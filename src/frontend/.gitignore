@@ -1,0 +1,8 @@
+# Node/Vite/Playwright build output — merges with the repo-root .gitignore's universal rules.
+node_modules/
+dist/
+.vite/
+coverage/
+*.tsbuildinfo
+test-results/
+playwright-report/

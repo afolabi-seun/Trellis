@@ -1,14 +1,8 @@
-# .NET
-bin/
-obj/
-*.user
-
-# Node / frontend
-node_modules/
-dist/
-.vite/
-coverage/
-*.tsbuildinfo
+# Repo-wide rules only — git merges a nested .gitignore with every parent one up to here, so
+# src/backend/.gitignore and src/frontend/.gitignore each add their own ecosystem-specific
+# rules on top of this rather than repeating it. Nothing below is specific to one app: .env can
+# appear under either (or at the root), .DS_Store/.vs//.vscode//.idea/ can appear anywhere an
+# editor or Finder touches, and *.log is generic.
 
 # Env / secrets — devops_environments.md: environment variables everywhere, .env locally via
 # DotNetEnv. .env.example documents the shape only and is the one exception committed.
@@ -19,14 +13,11 @@ coverage/
 # OS
 .DS_Store
 
-# IDE
+# IDE — .vs/ ties to Trellis.sln at the repo root; .vscode/ and .idea/ can be opened at any
+# folder level, backend or frontend included.
 .vs/
 .vscode/*
 !.vscode/extensions.json
 .idea/
 
-# Test/build artifacts
-TestResults/
-test-results/
-playwright-report/
 *.log

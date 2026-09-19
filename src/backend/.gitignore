@@ -1,0 +1,5 @@
+# .NET build output and test results — merges with the repo-root .gitignore's universal rules.
+bin/
+obj/
+*.user
+TestResults/
