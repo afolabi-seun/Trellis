@@ -1,5 +1,7 @@
-# .NET build output and test results — merges with the repo-root .gitignore's universal rules.
+# .NET build output and test results. No repo-root .gitignore exists anymore, so this also
+# covers OS/IDE files under this tree — that protection used to come from the root file.
 bin/
 obj/
 *.user
 TestResults/
+.DS_Store

@@ -1,7 +1,7 @@
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
 
-COPY Directory.Build.props .
+COPY src/backend/Directory.Build.props src/backend/
 COPY src/backend/Trellis.Api/Trellis.Api.csproj src/backend/Trellis.Api/
 RUN dotnet restore src/backend/Trellis.Api/Trellis.Api.csproj
 
