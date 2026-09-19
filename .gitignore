@@ -8,9 +8,10 @@ node_modules/
 dist/
 .vite/
 coverage/
+*.tsbuildinfo
 
-# Env / secrets — appsettings.{Environment}.json is committed per devops_environments.md,
-# but nothing that can hold a real secret is.
+# Env / secrets — devops_environments.md: environment variables everywhere, .env locally via
+# DotNetEnv. .env.example documents the shape only and is the one exception committed.
 .env
 .env.*
 !.env.example
