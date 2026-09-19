@@ -1,0 +1,18 @@
+# devops_environments.md: "Dependabot for known-vulnerable NuGet/npm packages" — a CI process
+# addition, not a BDR-numbered requirement, same as the Lint step.
+version: 2
+updates:
+  - package-ecosystem: "nuget"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "npm"
+    directory: "/src/frontend"
+    schedule:
+      interval: "weekly"
+
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"

@@ -1,0 +1,33 @@
+<Project>
+
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <LangVersion>12.0</LangVersion>
+    <EnableNETAnalyzers>true</EnableNETAnalyzers>
+    <AnalysisLevel>latest</AnalysisLevel>
+    <AnalysisMode>Recommended</AnalysisMode>
+    <GenerateDocumentationFile>false</GenerateDocumentationFile>
+
+    <!--
+      coding_standards.md: "a PR that fails formatting or analyzer rules doesn't merge, full
+      stop" — enforced as a build failure, not a convention someone has to remember to check.
+    -->
+    <TreatWarningsAsErrors>true</TreatWarningsAsErrors>
+
+    <!--
+      CA1000 (no static members on generic types) is suppressed solution-wide because it
+      directly contradicts the ServiceResult<T>/ApiResponse<T> static-factory pattern
+      api_standards.md and error_handling.md specify by name (ServiceResult<T>.Success(data),
+      ApiResponse<T>.Failure(error)) — this is the intended shape, not an oversight to fix.
+
+      CA1848 (use LoggerMessage source-gen delegates) is suppressed solution-wide for the same
+      reason project_architecture.md declines 50+ Clean-Architecture .csproj files: real
+      ceremony bought for a guarantee (high-throughput logging perf) this modular monolith
+      doesn't need yet. Revisit if logging is ever measured as a hot path.
+    -->
+    <NoWarn>$(NoWarn);CA1000;CA1848</NoWarn>
+  </PropertyGroup>
+
+</Project>

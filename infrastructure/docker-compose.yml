@@ -1,0 +1,19 @@
+# Local Postgres for development (devops_environments.md, "Environments" — Local uses
+# docker-compose Postgres with seeded fake data). Not used by Development/Staging/Production,
+# which run against the chosen PaaS's managed Postgres add-on.
+services:
+  postgres:
+    image: postgres:16
+    container_name: trellis-postgres-local
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: trellis_platform
+      POSTGRES_USER: trellis
+      POSTGRES_PASSWORD: trellis_dev_only
+    ports:
+      - "5432:5432"
+    volumes:
+      - trellis_postgres_data:/var/lib/postgresql/data
+
+volumes:
+  trellis_postgres_data:

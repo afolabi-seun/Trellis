@@ -1,0 +1,39 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.0.31903.59
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "src", "src", "{1DB7C773-6AE4-45EE-B8A9-3F70AFE26D65}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "backend", "backend", "{55E868B4-5F7A-46F0-A0E7-420C066D0CFC}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trellis.Api", "src\backend\Trellis.Api\Trellis.Api.csproj", "{344D7858-E361-498B-9B99-0E732A0B9AA7}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{DD628868-D965-416B-A679-C77A6D77EB9F}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Trellis.Tests", "tests\Trellis.Tests\Trellis.Tests.csproj", "{4DFBE139-3824-4960-911A-36DB8FA78D9E}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{344D7858-E361-498B-9B99-0E732A0B9AA7}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{344D7858-E361-498B-9B99-0E732A0B9AA7}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{344D7858-E361-498B-9B99-0E732A0B9AA7}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{344D7858-E361-498B-9B99-0E732A0B9AA7}.Release|Any CPU.Build.0 = Release|Any CPU
+		{4DFBE139-3824-4960-911A-36DB8FA78D9E}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{4DFBE139-3824-4960-911A-36DB8FA78D9E}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{4DFBE139-3824-4960-911A-36DB8FA78D9E}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{4DFBE139-3824-4960-911A-36DB8FA78D9E}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{55E868B4-5F7A-46F0-A0E7-420C066D0CFC} = {1DB7C773-6AE4-45EE-B8A9-3F70AFE26D65}
+		{344D7858-E361-498B-9B99-0E732A0B9AA7} = {55E868B4-5F7A-46F0-A0E7-420C066D0CFC}
+		{4DFBE139-3824-4960-911A-36DB8FA78D9E} = {DD628868-D965-416B-A679-C77A6D77EB9F}
+	EndGlobalSection
+EndGlobal

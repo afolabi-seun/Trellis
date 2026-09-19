@@ -1,0 +1,51 @@
+name: Frontend CI
+
+# devops_environments.md: the frontend's own path-filtered pipeline — vitest, playwright (with
+# axe), eslint/prettier — separate from backend-ci.yml so an API-only change never triggers this.
+
+on:
+  pull_request:
+    paths:
+      - "src/frontend/**"
+      - ".github/workflows/frontend-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/frontend/**"
+
+defaults:
+  run:
+    working-directory: src/frontend
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: "npm"
+          cache-dependency-path: src/frontend/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Format check
+        run: npm run format
+
+      - name: Unit tests
+        run: npm run test
+
+      - name: Build
+        run: npm run build
+
+      - name: Install Playwright browsers
+        run: npx playwright install --with-deps chromium
+
+      - name: E2E + accessibility tests
+        run: npm run test:e2e

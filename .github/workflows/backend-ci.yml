@@ -1,0 +1,43 @@
+name: Backend CI
+
+# devops_environments.md, "CI/CD Pipeline" — path-filtered so a frontend-only change never
+# triggers this. Inert until this repo has a remote (Handbook fifth-round scaffolding decision):
+# the workflow file is correct and ready, it just isn't running against anything yet.
+
+on:
+  pull_request:
+    paths:
+      - "src/backend/**"
+      - "tests/**"
+      - "Directory.Build.props"
+      - ".github/workflows/backend-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "src/backend/**"
+      - "tests/**"
+      - "Directory.Build.props"
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Restore
+        run: dotnet restore
+
+      - name: Build
+        run: dotnet build --no-restore --configuration Release
+
+      - name: Unit + integration tests
+        run: dotnet test --no-build --configuration Release
+        # testing_strategy.md: integration tests use Testcontainers.PostgreSql, which needs
+        # Docker — available by default on GitHub-hosted ubuntu-latest runners.
+
+      - name: Lint (dotnet format)
+        run: dotnet format --verify-no-changes

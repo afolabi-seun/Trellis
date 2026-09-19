@@ -1,0 +1,29 @@
+# .NET
+bin/
+obj/
+*.user
+
+# Node / frontend
+node_modules/
+dist/
+.vite/
+coverage/
+
+# Env / secrets — appsettings.{Environment}.json is committed per devops_environments.md,
+# but nothing that can hold a real secret is.
+.env
+.env.*
+!.env.example
+
+# OS
+.DS_Store
+
+# IDE
+.vs/
+.vscode/*
+!.vscode/extensions.json
+.idea/
+
+# Test/build artifacts
+TestResults/
+*.log
