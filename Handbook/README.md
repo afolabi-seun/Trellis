@@ -137,6 +137,19 @@ Development/Staging/Production. `appsettings.json` is removed from the codebase 
 User-Secrets/cloud-SDK split) both updated to match. No BDR — a configuration-mechanism fix, the
 same way the Lint and Dependabot additions in earlier rounds carried none.
 
+**A seventh round**, prompted by explicit direction that the eventual real repository will check
+in only what's under `src/`: `Trellis.Tests` colocated under `src/backend/` (matching
+`src/frontend/tests/`'s existing pattern, not a top-level `tests/` folder); `.editorconfig` and
+`.gitignore` split so only genuinely cross-cutting rules stay at the workspace root, with
+language-specific rules colocated per app (the root files were later removed entirely, per
+explicit direction, despite the tradeoff — `.env`/OS/IDE files outside `src/` are no longer
+gitignored, and EditorConfig has no `root = true` boundary in this workspace); and
+`Directory.Build.props`, `Trellis.sln`, `.github/` (CI workflows, Dependabot), and
+`infrastructure/` (docker-compose) all moved inside `src/`, with every path inside them rewritten
+relative to `src/` as its own root. `src/` is now genuinely self-contained — see
+`project_architecture.md`'s Repository Structure for the full tree and reasoning. No BDR — a
+repository-layout decision, not a requirement.
+
 Every technical decision here traces back to a BDR ID in `Requirements/Trellis_BRD_v0.4.docx`
 (the current version; earlier IDs trace back through v0.1–v0.3 as noted per document above).
 Where an implementation detail extends or narrows a BDR, that's called out in the relevant

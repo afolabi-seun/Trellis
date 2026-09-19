@@ -70,19 +70,23 @@ main                    — always deployable to Development
 
 ## CI/CD Pipeline
 
-**Two path-filtered pipelines, one repository.** `src/backend/` and `src/frontend/`
+**Two path-filtered pipelines, one repository.** `backend/` and `frontend/`
 (`project_architecture.md`, `frontend_architecture.md`) are built, tested, and deployed by
 separate CI jobs gated on which paths a PR actually touches — a frontend-only change never
 triggers the backend pipeline below, and vice versa. This is what makes the monorepo decision
 free: each app keeps its own pipeline and deploy target exactly as if it were a separate repo,
 without the coordination cost two repos would add. The pipeline below is the backend
-(`src/backend/`) one; the frontend's is a conventional Vite build (`vitest` unit tests, a
+(`backend/`) one; the frontend's is a conventional Vite build (`vitest` unit tests, a
 `playwright` e2e job, `eslint`/`prettier` lint) deploying to its own static host/CDN target
 (`frontend_architecture.md`), on the same branch/tag triggers.
 
+The `.github/` these workflows live in, and every path below, is relative to `src/` — the
+workspace's `src/` subtree *is* this repository, per `project_architecture.md`'s Repository
+Structure; `backend/**` here is `src/backend/` from the wider workspace's point of view.
+
 ```
-PR opened/updated (paths: src/backend/**)   — Trellis.Tests lives under src/backend/, so this
-                                              one filter already covers it
+PR opened/updated (paths: backend/**)   — Trellis.Tests lives under backend/, so this
+                                          one filter already covers it
   → Restore + Build
   → Dependency/vulnerability scan (GitHub Dependabot alerts + CodeQL — gate on high/critical)
   → Unit tests

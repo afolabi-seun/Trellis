@@ -55,57 +55,80 @@ frontend team forms, the two need genuinely independent release cadences, or on-
 packaging (`deployment_topologies.md`) needs the backend to ship without frontend source present
 — any of those is a reason to split, at that point, not before.
 
+**`src/` is deliberately self-contained** — everything a checkout of `src/` alone needs to build,
+test, and run both apps lives inside it: the `.sln`, the CI workflows, and the local Postgres
+compose file, not just the two apps' own source. `Handbook/`, `Requirements/`, `Pitch/`, and
+`Discovery/` describe the product but aren't code, so they stay outside `src/` in this
+workspace. This is what lets `src/` become a standalone repository's own root later — per your
+own direction, checking in only what's under `src/` when that happens — with zero path rework,
+not just a copy that then needs fixing up.
+
 ```
 Trellis/                                (project root — also contains Handbook/, Requirements/,
 │                                        Pitch/, Discovery/, README.md)
 │
-├── src/
-│   ├── backend/
-│   │   └── Trellis.Api/
-│   │       ├── Modules/               # Each module internally follows Clean Architecture —
-│   │       │   │                     # Domain/ → Application/ → Infrastructure/ + Presentation/
-│   │       │   │                     # (see "Module Internal Layering" below for the full tree)
-│   │       │   ├── Auth/              # Users, roles, sessions, JWT issuance
-│   │       │   ├── Tenant/            # PM company tenants, subscription tiers
-│   │       │   ├── PropertyAsset/     # Owners, Properties, Units/Assets
-│   │       │   ├── Notification/      # Template resolution, email/SMS dispatch, delivery audit
-│   │       │   ├── Document/          # Documents, versions, expiry tracking
-│   │       │   ├── Workflow/          # Workflow templates, instances, approvals
-│   │       │   ├── Inspection/        # Inspections, checklist items, photos
-│   │       │   ├── Vendor/            # Vendor identities, cross-tenant assignments
-│   │       │   ├── Ai/                # Document extraction jobs, routing suggestions
-│   │       │   ├── Reporting/         # Audit log, dashboards, Owner report generation
-│   │       │   ├── Billing/           # Subscriptions, invoicing, Paystack integration
-│   │       │   ├── Leasing/           # Vacancy listings, applications, screening, e-signature
-│   │       │   ├── RentLedger/        # Rent schedules, recorded payments, arrears (tracking only)
-│   │       │   └── Support/           # Cross-tenant support tickets — Triggered, Not Scheduled
-│   │       │
-│   │       ├── Core/                  # Shared cross-cutting code (ONE copy — see note below)
-│   │       │   ├── Results/           # ServiceResult<T>, ServiceResultExtensions
-│   │       │   ├── Dtos/              # ApiResponse<T> envelope
-│   │       │   ├── Middleware/        # Exception handling, tenant scope, correlation id
-│   │       │   ├── Attributes/        # Role-based auth attributes
-│   │       │   └── Helpers/           # Pagination, error code registry
-│   │       │
-│   │       ├── Configuration/         # DI registration, environment/.env-sourced config
-│   │       ├── Program.cs
-│   │       └── Dockerfile
+├── src/                                 (self-contained — see above; this subtree is what
+│   │                                     becomes the real repo's root)
+│   ├── .github/
+│   │   ├── workflows/                 # backend-ci.yml, frontend-ci.yml, codeql.yml — path
+│   │   │                              # filters below are relative to src/, e.g. "backend/**"
+│   │   └── dependabot.yml
 │   │
-│   ├── Trellis.Tests/                 # Backend tests — a separate .csproj (test-only
+│   ├── Trellis.sln                    # References Trellis.Api and Trellis.Tests, both under
+│   │                                   # backend/ — the frontend has no .NET project to
+│   │                                   # reference
+│   │
+│   ├── infrastructure/
+│   │   └── docker-compose.yml         # Local PostgreSQL for development
+│   │
+│   ├── backend/
+│   │   ├── Directory.Build.props      # .NET solution-wide settings — coding_standards.md
+│   │   ├── .editorconfig              # C#-specific rules, merges with the repo-root one
+│   │   ├── .gitignore                 # bin/, obj/, .NET-specific
+│   │   │
+│   │   ├── Trellis.Api/
+│   │   │   ├── Modules/               # Each module internally follows Clean Architecture —
+│   │   │   │   │                     # Domain/ → Application/ → Infrastructure/ + Presentation/
+│   │   │   │   │                     # (see "Module Internal Layering" below for the full tree)
+│   │   │   │   ├── Auth/              # Users, roles, sessions, JWT issuance
+│   │   │   │   ├── Tenant/            # PM company tenants, subscription tiers
+│   │   │   │   ├── PropertyAsset/     # Owners, Properties, Units/Assets
+│   │   │   │   ├── Notification/      # Template resolution, email/SMS dispatch, delivery audit
+│   │   │   │   ├── Document/          # Documents, versions, expiry tracking
+│   │   │   │   ├── Workflow/          # Workflow templates, instances, approvals
+│   │   │   │   ├── Inspection/        # Inspections, checklist items, photos
+│   │   │   │   ├── Vendor/            # Vendor identities, cross-tenant assignments
+│   │   │   │   ├── Ai/                # Document extraction jobs, routing suggestions
+│   │   │   │   ├── Reporting/         # Audit log, dashboards, Owner report generation
+│   │   │   │   ├── Billing/           # Subscriptions, invoicing, Paystack integration
+│   │   │   │   ├── Leasing/           # Vacancy listings, applications, screening, e-signature
+│   │   │   │   ├── RentLedger/        # Rent schedules, recorded payments, arrears (tracking only)
+│   │   │   │   └── Support/           # Cross-tenant support tickets — Triggered, Not Scheduled
+│   │   │   │
+│   │   │   ├── Core/                  # Shared cross-cutting code (ONE copy — see note below)
+│   │   │   │   ├── Results/           # ServiceResult<T>, ServiceResultExtensions
+│   │   │   │   ├── Dtos/              # ApiResponse<T> envelope
+│   │   │   │   ├── Middleware/        # Exception handling, tenant scope, correlation id
+│   │   │   │   ├── Attributes/        # Role-based auth attributes
+│   │   │   │   └── Helpers/           # Pagination, error code registry
+│   │   │   │
+│   │   │   ├── Configuration/         # DI registration, environment/.env-sourced config
+│   │   │   ├── Program.cs
+│   │   │   ├── .env.example           # Structure only — devops_environments.md
+│   │   │   └── Dockerfile
+│   │   │
+│   │   └── Trellis.Tests/             # Backend tests — a separate .csproj (test-only
 │   │                                   # packages like xunit never ship in Trellis.Api's
-│   │                                   # deployable), but colocated under src/backend/
-│   │                                   # alongside what it tests, not a top-level tests/
-│   │                                   # folder — the same colocation frontend/ already uses
+│   │                                   # deployable), colocated here alongside what it tests
+│   │                                   # rather than a top-level tests/ folder — the same
+│   │                                   # colocation frontend/ already uses
 │   │
 │   └── frontend/                      # trellis-web — see frontend_architecture.md for its
 │                                       # internal tree (src/api, src/features, tests/, etc.)
 │
-├── infrastructure/
-│   └── docker-compose.yml             # Local PostgreSQL for development
-│
-└── Trellis.sln                        # References Trellis.Api and Trellis.Tests, both under
-                                        # src/backend/ — the frontend has no .NET project to
-                                        # reference
+├── Handbook/, Requirements/, Pitch/, Discovery/   # product/business docs — not code, stay
+│                                                   # outside src/ (see above)
+└── README.md
 ```
 
 **Note on `Core/`:** the reference architecture duplicates its `Core/` folder inside every
