@@ -1,5 +1,12 @@
 root = true
 
+# Universal rules — covers everything outside src/backend/ and src/frontend/ too (Handbook/
+# Markdown, .github/workflows/*.yml, infrastructure/docker-compose.yml), so this stays at the
+# repo root. src/backend/.editorconfig and src/frontend/.editorconfig each add their own
+# language-specific rules on top of this one — EditorConfig merges nested files with their
+# parents (unlike Directory.Build.props, which only takes the nearest one), so nothing here
+# needs repeating in either.
+
 [*]
 indent_style = space
 end_of_line = lf
@@ -7,38 +14,5 @@ charset = utf-8
 trim_trailing_whitespace = true
 insert_final_newline = true
 
-[*.cs]
-indent_size = 4
-
-# coding_standards.md, "Language Baseline": file-scoped namespaces, not the brace-block style.
-csharp_style_namespace_declarations = file_scoped:error
-
-# coding_standards.md, "Async Conventions": every I/O-bound method (including private helpers)
-# is suffixed Async.
-dotnet_naming_rule.async_methods_end_in_async.severity = suggestion
-dotnet_naming_rule.async_methods_end_in_async.symbols = async_methods
-dotnet_naming_rule.async_methods_end_in_async.style = end_in_async
-dotnet_naming_symbols.async_methods.applicable_kinds = method
-dotnet_naming_symbols.async_methods.required_modifiers = async
-dotnet_naming_style.end_in_async.required_suffix = Async
-
-csharp_new_line_before_open_brace = all
-csharp_prefer_braces = true:suggestion
-csharp_style_var_for_built_in_types = true:suggestion
-csharp_style_var_when_type_is_apparent = true:suggestion
-csharp_style_expression_bodied_methods = when_on_single_line:suggestion
-
-dotnet_sort_system_directives_first = true
-dotnet_style_qualification_for_field = false:suggestion
-dotnet_style_qualification_for_property = false:suggestion
-dotnet_style_qualification_for_method = false:suggestion
-
-# coding_standards.md, "Async Conventions": .Result/.Wait()/.GetAwaiter().GetResult() outside
-# Main / a composition-root shim is a bug, not a style nit.
-dotnet_diagnostic.VSTHRD002.severity = warning
-
 [*.{json,yml,yaml}]
-indent_size = 2
-
-[*.{ts,tsx,js,jsx}]
 indent_size = 2

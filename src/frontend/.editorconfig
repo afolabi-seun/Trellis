@@ -1,0 +1,7 @@
+# No `root = true` — merges with the repo-root .editorconfig's universal [*] rules. Prettier
+# (.prettierrc.json) owns the rest of this app's formatting opinions; this is just the
+# IDE-level indent hint for editors that read .editorconfig directly, colocated with the
+# frontend it applies to rather than the repo-root file.
+
+[*.{ts,tsx,js,jsx}]
+indent_size = 2
