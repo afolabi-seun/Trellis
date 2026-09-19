@@ -84,6 +84,16 @@ The `.github/` these workflows live in, and every path below, is relative to `sr
 workspace's `src/` subtree *is* this repository, per `project_architecture.md`'s Repository
 Structure; `backend/**` here is `src/backend/` from the wider workspace's point of view.
 
+**One gap this creates, by explicit choice**: `Trellis.sln` itself lives at the workspace root,
+one level above `src/` — the sole exception to `src/`'s self-containment
+(`project_architecture.md`'s Repository Structure explains why). The `Restore`/`Build`/`Unit +
+integration tests`/`Lint` steps below call bare `dotnet restore`/`dotnet build`/`dotnet
+test`/`dotnet format`, which auto-discover a `.sln` in the working directory — that only works
+today because these commands are run from the wider workspace root, not from what `src/` alone
+would check out. Whoever cuts the real repo needs to either add a `.sln` back inside `src/`, or
+point these steps at an explicit project file — flagged here, not solved, since it's only a real
+problem at that future point.
+
 ```
 PR opened/updated (paths: backend/**)   — Trellis.Tests lives under backend/, so this
                                           one filter already covers it

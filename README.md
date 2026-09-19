@@ -33,13 +33,15 @@ vendor management, and targeted AI capabilities.
   (shared email/SMS dispatch), and a minimal Support module. Read
   Handbook/README.md first.
 - **src/** — the application code: `backend/` (.NET 8 API), `frontend/`
-  (`trellis-web`, React + TypeScript), plus `Trellis.sln`, `.github/`
-  (CI workflows, Dependabot), and `infrastructure/` (local Postgres compose
-  file). Deliberately self-contained — everything the code needs to build,
-  test, and run lives inside `src/`, nothing outside it — so this subtree
-  can become a standalone repository's own root later with no path rework,
-  checking in only what's under `src/` at that point. See
-  `Handbook/project_architecture.md`'s Repository Structure for the full
+  (`trellis-web`, React + TypeScript), plus `.github/` (CI workflows,
+  Dependabot) and `infrastructure/` (local Postgres compose file).
+  Deliberately self-contained with one stated exception — `Trellis.sln`
+  lives at this workspace's own root by explicit choice, not inside `src/`,
+  so it'll need to be added back inside `src/` (or CI pointed at an
+  explicit project file) whenever `src/` actually becomes a standalone
+  repository's own root, checking in only what's under `src/` at that
+  point. See `Handbook/project_architecture.md`'s Repository Structure for
+  the full
   tree and reasoning.
 
 ## Status

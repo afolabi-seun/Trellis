@@ -55,28 +55,36 @@ frontend team forms, the two need genuinely independent release cadences, or on-
 packaging (`deployment_topologies.md`) needs the backend to ship without frontend source present
 — any of those is a reason to split, at that point, not before.
 
-**`src/` is deliberately self-contained** — everything a checkout of `src/` alone needs to build,
-test, and run both apps lives inside it: the `.sln`, the CI workflows, and the local Postgres
-compose file, not just the two apps' own source. `Handbook/`, `Requirements/`, `Pitch/`, and
-`Discovery/` describe the product but aren't code, so they stay outside `src/` in this
-workspace. This is what lets `src/` become a standalone repository's own root later — per your
-own direction, checking in only what's under `src/` when that happens — with zero path rework,
-not just a copy that then needs fixing up.
+**`src/` is deliberately self-contained, with one stated exception.** The CI workflows and the
+local Postgres compose file live inside `src/` — every path in both is written relative to
+`src/` as its own root — so `Handbook/`, `Requirements/`, `Pitch/`, and `Discovery/` (product,
+not code) can stay outside it while `src/` alone is what checks into the eventual real
+repository, per your direction. **`Trellis.sln` is the one piece that doesn't follow this rule**
+— it sits at the workspace root by explicit choice, one level above `src/`, with its two project
+paths carrying the `src\` prefix back (`src\backend\Trellis.Api\...`). This means the `.sln`
+itself won't be part of `src/` if it's checked in as-is at extraction time, and
+`.github/workflows/backend-ci.yml`'s bare `dotnet build`/`dotnet test` calls (which
+auto-discover a `.sln` in the working directory) would have nothing to find — whoever cuts the
+real repo needs to either add a `.sln` back inside `src/` at that point, or point those CI steps
+at an explicit project file instead. Flagged here rather than solved now, since it's a real gap
+only at that future point, not today.
 
 ```
 Trellis/                                (project root — also contains Handbook/, Requirements/,
 │                                        Pitch/, Discovery/, README.md)
 │
-├── src/                                 (self-contained — see above; this subtree is what
-│   │                                     becomes the real repo's root)
+├── Trellis.sln                          (the one exception — see above; everything else needed
+│                                         to build/test/run lives inside src/. References
+│                                         src\backend\Trellis.Api\... and
+│                                         src\backend\Trellis.Tests\... — the frontend has no
+│                                         .NET project to reference)
+│
+├── src/                                 (self-contained except for Trellis.sln — this subtree
+│   │                                     is what becomes the real repo's root)
 │   ├── .github/
 │   │   ├── workflows/                 # backend-ci.yml, frontend-ci.yml, codeql.yml — path
 │   │   │                              # filters below are relative to src/, e.g. "backend/**"
 │   │   └── dependabot.yml
-│   │
-│   ├── Trellis.sln                    # References Trellis.Api and Trellis.Tests, both under
-│   │                                   # backend/ — the frontend has no .NET project to
-│   │                                   # reference
 │   │
 │   ├── infrastructure/
 │   │   └── docker-compose.yml         # Local PostgreSQL for development
