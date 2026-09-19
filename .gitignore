@@ -27,4 +27,6 @@ coverage/
 
 # Test/build artifacts
 TestResults/
+test-results/
+playwright-report/
 *.log
