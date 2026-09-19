@@ -81,7 +81,8 @@ without the coordination cost two repos would add. The pipeline below is the bac
 (`frontend_architecture.md`), on the same branch/tag triggers.
 
 ```
-PR opened/updated (paths: src/backend/**, tests/**)
+PR opened/updated (paths: src/backend/**)   — Trellis.Tests lives under src/backend/, so this
+                                              one filter already covers it
   → Restore + Build
   → Dependency/vulnerability scan (GitHub Dependabot alerts + CodeQL — gate on high/critical)
   → Unit tests

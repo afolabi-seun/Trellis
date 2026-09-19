@@ -28,7 +28,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="..\..\src\backend\Trellis.Api\Trellis.Api.csproj" />
+    <ProjectReference Include="..\Trellis.Api\Trellis.Api.csproj" />
   </ItemGroup>
 
 </Project>

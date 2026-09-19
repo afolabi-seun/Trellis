@@ -87,22 +87,25 @@ Trellis/                                (project root — also contains Handbook
 │   │       │   ├── Attributes/        # Role-based auth attributes
 │   │       │   └── Helpers/           # Pagination, error code registry
 │   │       │
-│   │       ├── Configuration/         # DI registration, app settings
+│   │       ├── Configuration/         # DI registration, environment/.env-sourced config
 │   │       ├── Program.cs
 │   │       └── Dockerfile
+│   │
+│   ├── Trellis.Tests/                 # Backend tests — a separate .csproj (test-only
+│   │                                   # packages like xunit never ship in Trellis.Api's
+│   │                                   # deployable), but colocated under src/backend/
+│   │                                   # alongside what it tests, not a top-level tests/
+│   │                                   # folder — the same colocation frontend/ already uses
 │   │
 │   └── frontend/                      # trellis-web — see frontend_architecture.md for its
 │                                       # internal tree (src/api, src/features, tests/, etc.)
 │
-├── tests/
-│   └── Trellis.Tests/                 # Backend tests only — frontend tests live under
-│                                       # src/frontend/tests/, colocated with that package
-│
 ├── infrastructure/
 │   └── docker-compose.yml             # Local PostgreSQL for development
 │
-└── Trellis.sln                        # References Trellis.Api and Trellis.Tests only —
-                                        # the frontend has no .NET project to reference
+└── Trellis.sln                        # References Trellis.Api and Trellis.Tests, both under
+                                        # src/backend/ — the frontend has no .NET project to
+                                        # reference
 ```
 
 **Note on `Core/`:** the reference architecture duplicates its `Core/` folder inside every
