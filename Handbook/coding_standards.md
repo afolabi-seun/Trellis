@@ -26,6 +26,13 @@ leaking past a repository) that a plain layered architecture doesn't have to gua
   that fails formatting or analyzer rules doesn't merge, full stop. This is enforcement, not a
   style suggestion, precisely because "the linter will catch it" is what makes a large naming
   or layering convention actually hold across a solo build's inevitable rushed Friday commits.
+- **Analyzers are off for `**/Migrations/*.cs`** (`src/backend/.editorconfig`) — `dotnet ef
+  migrations add` generates that code, and its own generator patterns (inlining a composite
+  index's columns as an array literal, for one) trip rules aimed at hand-written hot paths, not
+  one-time schema DDL. Found at Phase 1's first multi-column index. Everything else in a
+  module's `Infrastructure/Data/` folder — the `DbContext`, `Configurations/`,
+  `Repositories/` — is hand-written and stays held to the full analyzer set; only the
+  `Migrations/` subfolder specifically is exempted.
 
 ---
 

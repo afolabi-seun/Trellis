@@ -5,6 +5,7 @@ using Trellis.Api.Configuration;
 using Trellis.Api.Core;
 using Trellis.Api.Core.Logging;
 using Trellis.Api.Core.Middleware;
+using Trellis.Api.Modules.Notification;
 using Trellis.Api.Modules.Tenant;
 
 // devops_environments.md, "Configuration & Secrets Per Environment": .env exists only in Local
@@ -30,6 +31,7 @@ builder.Services.AddTrellisCore(builder.Configuration);
 
 // Tenant → Notification → Auth, per data_model.md's migration dependency order.
 builder.Services.AddTenantModule(builder.Configuration);
+builder.Services.AddNotificationModule(builder.Configuration);
 
 var app = builder.Build();
 

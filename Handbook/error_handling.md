@@ -147,8 +147,12 @@ section applies narrowly to the few real network boundaries Trellis has.
 | Managed Postgres | Transient connection drop | EF Core's own connection resiliency (`EnableRetryOnFailure`), not custom retry code — this is a solved problem in the Npgsql provider |
 
 ```csharp
-// Core/Resilience/ResiliencePolicies.cs
-public static readonly IAsyncPolicy AiProviderPolicy = Policy
+// Core/Resilience/ResiliencePolicies.cs — named ExternalProviderPolicy, not the AiProviderPolicy
+// an earlier version of this doc used: Notification (Phase 1) reuses this same policy well
+// before the Ai module (a much later phase) exists, so an AI-specific name would have been
+// wrong the moment a second caller showed up. The table above already called this "the same
+// policy" shared across every external-dependency call — the name now matches that.
+public static readonly IAsyncPolicy ExternalProviderPolicy = Policy
     .Handle<HttpRequestException>()
     .Or<TaskCanceledException>()
     .WaitAndRetryAsync(3, attempt => TimeSpan.FromSeconds(Math.Pow(4, attempt) / 2));

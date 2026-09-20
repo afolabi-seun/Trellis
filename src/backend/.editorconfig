@@ -30,3 +30,13 @@ dotnet_style_qualification_for_method = false:suggestion
 # coding_standards.md, "Async Conventions": .Result/.Wait()/.GetAwaiter().GetResult() outside
 # Main / a composition-root shim is a bug, not a style nit.
 dotnet_diagnostic.VSTHRD002.severity = warning
+
+# EF Core's own `dotnet ef migrations add` generates Migrations/*.cs and *.Designer.cs — tool
+# output, not hand-written code, and it doesn't follow this file's conventions (e.g. it always
+# inlines composite-index column arrays, which CA1861 flags). Found the hard way: the first
+# migration with a multi-column index failed the build on a rule aimed at hand-written hot paths,
+# not one-time schema DDL. Analyzers off for generated migration files specifically, not the
+# handwritten Configurations/Repositories/etc. alongside them in the same module.
+[**/Migrations/*.cs]
+generated_code = true
+dotnet_analyzer_diagnostic.severity = none
