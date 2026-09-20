@@ -27,7 +27,11 @@ public sealed class TenantScopeMiddleware(RequestDelegate next)
         }
         else if (role == "SUPER_ADMIN")
         {
-            SystemContext.IsSystem = true;
+            using (SystemContext.Enter())
+            {
+                await next(context);
+                return;
+            }
         }
 
         await next(context);

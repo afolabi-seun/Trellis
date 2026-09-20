@@ -54,11 +54,11 @@ public sealed class SystemContext
 {
     private static readonly AsyncLocal<bool> IsSystemHolder = new();
 
-    public static bool IsSystem
-    {
-        get => IsSystemHolder.Value;
-        set => IsSystemHolder.Value = value;
-    }
+    // Read-only from the outside on purpose: testing_strategy.md requires that setting this
+    // bypass isn't reachable by an arbitrary code path, "not silently succeed." A bare public
+    // setter would let any Service, anywhere in this assembly, flip it with one line and no
+    // review trail. Enter() is the one, auditable place that can turn it on.
+    public static bool IsSystem => IsSystemHolder.Value;
 
     /// <summary>
     /// Scopes the bypass to a single lookup and restores the prior value afterward, so a narrow,

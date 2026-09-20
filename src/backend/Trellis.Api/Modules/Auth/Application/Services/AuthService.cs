@@ -1,5 +1,6 @@
 using System.Security.Cryptography;
 using System.Text;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using Trellis.Api.Core.Audit;
 using Trellis.Api.Core.Configuration;
@@ -245,8 +246,19 @@ public sealed class AuthService(
 
         user.SetPasswordHash(passwordHasher.Hash(newPassword));
         resetToken.MarkUsed();
-        await userRepository.SaveChangesAsync();
-        await resetTokenRepository.SaveChangesAsync();
+
+        try
+        {
+            await userRepository.SaveChangesAsync();
+            await resetTokenRepository.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // BDR-NFR-006 (coding_standards.md): the user's row changed between load and save
+            // here (e.g. a concurrent login updating failed_login_count). Reject rather than
+            // silently overwrite whatever else just happened to this account.
+            return ServiceResult<object>.ConcurrencyConflict();
+        }
 
         // security_guide.md's Session Revocation & Logout: a password change revokes every
         // active session for the user, through the same path logout uses.
