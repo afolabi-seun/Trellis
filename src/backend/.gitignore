@@ -1,7 +1,11 @@
 # .NET build output and test results. No repo-root .gitignore exists anymore, so this also
-# covers OS/IDE files under this tree — that protection used to come from the root file.
+# covers OS/IDE files, and — critically — .env, under this tree; that protection used to come
+# from the root file. Caught the hard way: .env staged itself here once the root file was gone.
 bin/
 obj/
 *.user
 TestResults/
 .DS_Store
+.env
+.env.*
+!.env.example

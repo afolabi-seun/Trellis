@@ -2,6 +2,7 @@ using System.Globalization;
 using Serilog;
 using Serilog.Events;
 using Trellis.Api.Configuration;
+using Trellis.Api.Core;
 using Trellis.Api.Core.Logging;
 using Trellis.Api.Core.Middleware;
 
@@ -24,8 +25,10 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
 builder.Services.AddControllers();
 builder.Services.AddTrellisSwaggerGen();
 
-// Each future module adds its own AddXModule(builder.Configuration) call here
-// (coding_standards.md, "Dependency Injection") — none exist yet in Phase 0.
+builder.Services.AddTrellisCore(builder.Configuration);
+
+// Each module adds its own AddXModule(builder.Configuration) call here
+// (coding_standards.md, "Dependency Injection").
 
 var app = builder.Build();
 

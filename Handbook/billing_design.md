@@ -347,7 +347,8 @@ invoice history with downloadable receipts, and payment method management (addin
 card via Paystack's hosted widget, never a Trellis-built card form). Not reachable from the
 Vendor or Super Admin route trees — Super Admin gets a separate, platform-wide revenue view
 under `/platform/billing`, which is genuinely different data (aggregate across tenants), not
-the same page reused.
+the same page reused. `/platform/` (vs. `/api/v1/`) is `api_standards.md`'s convention for
+exactly this shape of endpoint — `SUPER_ADMIN`-only, cross-tenant by nature.
 
 ---
 

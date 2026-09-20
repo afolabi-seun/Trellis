@@ -4,8 +4,10 @@ namespace Trellis.Api.Core.Middleware;
 /// Resolves the request's tenant or Vendor scope from JWT claims into
 /// <see cref="TenantContext.Current"/> / <see cref="VendorContext.Current"/>
 /// (multi_tenant_design.md) — one of the multi-tenant isolation model's three enforcement
-/// layers. Neither claim present (and a SUPER_ADMIN role) means a platform-scope request; no
-/// context is set. A no-op until Auth (Phase 1) actually issues JWTs carrying these claims.
+/// layers. Neither claim present is only ever a platform-scope (<see cref="SystemContext"/>)
+/// request if the JWT's role claim is verified as <c>SUPER_ADMIN</c> — never inferred from the
+/// absence of the other two alone, which would let an unauthenticated or malformed request
+/// bypass tenant isolation instead of seeing nothing.
 /// </summary>
 public sealed class TenantScopeMiddleware(RequestDelegate next)
 {
@@ -13,6 +15,7 @@ public sealed class TenantScopeMiddleware(RequestDelegate next)
     {
         var tenantId = context.User.FindFirst("tenant_id")?.Value;
         var vendorId = context.User.FindFirst("vendor_id")?.Value;
+        var role = context.User.FindFirst("role")?.Value;
 
         if (tenantId is not null && Guid.TryParse(tenantId, out var parsedTenantId))
         {
@@ -21,6 +24,10 @@ public sealed class TenantScopeMiddleware(RequestDelegate next)
         else if (vendorId is not null && Guid.TryParse(vendorId, out var parsedVendorId))
         {
             VendorContext.Current = new VendorContext(parsedVendorId);
+        }
+        else if (role == "SUPER_ADMIN")
+        {
+            SystemContext.IsSystem = true;
         }
 
         await next(context);

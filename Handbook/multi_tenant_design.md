@@ -52,6 +52,14 @@ public class TenantScopeMiddleware
 }
 ```
 
+**Refined during Phase 1 implementation**: the built version also reads the `role` claim and sets
+a third, explicit `SystemContext.IsSystem` flag only when `role == "SUPER_ADMIN"` — not inferred
+from "neither `tenant_id` nor `vendor_id` is present" the way the comment above reads. That
+inference would be fail-open: an unauthenticated or malformed request that somehow reached a
+scoped query with no claims at all would get the Super Admin RLS bypass by default instead of
+seeing nothing. `app.is_system` in every RLS policy is driven by this explicit flag, never by
+absence of the other two.
+
 `TenantContext.Current` and `VendorContext.Current` are `AsyncLocal<T>`-backed, exactly the
 same idiom the reference uses for its own request-scoped tenant context — it flows correctly
 through `async`/`await` without needing to be threaded through every method signature.
@@ -270,7 +278,9 @@ leaving it unspecified means it happens ad hoc, via a one-off support/engineerin
 first time it actually occurs. This closes that gap with an explicit, staged flow rather than
 an immediate hard delete — the same "erasure is a process, not a DELETE statement" principle
 `security_guide.md`'s Compliance section already applies to individual erasure requests,
-applied here at the tenant level.
+applied here at the tenant level. The full Tenant CRUD/provisioning contract, including this
+endpoint's `/platform/` prefix convention, is specified in `api_standards.md`'s "Tenant
+Management Endpoints (Platform)" section.
 
 ```
 1. POST /platform/tenants/{id}/offboard   (SUPER_ADMIN only — not self-service; this begins

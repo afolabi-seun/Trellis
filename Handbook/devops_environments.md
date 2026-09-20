@@ -170,6 +170,14 @@ implementation across every environment (read the environment variable), not a
 User-Secrets-locally/cloud-SDK-elsewhere split — see that document for the updated
 `EnvironmentSecretProvider`.
 
+**Two `ConnectionStrings` entries, not one**, added during Phase 1 once RLS went live
+(`data_model.md`'s Row-Level Security section explains why one connection isn't enough):
+`ConnectionStrings__Trellis` — the unprivileged `trellis_app` role, what the running API actually
+connects as — and `ConnectionStrings__TrellisMigrations` — the privileged migration-owner role,
+used only by `dotnet ef database update`, never by the app itself. Both are real per-environment
+secrets under this same environment-variable mechanism; only their *number* changed, not how
+they're delivered.
+
 ---
 
 ## Observability

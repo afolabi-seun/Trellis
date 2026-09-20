@@ -12,9 +12,9 @@ it does not own — cross-module data needs go through that module's service cla
 
 | Schema | Module | Tables | Notes |
 |--------|--------|--------|-------|
-| `trellis_tenant` | Tenant | 2 | tenant, tenant_config |
+| `trellis_tenant` | Tenant | 1 | tenant |
 | `trellis_notification` | Notification | 3 | notification_template, notification_delivery, tenant_notification_channel_pref — see `notifications_design.md` |
-| `trellis_auth` | Auth | 3 | app_user, role_assignment, session |
+| `trellis_auth` | Auth | 4 | app_user, session, password_reset_token, mfa_recovery_code — see `security_guide.md` |
 | `trellis_property` | PropertyAsset | 3 | owner, property, unit_asset |
 | `trellis_document` | Document | 2 | document, document_version |
 | `trellis_workflow` | Workflow | 4 | department, workflow_template, workflow_instance, workflow_step |
@@ -29,6 +29,16 @@ it does not own — cross-module data needs go through that module's service cla
 
 `trellis_reporting` (materialised views for dashboards and Owner reports) is deferred until
 there is real usage data to build views against.
+
+**Corrected during Phase 1 planning**: two catalogue entries never matched anything actually
+specified elsewhere in the handbook. `tenant_config` was listed alongside `tenant` with no
+column list or stated purpose anywhere — `tenant.config_json` (below) already covers the one
+need ever described for it ("feature flags, tenant-level overrides"), so it's dropped rather
+than built speculatively. `role_assignment` was listed under Auth, but role has only ever been
+specified as a single `app_user.role` column — every JWT claim, the RBAC table
+(`api_standards.md`), and the login flow (`security_guide.md`) all treat role as one value per
+user, never a separate assignment table. Both were removed rather than filled in, per this
+handbook's own "don't build ahead of need" principle applied to documentation, not just code.
 
 ---
 
@@ -288,9 +298,42 @@ CREATE POLICY tenant_or_vendor_isolation ON trellis_workflow.workflow_instance A
   );
 ```
 
-RLS is active even for the application's own database user — it is defence in depth. The
-application layer also enforces the equivalent filter at the EF Core level (see
+**RLS is active even for the application's own database user — it is defence in depth.**
+Achieving that literally, though, needs one more piece this section didn't originally state:
+`ENABLE ROW LEVEL SECURITY` alone does **not** apply to a table's owner, and does nothing at all
+for a superuser — both bypass every policy outright, regardless of `FORCE ROW LEVEL SECURITY`
+(which only extends RLS to a non-superuser owner, not a superuser). Found the hard way during
+Phase 1 implementation: `docker-compose.yml`'s `POSTGRES_USER` is a superuser by default, and if
+the running API connected as that same user, layer 1 would be silently inert in every
+environment, and the isolation test suite's own "RLS holds even if the app-layer filter is
+bypassed" case (`testing_strategy.md`) would pass without proving anything. The fix: every
+environment provisions a **second, unprivileged role** (`trellis_app`, created via
+`infrastructure/init-app-role.sql` locally) that the running API connects as — not the
+migration-owner role, which stays privileged and is used only for `dotnet ef database update`.
+Every table's migration grants that role exactly the DML it needs (no `UPDATE`/`DELETE` on
+`audit_record` at all, for instance — belt-and-suspenders alongside its append-only trigger).
+See `devops_environments.md`'s Configuration & Secrets section for the two-connection-string
+pattern this implies, and `security_guide.md`'s Secrets Management table for where each
+connection string's credential lives per environment.
+
+The application layer also enforces the equivalent filter at the EF Core level (see
 `multi_tenant_design.md`).
+
+**`trellis_audit.audit_record` uses this same standard `tenant_isolation` policy**, despite
+`tenant_id` being nullable there (platform-level Super Admin actions have no tenant) — worth
+stating explicitly rather than leaving it to be rediscovered, since a nullable column in a
+tenant-scoped policy looks like it should need a special case. It doesn't: SQL's three-valued
+logic means `tenant_id = current_setting('app.current_tenant_id', true)::uuid` evaluates to
+`NULL`, not `TRUE`, when `tenant_id IS NULL` — a `NULL` row is invisible to every ordinary
+tenant request and visible only when `app.is_system = true`, exactly the behaviour a
+platform-level audit row needs, with no policy variant required.
+
+`IAuditService`/`AuditService` (the code that writes rows here) live in **`Core/`**, not a
+`Reporting` module — `Reporting` itself isn't built until much later (`roadmap.md`), but every
+module from Phase 1 onward needs to write an audit record. This is the same "shared capability
+available from day one, moved into its own module's phase later without callers changing"
+pattern `project_architecture.md`'s extraction seam already uses elsewhere — when `Reporting` is
+eventually built, `IAuditService`'s home moves, not its interface.
 
 ---
 
@@ -312,10 +355,22 @@ public class PropertyDbContext : DbContext
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
-        modelBuilder.ApplyConfigurationsFromAssembly(typeof(PropertyDbContext).Assembly);
+        // Scoped by namespace, not the bare typeof(PropertyDbContext).Assembly form an earlier
+        // version of this example used — every module lives in this same single Trellis.Api
+        // assembly (project_architecture.md's single-project decision), so an unscoped
+        // ApplyConfigurationsFromAssembly(assembly) call would pick up every OTHER module's
+        // IEntityTypeConfiguration<T> too and map their entities into this DbContext as a side
+        // effect — exactly the cross-module leak this whole section exists to prevent. The
+        // predicate keeps each DbContext scoped to its own module's configurations only.
+        modelBuilder.ApplyConfigurationsFromAssembly(
+            typeof(PropertyDbContext).Assembly,
+            t => t.Namespace?.StartsWith("Trellis.Api.Modules.PropertyAsset.", StringComparison.Ordinal) == true);
         // Each entity's table/schema/column mapping lives in its own
         // Infrastructure/Data/Configurations/{Entity}Configuration.cs — see project_architecture.md
-        // RLS: app.current_tenant_id set via SaveChangesInterceptor on every command
+        // RLS: app.current_tenant_id / app.is_system set by a DbConnectionInterceptor on every
+        // connection open, not a SaveChangesInterceptor — RLS applies to reads too, not just
+        // writes, so it has to run before any command, not just before SaveChanges (Core/Data/
+        // TenantScopeConnectionInterceptor.cs)
     }
 }
 ```
@@ -323,7 +378,9 @@ public class PropertyDbContext : DbContext
 This is enforced even though every module currently runs in the same process: a
 `PropertyDbContext` simply has no `DbSet` for `Vendor` or `Document`, so a compile-time
 mistake ("just join across modules, it's the same database anyway") isn't possible by
-accident. The Domain/Infrastructure split adds a second guarantee on top: even *within*
+accident — and the namespace-scoped configuration scan above means it can't happen by *runtime*
+accident either, via a stray `IEntityTypeConfiguration<T>` for another module's entity getting
+picked up. The Domain/Infrastructure split adds a second guarantee on top: even *within*
 PropertyAsset, `Property` the class and `property` the table are defined in different files by
 different layers, so a persistence detail (a renamed column, an added index) never requires
 touching the entity that defines the business object.

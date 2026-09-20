@@ -14,6 +14,9 @@ services:
       - "5432:5432"
     volumes:
       - trellis_postgres_data:/var/lib/postgresql/data
+      # Runs once, on first container init only — creates the unprivileged trellis_app role the
+      # running API connects as, so RLS actually applies (see that file's own comment).
+      - ./init-app-role.sql:/docker-entrypoint-initdb.d/init-app-role.sql:ro
 
 volumes:
   trellis_postgres_data:

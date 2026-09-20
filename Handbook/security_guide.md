@@ -485,7 +485,7 @@ exactly. Where we diverge is the mechanism:
 
 | Secret Category | Reference (Vault) | Trellis Phase 1 |
 |-----------------|--------------------|--------------------|
-| Database credentials | Dynamic Vault secrets, 1-hour leases | Connection string as an environment variable — `.env` (gitignored) locally, the hosting platform's own env var config in Development/Staging/Production |
+| Database credentials | Dynamic Vault secrets, 1-hour leases | Two connection strings, not one — `ConnectionStrings__Trellis` (unprivileged `trellis_app` role, what the running API connects as) and `ConnectionStrings__TrellisMigrations` (the privileged migration-owner role, `dotnet ef database update` only) — both as environment variables, `.env` (gitignored) locally, the hosting platform's own env var config elsewhere. Two connection strings because Postgres RLS doesn't apply to a table's owner or a superuser regardless of policy (`data_model.md`'s Row-Level Security section) — a single shared connection would make RLS inert. |
 | JWT signing key (RS256) | Vault, rotated every 6 months | Environment variable, rotated every 6 months (manual for now) |
 | Third-party API keys (AI provider, email/SMS) | Vault, per-tenant paths | Environment variable, single platform-level key per provider |
 | Third-party API keys (screening provider, e-signature provider) | N/A — no reference equivalent | Same as above: platform-level key(s) per provider via `ISecretProvider`, one per active `IScreeningProvider`/`IESignatureProvider` implementation (`leasing_design.md`); rotated on the same 6-month cadence as other third-party keys until a provider-specific requirement says otherwise |
@@ -547,7 +547,7 @@ Never log secret values.
 |-------|-----------|-----------------|
 | External TLS | TLS 1.3 | Managed cert (Let's Encrypt or cloud-provider-issued); auto-renewal |
 | Database at rest | AES-256 | Managed by the Postgres hosting provider |
-| Password hashes | Argon2id | Per-password salt, standard .NET `PasswordHasher` conventions |
+| Password hashes | Argon2id | Per-password salt, OWASP Password Storage Cheat Sheet baseline parameters: 19 MiB memory, 2 iterations, degree of parallelism 1 — a checkable fact, not "standard conventions" left to whichever library default happens to apply |
 | MFA TOTP secrets | AES-256-GCM | Single platform-level key from `ISecretProvider`, rotated annually — per-tenant TOTP key isolation deferred alongside per-tenant PII keys |
 | PII columns (owner contact details, vendor contact details) | Deferred to platform-level DB-at-rest encryption for Phase 1 | Revisit once cryptographic isolation (above) is scoped |
 

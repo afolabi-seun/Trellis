@@ -37,3 +37,23 @@ public sealed class VendorContext(Guid vendorId)
         set => CurrentHolder.Value = value;
     }
 }
+
+/// <summary>
+/// The Super Admin / background-job RLS bypass flag (multi_tenant_design.md, "Super Admin
+/// Bypass" — <c>app.is_system</c>). Deliberately a third, separate flag rather than inferred
+/// from "neither <see cref="TenantContext"/> nor <see cref="VendorContext"/> is set" — that
+/// inference would be fail-open: an unauthenticated or malformed request that reaches a scoped
+/// query with no context at all must see zero rows, not every tenant's. Only
+/// <see cref="TenantScopeMiddleware"/>, after confirming the <c>SUPER_ADMIN</c> role claim, or a
+/// trusted background job, may set this explicitly.
+/// </summary>
+public sealed class SystemContext
+{
+    private static readonly AsyncLocal<bool> IsSystemHolder = new();
+
+    public static bool IsSystem
+    {
+        get => IsSystemHolder.Value;
+        set => IsSystemHolder.Value = value;
+    }
+}

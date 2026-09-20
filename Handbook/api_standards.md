@@ -296,6 +296,37 @@ See `multi_tenant_design.md` for how `VendorAssignedToWorkItem` resolves its sco
 
 ---
 
+## The `/platform/` Prefix
+
+**Corrected during Phase 1 planning**: `multi_tenant_design.md`'s tenant offboarding endpoint
+(`POST /platform/tenants/{id}/offboard`) and `billing_design.md`'s Super Admin revenue view
+(`/platform/billing`) both used a `/platform/` prefix instead of the standard `/api/v1/`, with no
+stated rule for when each applies — an inconsistency by omission, not two independent decisions.
+Stated explicitly now: **`/api/v1/`** is for resources scoped to the caller's own tenant,
+resolved from their JWT (the versioning row above). **`/platform/`** is for `SUPER_ADMIN`-only
+operations that are genuinely cross-tenant by nature — managing tenants themselves, platform-wide
+billing/revenue — where there is no "caller's own tenant" to scope to in the first place. Both
+prefixes share the same response envelope, error registry, and pagination pattern; `/platform/`
+is a routing distinction, not a second API standard.
+
+### Tenant Management Endpoints (Platform)
+
+```
+GET  /platform/tenants                → paginated list, SUPER_ADMIN only
+POST /platform/tenants                { tenant_name, country_code, admin_email }
+                                       → 201, provisions a tenant + its first Tenant Admin in one
+                                       transaction (multi_tenant_design.md's ProvisionTenantAsync)
+GET  /platform/tenants/{id}           → tenant detail
+POST /platform/tenants/{id}/offboard  → begins the staged offboarding flow (multi_tenant_design.md)
+```
+
+All four `SUPER_ADMIN` only. `POST /platform/tenants` returns the same `ApiResponse<T>` envelope
+as any other endpoint; `country_code` and `admin_email` validate the same way any other
+request DTO does (`error_handling.md`'s Validation section) — a malformed request is a 400
+`ValidationFailed`, not a special case for this endpoint.
+
+---
+
 ## Pagination Pattern
 
 ```json
