@@ -16,6 +16,19 @@ public sealed record LoginResult(
     DateTimeOffset? AccessTokenExpiresAt,
     string? RefreshToken);
 
+/// <summary>
+/// The public-facing shape of a login response — everything <see cref="LoginResult"/> carries
+/// except <see cref="LoginResult.RefreshToken"/>, which never leaves the Controller as JSON.
+/// Named (not an anonymous object) so Swashbuckle can generate an accurate OpenAPI response
+/// schema for <c>POST /api/v1/auth/login</c> — frontend_architecture.md's typed-client story
+/// depends on every endpoint's response actually being documented, not just its request body.
+/// </summary>
+public sealed record LoginResponse(
+    bool MfaRequired, string? PartialToken, string? AccessToken, DateTimeOffset? AccessTokenExpiresAt);
+
+/// <summary>The shape <c>mfa/verify</c>'s success branch and <c>refresh</c> both return — a fresh access token, nothing else.</summary>
+public sealed record TokenResponse(string AccessToken, DateTimeOffset AccessTokenExpiresAt);
+
 public sealed record MfaVerifyRequest(string PartialToken, string? TotpCode, string? RecoveryCode);
 
 public sealed record MfaEnrollResponse(string TotpSecretBase32, string OtpAuthUri);

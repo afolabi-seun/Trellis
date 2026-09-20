@@ -20,6 +20,7 @@ public sealed class AuthController(IAuthService authService, ISessionService ses
 
     [HttpPost("login")]
     [EnableRateLimiting(AuthModuleExtensions.AuthSensitiveRateLimitPolicy)]
+    [ProducesResponseType(typeof(ApiResponse<LoginResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Login([FromBody] LoginRequest request)
     {
         // The one hand-written exception to the thin-controller one-liner pattern in this
@@ -37,30 +38,23 @@ public sealed class AuthController(IAuthService authService, ISessionService ses
             SetRefreshCookie(refreshToken);
         }
 
-        var publicResult = ServiceResult<object>.Success(new
-        {
-            mfa_required = result.Data.MfaRequired,
-            partial_token = result.Data.PartialToken,
-            access_token = result.Data.AccessToken,
-            access_token_expires_at = result.Data.AccessTokenExpiresAt,
-        });
+        var publicResult = ServiceResult<LoginResponse>.Success(new LoginResponse(
+            result.Data.MfaRequired, result.Data.PartialToken, result.Data.AccessToken, result.Data.AccessTokenExpiresAt));
 
         return publicResult.ToActionResult(HttpContext);
     }
 
     [HttpPost("mfa/verify")]
     [EnableRateLimiting(AuthModuleExtensions.AuthSensitiveRateLimitPolicy)]
+    [ProducesResponseType(typeof(ApiResponse<TokenResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> VerifyMfa([FromBody] MfaVerifyRequest request)
     {
         var result = await authService.VerifyMfaAsync(request);
         if (result.Outcome == ServiceResultOutcome.Success && result.Data!.RefreshToken is { } refreshToken)
         {
             SetRefreshCookie(refreshToken);
-            var publicResult = ServiceResult<object>.Success(new
-            {
-                access_token = result.Data.AccessToken,
-                access_token_expires_at = result.Data.AccessTokenExpiresAt,
-            });
+            var publicResult = ServiceResult<TokenResponse>.Success(
+                new TokenResponse(result.Data.AccessToken!, result.Data.AccessTokenExpiresAt!.Value));
             return publicResult.ToActionResult(HttpContext);
         }
 
@@ -68,6 +62,7 @@ public sealed class AuthController(IAuthService authService, ISessionService ses
     }
 
     [HttpPost("refresh")]
+    [ProducesResponseType(typeof(ApiResponse<TokenResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Refresh()
     {
         if (Request.Cookies[RefreshCookieName] is not { } refreshToken)
@@ -81,32 +76,33 @@ public sealed class AuthController(IAuthService authService, ISessionService ses
             return result.ToActionResult(HttpContext);
         }
 
-        var publicResult = ServiceResult<object>.Success(new
-        {
-            access_token = result.Data!.AccessToken,
-            access_token_expires_at = result.Data.AccessTokenExpiresAt,
-        });
+        var publicResult = ServiceResult<TokenResponse>.Success(
+            new TokenResponse(result.Data!.AccessToken!, result.Data.AccessTokenExpiresAt!.Value));
 
         return publicResult.ToActionResult(HttpContext);
     }
 
     [HttpPost("mfa/enroll")]
     [Authorize]
+    [ProducesResponseType(typeof(ApiResponse<MfaEnrollResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> EnrollMfa() =>
         (await authService.EnrollMfaAsync(CurrentUserId())).ToActionResult(HttpContext);
 
     [HttpPost("mfa/enroll/confirm")]
     [Authorize]
+    [ProducesResponseType(typeof(ApiResponse<MfaEnrollConfirmResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ConfirmMfaEnrollment([FromBody] MfaEnrollConfirmRequest request) =>
         (await authService.ConfirmMfaEnrollmentAsync(CurrentUserId(), request.TotpCode)).ToActionResult(HttpContext);
 
     [HttpPost("mfa/recovery-codes/regenerate")]
     [Authorize]
+    [ProducesResponseType(typeof(ApiResponse<RecoveryCodesRegenerateResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> RegenerateRecoveryCodes([FromBody] RecoveryCodesRegenerateRequest request) =>
         (await authService.RegenerateRecoveryCodesAsync(CurrentUserId(), request.CurrentPassword)).ToActionResult(HttpContext);
 
     [HttpPost("password/forgot")]
     [EnableRateLimiting(AuthModuleExtensions.AuthSensitiveRateLimitPolicy)]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ForgotPassword([FromBody] PasswordForgotRequest request)
     {
         // Existence-non-disclosure (security_guide.md): always 200, identical body, regardless
@@ -117,11 +113,13 @@ public sealed class AuthController(IAuthService authService, ISessionService ses
     }
 
     [HttpPost("password/reset")]
+    [ProducesResponseType(typeof(ApiResponse<object>), StatusCodes.Status200OK)]
     public async Task<IActionResult> ResetPassword([FromBody] PasswordResetRequest request) =>
         (await authService.ResetPasswordAsync(request.Token, request.NewPassword)).ToActionResult(HttpContext);
 
     [HttpPost("logout")]
     [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> Logout()
     {
         await sessionService.RevokeAsync(CurrentSessionId());
@@ -131,6 +129,7 @@ public sealed class AuthController(IAuthService authService, ISessionService ses
 
     [HttpPost("logout/all-other-sessions")]
     [Authorize]
+    [ProducesResponseType(StatusCodes.Status204NoContent)]
     public async Task<IActionResult> LogoutAllOtherSessions()
     {
         await sessionService.RevokeAllExceptAsync(CurrentUserId(), CurrentSessionId());

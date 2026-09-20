@@ -1,5 +1,6 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Trellis.Api.Core.Dtos;
 using Trellis.Api.Core.Results;
 using Trellis.Api.Modules.Tenant.Application.Dtos;
 using Trellis.Api.Modules.Tenant.Application.Interfaces;
@@ -18,18 +19,22 @@ namespace Trellis.Api.Modules.Tenant.Presentation.Controllers;
 public sealed class TenantsController(ITenantService tenantService) : ControllerBase
 {
     [HttpGet]
+    [ProducesResponseType(typeof(ApiResponse<PagedResponse<TenantResponse>>), StatusCodes.Status200OK)]
     public async Task<IActionResult> List([FromQuery] string? cursor, [FromQuery] int limit = 25) =>
         (await tenantService.ListAsync(cursor, Math.Clamp(limit, 1, 100))).ToActionResult(HttpContext);
 
     [HttpPost]
+    [ProducesResponseType(typeof(ApiResponse<TenantResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Provision([FromBody] TenantProvisionRequest request) =>
         (await tenantService.ProvisionTenantAsync(request)).ToActionResult(HttpContext);
 
     [HttpGet("{id:guid}")]
+    [ProducesResponseType(typeof(ApiResponse<TenantResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetById(Guid id) =>
         (await tenantService.GetByIdAsync(id)).ToActionResult(HttpContext);
 
     [HttpPost("{id:guid}/offboard")]
+    [ProducesResponseType(typeof(ApiResponse<TenantResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Offboard(Guid id) =>
         (await tenantService.OffboardTenantAsync(id)).ToActionResult(HttpContext);
 }

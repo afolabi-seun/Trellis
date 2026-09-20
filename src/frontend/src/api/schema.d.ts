@@ -3,10 +3,717 @@
  * Do not make direct changes to the file.
  */
 
-export type paths = Record<string, never>;
+export interface paths {
+    "/api/v1/auth/login": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["LoginRequest"];
+                    "text/json": components["schemas"]["LoginRequest"];
+                    "application/*+json": components["schemas"]["LoginRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["LoginResponseApiResponse"];
+                        "application/json": components["schemas"]["LoginResponseApiResponse"];
+                        "text/json": components["schemas"]["LoginResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/mfa/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["MfaVerifyRequest"];
+                    "text/json": components["schemas"]["MfaVerifyRequest"];
+                    "application/*+json": components["schemas"]["MfaVerifyRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TokenResponseApiResponse"];
+                        "application/json": components["schemas"]["TokenResponseApiResponse"];
+                        "text/json": components["schemas"]["TokenResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/refresh": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TokenResponseApiResponse"];
+                        "application/json": components["schemas"]["TokenResponseApiResponse"];
+                        "text/json": components["schemas"]["TokenResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/mfa/enroll": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MfaEnrollResponseApiResponse"];
+                        "application/json": components["schemas"]["MfaEnrollResponseApiResponse"];
+                        "text/json": components["schemas"]["MfaEnrollResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/mfa/enroll/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["MfaEnrollConfirmRequest"];
+                    "text/json": components["schemas"]["MfaEnrollConfirmRequest"];
+                    "application/*+json": components["schemas"]["MfaEnrollConfirmRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["MfaEnrollConfirmResponseApiResponse"];
+                        "application/json": components["schemas"]["MfaEnrollConfirmResponseApiResponse"];
+                        "text/json": components["schemas"]["MfaEnrollConfirmResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/mfa/recovery-codes/regenerate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RecoveryCodesRegenerateRequest"];
+                    "text/json": components["schemas"]["RecoveryCodesRegenerateRequest"];
+                    "application/*+json": components["schemas"]["RecoveryCodesRegenerateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RecoveryCodesRegenerateResponseApiResponse"];
+                        "application/json": components["schemas"]["RecoveryCodesRegenerateResponseApiResponse"];
+                        "text/json": components["schemas"]["RecoveryCodesRegenerateResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/password/forgot": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["PasswordForgotRequest"];
+                    "text/json": components["schemas"]["PasswordForgotRequest"];
+                    "application/*+json": components["schemas"]["PasswordForgotRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/password/reset": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["PasswordResetRequest"];
+                    "text/json": components["schemas"]["PasswordResetRequest"];
+                    "application/*+json": components["schemas"]["PasswordResetRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ObjectApiResponse"];
+                        "application/json": components["schemas"]["ObjectApiResponse"];
+                        "text/json": components["schemas"]["ObjectApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/logout": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/logout/all-other-sessions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description No Content */
+                204: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/auth/.well-known/jwks.json": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/platform/tenants": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TenantResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["TenantResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["TenantResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["TenantProvisionRequest"];
+                    "text/json": components["schemas"]["TenantProvisionRequest"];
+                    "application/*+json": components["schemas"]["TenantProvisionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TenantResponseApiResponse"];
+                        "application/json": components["schemas"]["TenantResponseApiResponse"];
+                        "text/json": components["schemas"]["TenantResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/platform/tenants/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TenantResponseApiResponse"];
+                        "application/json": components["schemas"]["TenantResponseApiResponse"];
+                        "text/json": components["schemas"]["TenantResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/platform/tenants/{id}/offboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TenantResponseApiResponse"];
+                        "application/json": components["schemas"]["TenantResponseApiResponse"];
+                        "text/json": components["schemas"]["TenantResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+}
 export type webhooks = Record<string, never>;
 export interface components {
-    schemas: never;
+    schemas: {
+        ApiError: {
+            code: string | null;
+            message: string | null;
+            details?: components["schemas"]["ApiErrorDetail"][] | null;
+            requestId?: string | null;
+        };
+        ApiErrorDetail: {
+            field?: string | null;
+            issue?: string | null;
+        };
+        ApiMeta: {
+            requestId: string | null;
+            /** Format: date-time */
+            timestamp: string;
+        };
+        LoginRequest: {
+            username?: string | null;
+            password?: string | null;
+        };
+        LoginResponse: {
+            mfaRequired?: boolean;
+            partialToken?: string | null;
+            accessToken?: string | null;
+            /** Format: date-time */
+            accessTokenExpiresAt?: string | null;
+        };
+        LoginResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["LoginResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        MfaEnrollConfirmRequest: {
+            totpCode?: string | null;
+        };
+        MfaEnrollConfirmResponse: {
+            recoveryCodes?: string[] | null;
+        };
+        MfaEnrollConfirmResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["MfaEnrollConfirmResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        MfaEnrollResponse: {
+            totpSecretBase32?: string | null;
+            otpAuthUri?: string | null;
+        };
+        MfaEnrollResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["MfaEnrollResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        MfaVerifyRequest: {
+            partialToken?: string | null;
+            totpCode?: string | null;
+            recoveryCode?: string | null;
+        };
+        ObjectApiResponse: {
+            readonly status?: string | null;
+            readonly data?: unknown;
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        PasswordForgotRequest: {
+            username?: string | null;
+        };
+        PasswordResetRequest: {
+            token?: string | null;
+            newPassword?: string | null;
+        };
+        RecoveryCodesRegenerateRequest: {
+            currentPassword?: string | null;
+        };
+        RecoveryCodesRegenerateResponse: {
+            codes?: string[] | null;
+        };
+        RecoveryCodesRegenerateResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["RecoveryCodesRegenerateResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        TenantProvisionRequest: {
+            tenantName?: string | null;
+            countryCode?: string | null;
+            adminEmail?: string | null;
+        };
+        TenantResponse: {
+            /** Format: uuid */
+            tenantId?: string;
+            tenantName?: string | null;
+            countryCode?: string | null;
+            status?: string | null;
+            subscriptionTier?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        TenantResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["TenantResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        TenantResponsePagedResponse: {
+            items?: components["schemas"]["TenantResponse"][] | null;
+            nextCursor?: string | null;
+            hasMore?: boolean;
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        TenantResponsePagedResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["TenantResponsePagedResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        TokenResponse: {
+            accessToken?: string | null;
+            /** Format: date-time */
+            accessTokenExpiresAt?: string;
+        };
+        TokenResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["TokenResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+    };
     responses: never;
     parameters: never;
     requestBodies: never;

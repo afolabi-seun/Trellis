@@ -11,7 +11,7 @@
     "format": "prettier --check .",
     "test": "vitest run",
     "test:e2e": "playwright test",
-    "generate:api": "openapi-typescript openapi.starter.json -o src/api/schema.d.ts"
+    "generate:api": "openapi-typescript http://localhost:5080/swagger/all/swagger.json -o src/api/schema.d.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.0",
