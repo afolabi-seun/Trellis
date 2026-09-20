@@ -12,6 +12,9 @@ public sealed class SessionRepository(AuthDbContext dbContext) : ISessionReposit
     public Task<Session?> GetByIdAsync(Guid sessionId) =>
         dbContext.Sessions.FirstOrDefaultAsync(s => s.SessionId == sessionId);
 
+    public Task<Session?> GetByRefreshTokenHashAsync(string refreshTokenHash) =>
+        dbContext.Sessions.FirstOrDefaultAsync(s => s.RefreshTokenHash == refreshTokenHash);
+
     public Task<IReadOnlyList<Session>> GetActiveForUserAsync(Guid userId) =>
         QueryActive(dbContext.Sessions.Where(s => s.UserId == userId));
 

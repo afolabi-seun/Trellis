@@ -1,3 +1,4 @@
+using Trellis.Api.Core.Middleware;
 using Trellis.Api.Core.Resilience;
 using Trellis.Api.Modules.Notification.Application.Interfaces;
 using Trellis.Api.Modules.Notification.Domain.Entities;
@@ -38,6 +39,16 @@ public sealed class NotificationDispatchBackgroundService(
 
     private async Task DispatchOnceAsync(CancellationToken cancellationToken)
     {
+        // notification_delivery carries the standard tenant_isolation RLS policy
+        // (is_system OR tenant match) — this poll deliberately reads across every tenant's
+        // queued rows in one batch, so it needs the same "trusted background job" bypass
+        // SystemContext's own doc comment already names as a legitimate use, not a per-tenant
+        // context this service has no way to have. Without this, GetQueuedAsync always returns
+        // zero rows (RLS filters everything out silently, no exception) and nothing is ever
+        // dispatched — found via a live smoke test, not a unit test, since Testcontainers'
+        // isolation suite never exercised this background path end-to-end.
+        using var systemScope = SystemContext.Enter();
+
         using var scope = scopeFactory.CreateScope();
         var deliveryRepository = scope.ServiceProvider.GetRequiredService<INotificationDeliveryRepository>();
         var templateRepository = scope.ServiceProvider.GetRequiredService<INotificationTemplateRepository>();

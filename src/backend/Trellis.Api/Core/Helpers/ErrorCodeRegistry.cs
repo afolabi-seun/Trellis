@@ -61,5 +61,8 @@ public static class ErrorCodeRegistry
 
         /// <summary>TRL-E-AUT-1005 — an invalid, expired, or already-used password reset token. Generic on purpose — never distinguishes which.</summary>
         public const string PasswordResetTokenInvalid = "TRL-E-AUT-1005";
+
+        /// <summary>TRL-E-AUT-1006 — the refresh_token cookie is missing, doesn't match any session, or that session is revoked/expired.</summary>
+        public const string RefreshTokenInvalid = "TRL-E-AUT-1006";
     }
 }

@@ -20,6 +20,9 @@ public interface ISessionRepository
 
     Task<Session?> GetByIdAsync(Guid sessionId);
 
+    /// <summary>Looked up by hash — the raw refresh token itself is never stored (security_guide.md).</summary>
+    Task<Session?> GetByRefreshTokenHashAsync(string refreshTokenHash);
+
     Task<IReadOnlyList<Session>> GetActiveForUserAsync(Guid userId);
 
     Task<IReadOnlyList<Session>> GetActiveForTenantAsync(Guid tenantId);

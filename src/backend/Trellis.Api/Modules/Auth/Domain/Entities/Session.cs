@@ -12,12 +12,23 @@ public sealed class Session
     public DateTimeOffset ExpiresAt { get; private set; }
     public DateTimeOffset? RevokedAt { get; private set; }
 
+    /// <summary>
+    /// SHA-256 hash of the opaque refresh token issued alongside this session — the raw token
+    /// is never stored, same principle as <c>password_reset_token</c> (security_guide.md).
+    /// <c>POST /api/v1/auth/refresh</c> hashes the presented cookie value and looks a session up
+    /// by this column; there is no rotation, so it never changes for the life of the session —
+    /// a refresh just re-issues an access token against the same row, bounded by
+    /// <see cref="ExpiresAt"/>.
+    /// </summary>
+    public string RefreshTokenHash { get; private set; } = null!;
+
     private Session() { }
 
-    public static Session Create(Guid userId, TimeSpan expiry) => new()
+    public static Session Create(Guid userId, string refreshTokenHash, TimeSpan expiry) => new()
     {
         SessionId = Guid.NewGuid(),
         UserId = userId,
+        RefreshTokenHash = refreshTokenHash,
         IssuedAt = DateTimeOffset.UtcNow,
         ExpiresAt = DateTimeOffset.UtcNow.Add(expiry),
     };

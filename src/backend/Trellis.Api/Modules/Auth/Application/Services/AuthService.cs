@@ -49,15 +49,16 @@ public sealed class AuthService(
 
     public async Task<ServiceResult<LoginResult>> LoginAsync(string username, string password)
     {
-        // Resolving a username to its owning tenant is the one thing app_user's RLS can't gate
-        // on tenant_id, since the tenant isn't known until this lookup returns it — see
-        // SystemContext.Enter()'s doc comment and multi_tenant_design.md.
-        AppUser? user;
-        using (SystemContext.Enter())
-        {
-            user = await userRepository.GetByUsernameAsync(username);
-        }
+        // The whole flow — not just the username lookup — runs before any tenant context can
+        // exist: the lockout counter update, the AUTH_SUCCESS/AUTH_LOCKOUT audit write, and
+        // IssueSessionAsync's own writes all hit tables with the standard tenant_isolation RLS
+        // policy, and none of them have a tenant claim to set TenantContext from yet (that's the
+        // whole point of login). See SystemContext.Enter()'s doc comment and
+        // multi_tenant_design.md's "Identity Resolution Before Tenant Is Known" — scoped to the
+        // method, not just the lookup, since every write below has the identical problem.
+        using var systemScope = SystemContext.Enter();
 
+        var user = await userRepository.GetByUsernameAsync(username);
         if (user is null || user.PasswordHash is null)
         {
             // Same generic failure whether the account exists or not — no separate
@@ -107,13 +108,10 @@ public sealed class AuthService(
         }
 
         // The partial token carries no tenant claim (issued before MFA confirms identity), so
-        // this lookup runs before tenant context can exist — same reasoning as LoginAsync above.
-        AppUser? user;
-        using (SystemContext.Enter())
-        {
-            user = await userRepository.GetByIdAsync(userId.Value);
-        }
+        // the whole method runs before tenant context can exist — same reasoning as LoginAsync.
+        using var systemScope = SystemContext.Enter();
 
+        var user = await userRepository.GetByIdAsync(userId.Value);
         if (user is null)
         {
             return ServiceResult<LoginResult>.Forbidden(ErrorCodeRegistry.Auth.MfaVerificationFailed);
@@ -210,14 +208,12 @@ public sealed class AuthService(
 
     public async Task RequestPasswordResetAsync(string username, string? requestedIp)
     {
-        // Same reasoning as LoginAsync: resolving username → tenant is the lookup that
-        // establishes tenant context, so it can't be gated by tenant context itself.
-        AppUser? user;
-        using (SystemContext.Enter())
-        {
-            user = await userRepository.GetByUsernameAsync(username);
-        }
+        // Same reasoning as LoginAsync: the whole flow, including IssuePasswordSetLinkAsync's
+        // write to password_reset_token and its notification_delivery insert, runs before any
+        // tenant context can exist.
+        using var systemScope = SystemContext.Enter();
 
+        var user = await userRepository.GetByUsernameAsync(username);
         if (user is null)
         {
             // Existence-non-disclosure (security_guide.md): identical outcome, no exception,
@@ -231,6 +227,12 @@ public sealed class AuthService(
 
     public async Task<ServiceResult<object>> ResetPasswordAsync(string token, string newPassword)
     {
+        // Same reasoning as LoginAsync: presenting a reset token is itself anonymous, so there is
+        // no tenant context yet for the app_user lookup/update or the PASSWORD_RESET audit write
+        // below. (This one previously had no SystemContext.Enter() at all — every real reset
+        // would have failed RLS's app_user SELECT and returned a false PasswordResetTokenInvalid.)
+        using var systemScope = SystemContext.Enter();
+
         var tokenHash = HashToken(token);
         var resetToken = await resetTokenRepository.GetByHashAsync(tokenHash);
         if (resetToken is null || !resetToken.IsUsable())
@@ -271,17 +273,53 @@ public sealed class AuthService(
 
     private async Task<ServiceResult<LoginResult>> IssueSessionAsync(AppUser user)
     {
-        var session = Session.Create(user.UserId, TimeSpan.FromHours(_options.RefreshTokenExpiryHours));
+        var refreshToken = GenerateOpaqueToken();
+        var session = Session.Create(user.UserId, HashToken(refreshToken), TimeSpan.FromHours(_options.RefreshTokenExpiryHours));
         await sessionRepository.AddAsync(session);
         await sessionRepository.SaveChangesAsync();
 
         var accessToken = jwtTokenService.IssueAccessToken(user, session.SessionId);
-        var refreshToken = GenerateOpaqueToken();
 
         await auditService.RecordAsync(user.TenantId, user.UserId, AuditActorType.HumanUser, AuditTypes.Auth.AuthSuccess);
 
         return ServiceResult<LoginResult>.Success(new LoginResult(
             false, null, accessToken, DateTimeOffset.UtcNow.AddMinutes(_options.AccessTokenExpiryMinutes), refreshToken));
+    }
+
+    /// <summary>
+    /// <c>POST /api/v1/auth/refresh</c> (security_guide.md's Authentication Architecture — the
+    /// refresh half of the flow that turned out not to be fully specified: this is where that
+    /// gap was closed). No rotation: the presented cookie value is hashed and matched against
+    /// the session it was issued with, and — if that session is still active — a fresh access
+    /// token is issued against the same session_id. The session's own expiry
+    /// (<see cref="AuthOptions.RefreshTokenExpiryHours"/>) is the outer bound; nothing here
+    /// extends it.
+    /// </summary>
+    public async Task<ServiceResult<LoginResult>> RefreshAsync(string presentedRefreshToken)
+    {
+        var session = await sessionRepository.GetByRefreshTokenHashAsync(HashToken(presentedRefreshToken));
+        if (session is null || !session.IsActive())
+        {
+            return ServiceResult<LoginResult>.Forbidden(ErrorCodeRegistry.Auth.RefreshTokenInvalid);
+        }
+
+        // The presented cookie carries no tenant claim — same reasoning as LoginAsync/
+        // VerifyMfaAsync/RequestPasswordResetAsync above.
+        AppUser? user;
+        using (SystemContext.Enter())
+        {
+            user = await userRepository.GetByIdAsync(session.UserId);
+        }
+
+        if (user is null)
+        {
+            return ServiceResult<LoginResult>.Forbidden(ErrorCodeRegistry.Auth.RefreshTokenInvalid);
+        }
+
+        var accessToken = jwtTokenService.IssueAccessToken(user, session.SessionId);
+
+        return ServiceResult<LoginResult>.Success(new LoginResult(
+            false, null, accessToken, DateTimeOffset.UtcNow.AddMinutes(_options.AccessTokenExpiryMinutes), null));
     }
 
     private async Task IssuePasswordSetLinkAsync(AppUser user, string? requestedIp)

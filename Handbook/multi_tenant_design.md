@@ -98,19 +98,30 @@ That distinction is the whole point of the next section.
 ### Identity Resolution Before Tenant Is Known
 
 `app_user` gets the standard `tenant_isolation` policy from data_model.md, same as any other
-tenant-owned table — but three of Auth's own code paths must read it *before* any tenant context
-exists, because they're the paths that establish it:
+tenant-owned table — but four of Auth's own code paths run *entirely* before any tenant context
+exists, because they're the paths that establish it: `LoginAsync`, `VerifyMfaAsync`,
+`RequestPasswordResetAsync`, and `ResetPasswordAsync`. Each is anonymous by nature (a username, a
+partial token, or a bearer-authenticated reset link — never a JWT `tenant_id` claim), and each
+does more than one lookup before returning: `LoginAsync` alone reads the user by username, then
+(on the matching path) writes the lockout counter, the `AUTH_SUCCESS`/`AUTH_LOCKOUT` audit
+record, and — via `IssueSessionAsync` — the new session row and another audit write.
 
-- `LoginAsync` resolves `username` → the user's `tenant_id`, which the caller doesn't supply.
-- `VerifyMfaAsync` resolves a partial token's subject claim to a user; the partial token is issued
-  before MFA confirms identity and carries no `tenant_id` claim.
-- `RequestPasswordResetAsync` resolves `username` → user, same as login, before a token exists.
+**The whole method runs under `SystemContext.Enter()` (`Core/Middleware/TenantContext.cs`), not
+just the initial lookup.** The first version of this wired only the lookup, on the reasoning that
+resolving identity was the one step that needed the bypass — wrong: every write in the rest of
+each method (the lockout update, the audit record, `notification_delivery`'s insert for a
+password-reset or MFA-recovery notification) hits a table with the same standard
+`tenant_isolation` policy, and by the time those writes ran, `TenantContext.Current` was still
+`null` and the earlier `Enter()` scope had already been disposed. Found the hard way: every real
+login threw `42501: new row violates row-level security policy for table "audit_record"` the
+first time this ran against actual Postgres instead of a mocked repository — `ResetPasswordAsync`
+was worse, since it had no `Enter()` at all and its `app_user` lookup simply returned `null`
+under RLS, which looked like a correctly-generic "invalid token" response and would have shipped
+silently broken. `Enter()` scopes to the whole flow now (`using var systemScope = SystemContext.Enter();`
+at the top of each method), restored automatically when the method returns.
 
-Each of these wraps its single lookup in `SystemContext.Enter()` (`Core/Middleware/TenantContext.cs`)
-— a scoped, server-only bypass that sets `app.is_system = true` for exactly that query and restores
-the prior value on exit, never reachable from anything the caller controls. This is a third,
-narrower case than the Super Admin/background-job uses `SystemContext` was built for above, but the
-same flag: crossing tenants here is inherent to what a login/MFA/reset-request lookup *is*, not a
+This is a third, narrower case than the Super Admin/background-job uses `SystemContext` was built
+for above, but the same flag: crossing tenants here is inherent to what these flows *are*, not a
 role-driven exception. `tenant_id` is nullable on `app_user` (a Super Admin's own row has none);
 SQL's three-valued logic already makes those platform-level rows invisible to every tenant filter
 and visible only under `app.is_system`, the same behavior `audit_record`'s nullable `tenant_id`

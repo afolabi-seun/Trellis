@@ -17,7 +17,9 @@ public sealed class SessionConfiguration : IEntityTypeConfiguration<Session>
         builder.Property(s => s.IssuedAt).HasColumnName("issued_at");
         builder.Property(s => s.ExpiresAt).HasColumnName("expires_at");
         builder.Property(s => s.RevokedAt).HasColumnName("revoked_at");
+        builder.Property(s => s.RefreshTokenHash).HasColumnName("refresh_token_hash").HasMaxLength(64).IsRequired();
 
         builder.HasIndex(s => s.UserId);
+        builder.HasIndex(s => s.RefreshTokenHash).IsUnique();
     }
 }

@@ -175,6 +175,12 @@ namespace Trellis.Api.Modules.Auth.Infrastructure.Data.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("issued_at");
 
+                    b.Property<string>("RefreshTokenHash")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("refresh_token_hash");
+
                     b.Property<DateTimeOffset?>("RevokedAt")
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("revoked_at");
@@ -190,6 +196,9 @@ namespace Trellis.Api.Modules.Auth.Infrastructure.Data.Migrations
                         .HasColumnName("xmin");
 
                     b.HasKey("SessionId");
+
+                    b.HasIndex("RefreshTokenHash")
+                        .IsUnique();
 
                     b.HasIndex("UserId");
 

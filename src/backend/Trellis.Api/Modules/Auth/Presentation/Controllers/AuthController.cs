@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.RateLimiting;
 using Trellis.Api.Core.Dtos;
+using Trellis.Api.Core.Helpers;
 using Trellis.Api.Core.Results;
 using Trellis.Api.Modules.Auth.Application.Dtos;
 using Trellis.Api.Modules.Auth.Application.Interfaces;
@@ -64,6 +65,29 @@ public sealed class AuthController(IAuthService authService, ISessionService ses
         }
 
         return result.ToActionResult(HttpContext);
+    }
+
+    [HttpPost("refresh")]
+    public async Task<IActionResult> Refresh()
+    {
+        if (Request.Cookies[RefreshCookieName] is not { } refreshToken)
+        {
+            return ServiceResult<object>.Forbidden(ErrorCodeRegistry.Auth.RefreshTokenInvalid).ToActionResult(HttpContext);
+        }
+
+        var result = await authService.RefreshAsync(refreshToken);
+        if (result.Outcome != ServiceResultOutcome.Success)
+        {
+            return result.ToActionResult(HttpContext);
+        }
+
+        var publicResult = ServiceResult<object>.Success(new
+        {
+            access_token = result.Data!.AccessToken,
+            access_token_expires_at = result.Data.AccessTokenExpiresAt,
+        });
+
+        return publicResult.ToActionResult(HttpContext);
     }
 
     [HttpPost("mfa/enroll")]

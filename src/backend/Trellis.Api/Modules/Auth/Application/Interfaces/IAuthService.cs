@@ -22,6 +22,9 @@ public interface IAuthService
     /// <summary>The `mfa/verify` endpoint's two mutually exclusive branches — exactly one of <paramref name="request"/>'s TOTP/recovery-code fields is set.</summary>
     Task<ServiceResult<LoginResult>> VerifyMfaAsync(MfaVerifyRequest request);
 
+    /// <summary>Re-issues an access token against the session the presented refresh token cookie belongs to. No rotation.</summary>
+    Task<ServiceResult<LoginResult>> RefreshAsync(string presentedRefreshToken);
+
     /// <summary>Starts MFA enrollment — generates and returns a TOTP secret; not yet active until confirmed.</summary>
     Task<ServiceResult<MfaEnrollResponse>> EnrollMfaAsync(Guid userId);
 
