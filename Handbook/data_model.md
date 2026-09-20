@@ -96,7 +96,7 @@ every successful password reset — see `security_guide.md`.
 | token_hash | VARCHAR(64) | NOT NULL | SHA-256 hex of the raw token — the raw token itself is never stored |
 | expires_at | TIMESTAMPTZ | NOT NULL | Issued-at + 30 minutes |
 | used_at | TIMESTAMPTZ | NULLABLE | Set once; a used token is dead even if not yet expired |
-| requested_ip | INET | NULLABLE | Audit trail only, never part of validation |
+| requested_ip | VARCHAR(45) | NULLABLE | Audit trail only, never part of validation. Plain text, not native `INET` as an earlier version of this table specified — Npgsql's EF Core provider won't map a C# `string` to `INET` without a value converter, and nothing here ever parses or compares it as an address, so the simpler type costs nothing (found at Phase 1 implementation). |
 
 See `security_guide.md` for the full reset flow this table supports.
 
@@ -273,9 +273,23 @@ ALTER TABLE trellis_property.property ENABLE ROW LEVEL SECURITY;
 CREATE POLICY tenant_isolation ON trellis_property.property
   USING (
     current_setting('app.is_system', true) = 'true'
-    OR tenant_id = current_setting('app.current_tenant_id', true)::uuid
+    OR tenant_id::text = current_setting('app.current_tenant_id', true)
   );
 ```
+
+**Corrected during Phase 1 implementation**: an earlier version of this policy cast the session
+variable to `::uuid` (`tenant_id = current_setting(...)::uuid`) rather than casting the column to
+text. That looked equivalent and even tested fine in isolation — but the *reason* it broke wasn't
+obvious until it was hit for real: `set_config('app.current_tenant_id', NULL, false)` does **not**
+unset the GUC to "never set" the way it reads. Postgres stores the NULL as an empty string, and
+`current_setting(..., true)` still reports it as set (to `''`), not `NULL` — and `RESET` has the
+same problem once a custom GUC has been set at all in that session. So any request with no tenant
+context (a background job, a Vendor-scoped or platform-scope request) hit `''::uuid`, which is a
+genuine SQL error ("invalid input syntax for type uuid"), not a filtered-out row — first
+surfaced by `NotificationDispatchBackgroundService`, which legitimately has no tenant context at
+all. Comparing as text instead means an empty string simply fails to equal any real `tenant_id`
+— fail-closed, correctly, with no cast to throw. `Core/Data/TenantScopeConnectionInterceptor.cs`
+sends an empty string (not attempting `DBNull`) for exactly this reason now.
 
 `app.is_system` is the Super Admin / background-job bypass, set only by trusted internal code
 paths — never by anything driven directly from a user-facing request.
@@ -288,15 +302,18 @@ at all:
 CREATE POLICY tenant_or_vendor_isolation ON trellis_workflow.workflow_instance AS w
   USING (
     current_setting('app.is_system', true) = 'true'
-    OR w.tenant_id = current_setting('app.current_tenant_id', true)::uuid
+    OR w.tenant_id::text = current_setting('app.current_tenant_id', true)
     OR EXISTS (
       SELECT 1 FROM trellis_vendor.vendor_assignment va
-      WHERE va.vendor_id = current_setting('app.current_vendor_id', true)::uuid
+      WHERE va.vendor_id::text = current_setting('app.current_vendor_id', true)
         AND va.tenant_id = w.tenant_id
         AND va.work_item_id = w.workflow_instance_id
     )
   );
 ```
+
+(Not yet built — no Vendor module exists yet — but corrected here now so whoever builds it
+doesn't rediscover the same bug independently.)
 
 **RLS is active even for the application's own database user — it is defence in depth.**
 Achieving that literally, though, needs one more piece this section didn't originally state:
@@ -323,7 +340,7 @@ The application layer also enforces the equivalent filter at the EF Core level (
 `tenant_id` being nullable there (platform-level Super Admin actions have no tenant) — worth
 stating explicitly rather than leaving it to be rediscovered, since a nullable column in a
 tenant-scoped policy looks like it should need a special case. It doesn't: SQL's three-valued
-logic means `tenant_id = current_setting('app.current_tenant_id', true)::uuid` evaluates to
+logic means `tenant_id::text = current_setting('app.current_tenant_id', true)` evaluates to
 `NULL`, not `TRUE`, when `tenant_id IS NULL` — a `NULL` row is invisible to every ordinary
 tenant request and visible only when `app.is_system = true`, exactly the behaviour a
 platform-level audit row needs, with no policy variant required.

@@ -41,4 +41,25 @@ public static class ErrorCodeRegistry
         /// <summary>TRL-E-TEN-2001 — an offboard/status-transition request the tenant's current status doesn't allow.</summary>
         public const string InvalidStatusTransition = "TRL-E-TEN-2001";
     }
+
+    public static class Auth
+    {
+        /// <summary>TRL-E-AUT-1000 — wrong username/password, or the account doesn't exist. Same code either way (no existence disclosure).</summary>
+        public const string InvalidCredentials = "TRL-E-AUT-1000";
+
+        /// <summary>TRL-E-AUT-1001 — account locked out after too many failed attempts (security_guide.md's lockout policy).</summary>
+        public const string AccountLockedOut = "TRL-E-AUT-1001";
+
+        /// <summary>TRL-E-AUT-1002 — an invalid, expired, or already-used partial token, TOTP code, or recovery code.</summary>
+        public const string MfaVerificationFailed = "TRL-E-AUT-1002";
+
+        /// <summary>TRL-E-AUT-1003 — the TOTP code presented to confirm enrollment didn't validate against the newly generated secret.</summary>
+        public const string MfaEnrollmentConfirmationFailed = "TRL-E-AUT-1003";
+
+        /// <summary>TRL-E-AUT-1004 — recovery-code regeneration requires re-authentication; the presented password didn't match.</summary>
+        public const string ReauthenticationFailed = "TRL-E-AUT-1004";
+
+        /// <summary>TRL-E-AUT-1005 — an invalid, expired, or already-used password reset token. Generic on purpose — never distinguishes which.</summary>
+        public const string PasswordResetTokenInvalid = "TRL-E-AUT-1005";
+    }
 }

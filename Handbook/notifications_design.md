@@ -144,10 +144,14 @@ since it deliberately holds rows that *aren't* tenant data:
 CREATE POLICY tenant_or_platform_default ON trellis_notification.notification_template
   USING (
     current_setting('app.is_system', true) = 'true'
-    OR tenant_id = current_setting('app.current_tenant_id', true)::uuid
+    OR tenant_id::text = current_setting('app.current_tenant_id', true)
     OR tenant_id IS NULL   -- every tenant can read the platform defaults it falls back to
   );
 ```
+
+Text comparison, not `::uuid` — see `data_model.md`'s Row-Level Security section for why casting
+the session variable to `::uuid` breaks for any request with no tenant context at all (an empty
+`app.current_tenant_id`, not a `NULL` one, is what a no-context request actually produces).
 
 This is a new RLS shape worth naming explicitly rather than reusing `tenant_isolation` or
 `tenant_or_vendor_isolation` unchanged — it's "a tenant's own rows, plus the shared defaults,"

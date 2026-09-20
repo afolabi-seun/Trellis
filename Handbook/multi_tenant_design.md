@@ -95,6 +95,36 @@ Department Staff user could reach. What Trellis does **not** do is reuse this sa
 null-bypass shape for Vendor access, even though a Vendor also needs to "see across tenants."
 That distinction is the whole point of the next section.
 
+### Identity Resolution Before Tenant Is Known
+
+`app_user` gets the standard `tenant_isolation` policy from data_model.md, same as any other
+tenant-owned table — but three of Auth's own code paths must read it *before* any tenant context
+exists, because they're the paths that establish it:
+
+- `LoginAsync` resolves `username` → the user's `tenant_id`, which the caller doesn't supply.
+- `VerifyMfaAsync` resolves a partial token's subject claim to a user; the partial token is issued
+  before MFA confirms identity and carries no `tenant_id` claim.
+- `RequestPasswordResetAsync` resolves `username` → user, same as login, before a token exists.
+
+Each of these wraps its single lookup in `SystemContext.Enter()` (`Core/Middleware/TenantContext.cs`)
+— a scoped, server-only bypass that sets `app.is_system = true` for exactly that query and restores
+the prior value on exit, never reachable from anything the caller controls. This is a third,
+narrower case than the Super Admin/background-job uses `SystemContext` was built for above, but the
+same flag: crossing tenants here is inherent to what a login/MFA/reset-request lookup *is*, not a
+role-driven exception. `tenant_id` is nullable on `app_user` (a Super Admin's own row has none);
+SQL's three-valued logic already makes those platform-level rows invisible to every tenant filter
+and visible only under `app.is_system`, the same behavior `audit_record`'s nullable `tenant_id`
+relies on.
+
+`session`, `password_reset_token`, and `mfa_recovery_code` carry no `tenant_id` column at all and
+get **no RLS policy** — deliberately, not an oversight. Every read against them is an exact,
+unforgeable-key lookup (a `session_id` pulled from an already-validated JWT, a SHA-256 hash of a
+token or recovery code), never a tenant-scoped listing a policy would need to filter. A join back
+to `app_user.tenant_id` to gate these would add a subquery (itself subject to `app_user`'s own RLS)
+to the hottest path in the app — every authenticated request checks its session — for no isolation
+gain over the exact-key lookup the application layer already enforces. Isolation for these three
+tables is the unforgeable-key layer, not RLS.
+
 ---
 
 ## Vendor Cross-Tenant Identity

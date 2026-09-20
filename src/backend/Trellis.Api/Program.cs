@@ -5,6 +5,7 @@ using Trellis.Api.Configuration;
 using Trellis.Api.Core;
 using Trellis.Api.Core.Logging;
 using Trellis.Api.Core.Middleware;
+using Trellis.Api.Modules.Auth;
 using Trellis.Api.Modules.Notification;
 using Trellis.Api.Modules.Tenant;
 
@@ -32,6 +33,7 @@ builder.Services.AddTrellisCore(builder.Configuration);
 // Tenant → Notification → Auth, per data_model.md's migration dependency order.
 builder.Services.AddTenantModule(builder.Configuration);
 builder.Services.AddNotificationModule(builder.Configuration);
+builder.Services.AddAuthModule(builder.Configuration);
 
 var app = builder.Build();
 
@@ -48,9 +50,15 @@ if (app.Environment.IsDevelopment())
 
 app.UseHttpsRedirection();
 
-// UseAuthentication()/UseAuthorization() are added in Phase 1, once the Auth module registers
-// a real JWT scheme (coding_standards.md: don't build ahead of need) — added here, immediately
-// before them, so the ordering is already correct when that happens.
+app.UseCors(CoreModuleExtensions.CorsPolicyName);
+
+app.UseRateLimiter();
+
+app.UseAuthentication();
+app.UseAuthorization();
+
+// multi_tenant_design.md: needs UseAuthentication() to have populated context.User first, so
+// the tenant_id/vendor_id/role claims TenantScopeMiddleware reads are actually there.
 app.UseMiddleware<TenantScopeMiddleware>();
 
 app.MapControllers();

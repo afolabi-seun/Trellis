@@ -43,9 +43,12 @@ public sealed class VendorContext(Guid vendorId)
 /// Bypass" — <c>app.is_system</c>). Deliberately a third, separate flag rather than inferred
 /// from "neither <see cref="TenantContext"/> nor <see cref="VendorContext"/> is set" — that
 /// inference would be fail-open: an unauthenticated or malformed request that reaches a scoped
-/// query with no context at all must see zero rows, not every tenant's. Only
-/// <see cref="TenantScopeMiddleware"/>, after confirming the <c>SUPER_ADMIN</c> role claim, or a
-/// trusted background job, may set this explicitly.
+/// query with no context at all must see zero rows, not every tenant's. Set explicitly by:
+/// <see cref="TenantScopeMiddleware"/> after confirming the <c>SUPER_ADMIN</c> role claim; a
+/// trusted background job; or the Auth module's own identity-resolution lookups (login-by-
+/// username, MFA-partial-token-by-id, forgot-password-by-username) that must run before any
+/// tenant can be known — see <see cref="Enter"/> and multi_tenant_design.md's "Identity
+/// Resolution Before Tenant Is Known" section.
 /// </summary>
 public sealed class SystemContext
 {
@@ -55,5 +58,22 @@ public sealed class SystemContext
     {
         get => IsSystemHolder.Value;
         set => IsSystemHolder.Value = value;
+    }
+
+    /// <summary>
+    /// Scopes the bypass to a single lookup and restores the prior value afterward, so a narrow,
+    /// server-only operation (never client-controlled) can't leak "is system" into unrelated code
+    /// that happens to run later on the same async flow.
+    /// </summary>
+    public static IDisposable Enter()
+    {
+        var previous = IsSystemHolder.Value;
+        IsSystemHolder.Value = true;
+        return new Scope(previous);
+    }
+
+    private sealed class Scope(bool previous) : IDisposable
+    {
+        public void Dispose() => IsSystemHolder.Value = previous;
     }
 }

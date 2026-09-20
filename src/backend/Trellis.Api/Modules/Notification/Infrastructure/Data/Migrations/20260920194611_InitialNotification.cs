@@ -94,7 +94,7 @@ public partial class InitialNotification : Migration
             CREATE POLICY tenant_isolation ON trellis_notification.notification_delivery
                 USING (
                     current_setting('app.is_system', true) = 'true'
-                    OR tenant_id = current_setting('app.current_tenant_id', true)::uuid
+                    OR tenant_id::text = current_setting('app.current_tenant_id', true)
                 );
 
             ALTER TABLE trellis_notification.tenant_notification_channel_pref ENABLE ROW LEVEL SECURITY;
@@ -102,7 +102,7 @@ public partial class InitialNotification : Migration
             CREATE POLICY tenant_isolation ON trellis_notification.tenant_notification_channel_pref
                 USING (
                     current_setting('app.is_system', true) = 'true'
-                    OR tenant_id = current_setting('app.current_tenant_id', true)::uuid
+                    OR tenant_id::text = current_setting('app.current_tenant_id', true)
                 );
 
             -- notifications_design.md's tenant_or_platform_default policy — every tenant can
@@ -112,7 +112,7 @@ public partial class InitialNotification : Migration
             CREATE POLICY tenant_or_platform_default ON trellis_notification.notification_template
                 USING (
                     current_setting('app.is_system', true) = 'true'
-                    OR tenant_id = current_setting('app.current_tenant_id', true)::uuid
+                    OR tenant_id::text = current_setting('app.current_tenant_id', true)
                     OR tenant_id IS NULL
                 );
 

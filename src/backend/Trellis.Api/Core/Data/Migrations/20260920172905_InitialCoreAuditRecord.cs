@@ -60,7 +60,7 @@ public partial class InitialCoreAuditRecord : Migration
             CREATE POLICY tenant_isolation ON trellis_audit.audit_record
                 USING (
                     current_setting('app.is_system', true) = 'true'
-                    OR tenant_id = current_setting('app.current_tenant_id', true)::uuid
+                    OR tenant_id::text = current_setting('app.current_tenant_id', true)
                 );
 
             -- Append-only: a database trigger rejects UPDATE/DELETE outright, independent of
