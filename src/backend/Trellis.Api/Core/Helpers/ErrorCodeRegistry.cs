@@ -32,4 +32,13 @@ public static class ErrorCodeRegistry
         /// <summary>TRL-E-PLT-0409 — a stale RowVersion on update (coding_standards.md, "Optimistic Concurrency").</summary>
         public const string ConcurrencyConflict = "TRL-E-PLT-0409";
     }
+
+    public static class Tenant
+    {
+        /// <summary>TRL-E-TEN-2000 — ProvisionTenantAsync's cross-module call into Auth failed; the tenant was rolled back, not left half-provisioned.</summary>
+        public const string AdminCreationFailed = "TRL-E-TEN-2000";
+
+        /// <summary>TRL-E-TEN-2001 — an offboard/status-transition request the tenant's current status doesn't allow.</summary>
+        public const string InvalidStatusTransition = "TRL-E-TEN-2001";
+    }
 }

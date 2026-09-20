@@ -201,7 +201,11 @@ public class PropertyConfiguration : IEntityTypeConfiguration<Property>
     {
         builder.ToTable("property", schema: "trellis_property");
         builder.HasKey(p => p.PropertyId);
-        builder.UseXminAsConcurrencyToken();   // one line, no new column, no migration
+        // UseXminAsConcurrencyToken() — this section's original one-liner — is obsolete in the
+        // Npgsql.EntityFrameworkCore.PostgreSQL version this codebase is on (found at Phase 1
+        // implementation, not before). Npgsql's own current replacement, same zero-schema-cost
+        // guarantee, one line either way:
+        builder.Property<uint>("xmin").IsRowVersion();
     }
 }
 ```

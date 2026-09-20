@@ -5,6 +5,7 @@ using Trellis.Api.Configuration;
 using Trellis.Api.Core;
 using Trellis.Api.Core.Logging;
 using Trellis.Api.Core.Middleware;
+using Trellis.Api.Modules.Tenant;
 
 // devops_environments.md, "Configuration & Secrets Per Environment": .env exists only in Local
 // (gitignored — never committed). Development/Staging/Production have no file on disk; the
@@ -27,8 +28,8 @@ builder.Services.AddTrellisSwaggerGen();
 
 builder.Services.AddTrellisCore(builder.Configuration);
 
-// Each module adds its own AddXModule(builder.Configuration) call here
-// (coding_standards.md, "Dependency Injection").
+// Tenant → Notification → Auth, per data_model.md's migration dependency order.
+builder.Services.AddTenantModule(builder.Configuration);
 
 var app = builder.Build();
 
