@@ -1,15 +1,19 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { RequireRole } from "./auth/RequireRole";
+import { AdminShell } from "./features/admin/AdminShell";
+import { OwnersListPage } from "./features/admin/propertyasset/OwnersListPage";
+import { PropertiesListPage } from "./features/admin/propertyasset/PropertiesListPage";
+import { PropertyDetailPage } from "./features/admin/propertyasset/PropertyDetailPage";
 import { ForgotPasswordPage } from "./features/auth/ForgotPasswordPage";
 import { LoginPage } from "./features/auth/LoginPage";
 import { MfaVerifyPage } from "./features/auth/MfaVerifyPage";
 import { ResetPasswordPage } from "./features/auth/ResetPasswordPage";
 import { TenantsListPage } from "./features/platform/TenantsListPage";
 
-// frontend_architecture.md, "One SPA, Role-Based Routing" — placeholder route trees for the
-// two personas without a real screen yet. Real screens land module-by-module per roadmap.md;
-// UI-layer routing is UX, not the security boundary — the API enforces access regardless of
-// what this router renders (see the same doc's caveat).
+// frontend_architecture.md, "One SPA, Role-Based Routing" — the Vendor tree has no real screen
+// yet (a later phase). Real screens land module-by-module per roadmap.md; UI-layer routing is
+// UX, not the security boundary — the API enforces access regardless of what this router renders
+// (see the same doc's caveat).
 
 function Placeholder({ label }: { label: string }) {
   return <div>{label}</div>;
@@ -24,7 +28,12 @@ export function App() {
       <Route path="/reset-password" element={<ResetPasswordPage />} />
 
       <Route element={<RequireRole allowedRoles={["TENANT_ADMIN", "DEPARTMENT_STAFF"]} />}>
-        <Route path="/admin/*" element={<Placeholder label="Tenant Admin" />} />
+        <Route path="/admin" element={<AdminShell />}>
+          <Route index element={<Navigate to="properties" replace />} />
+          <Route path="properties" element={<PropertiesListPage />} />
+          <Route path="properties/:propertyId" element={<PropertyDetailPage />} />
+          <Route path="owners" element={<OwnersListPage />} />
+        </Route>
       </Route>
 
       <Route element={<RequireRole allowedRoles={["VENDOR_USER"]} />}>

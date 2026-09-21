@@ -31,6 +31,24 @@ const sage: MantineColorsTuple = [
   "#5b8a72",
 ];
 
+// BDR-NFR-007 (WCAG 2.1 AA) — an ACTIVE-status Badge needs white-text-on-filled contrast, and
+// even Mantine's built-in green's darkest shade (green.9, #2b8a3e) measures only 4.36:1, just
+// short of the 4.5:1 floor (found live, via tests/e2e's axe-core scan). A custom tuple, same
+// mechanism already proven for navy/sage: Badge's filled variant respects an explicit
+// "success.8" shade request. #1e7e34 at index 8 measures ~5.14:1.
+const success: MantineColorsTuple = [
+  "#eafbf0",
+  "#d1f4dc",
+  "#a6e8bd",
+  "#78db9d",
+  "#52d183",
+  "#3bc973",
+  "#2ec369",
+  "#20a856",
+  "#1e7e34",
+  "#175e27",
+];
+
 export const theme = createTheme({
   primaryColor: "sage",
   // BDR-NFR-007 (WCAG 2.1 AA) — Mantine's default primaryShade (6) is this palette's
@@ -38,7 +56,7 @@ export const theme = createTheme({
   // (found by the Playwright/axe-core suite in tests/e2e, the check this file's own earlier
   // comment flagged as still outstanding). Shade 8 ("#456c53") measures ~5.96:1.
   primaryShade: 8,
-  colors: { navy, sage },
+  colors: { navy, sage, success },
   fontFamily: "'IBM Plex Sans', system-ui, sans-serif",
   headings: { fontFamily: "'DM Sans', system-ui, sans-serif" },
 });

@@ -29,6 +29,33 @@ export async function seedSuperAdmin(username: string): Promise<void> {
   }
 }
 
+export async function seedTenantAdmin(username: string, tenantId: string): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(
+      `insert into trellis_auth.app_user (user_id, tenant_id, username, password_hash, role, status)
+       values (gen_random_uuid(), $1, $2, $3, 'TENANT_ADMIN', 'ACTIVE')`,
+      [tenantId, username, SEED_PASSWORD_HASH],
+    );
+  } finally {
+    await client.end();
+  }
+}
+
+/** propertyasset.spec.ts's own cleanup — Owner/Property/UnitAsset are archived (never hard-deleted) by the app, so tests still delete their rows directly to keep the DB clean between runs. */
+export async function deletePropertyAssetDataForTenant(tenantId: string): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(`delete from trellis_property.unit_asset where tenant_id = $1`, [tenantId]);
+    await client.query(`delete from trellis_property.property where tenant_id = $1`, [tenantId]);
+    await client.query(`delete from trellis_property.owner where tenant_id = $1`, [tenantId]);
+  } finally {
+    await client.end();
+  }
+}
+
 export async function deleteAppUsers(usernames: string[]): Promise<void> {
   const client = new Client({ connectionString: CONNECTION_STRING });
   await client.connect();

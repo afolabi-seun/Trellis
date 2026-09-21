@@ -20,6 +20,7 @@ import { tenantsApi } from "../../api/tenants";
 import { authApi } from "../../api/auth";
 import { TrellisApiError } from "../../api/client";
 import { useAuth } from "../../auth/AuthContext";
+import { dangerAlertStyles, dangerButtonStyles } from "../../theme/dangerStyles";
 
 const provisionSchema = z.object({
   tenantName: z.string().min(1, "Tenant name is required."),
@@ -29,18 +30,14 @@ const provisionSchema = z.object({
 
 type ProvisionFormValues = z.infer<typeof provisionSchema>;
 
-// BDR-NFR-007 (WCAG 2.1 AA), both found via tests/e2e's axe-core scan:
-// - Badge's filled variant DOES respect an explicit "color.shade" override — default shade 6
-//   fails 4.5:1 white-text contrast for several of these; shade 8 clears it for all five.
-// - Alert/Button's "subtle"/"light" variants do NOT respect the same override (confirmed
-//   empirically, stayed ~3.1-3.9:1 regardless) — Styles API override on `label` bypasses
-//   Mantine's variant color resolver entirely instead. See ResetPasswordPage.tsx's identical
-//   constant.
-const dangerAlertStyles = { label: { color: "#a61e1e" } };
-const dangerButtonStyles = { label: { color: "#a61e1e" } };
-
+// BDR-NFR-007 (WCAG 2.1 AA), found via tests/e2e's axe-core scan: Badge's filled variant DOES
+// respect an explicit "color.shade" override — default shade 6 fails 4.5:1 white-text contrast
+// for most of these; shade 8/9 clears it for blue/orange/yellow/gray, but even green's darkest
+// built-in shade (green.9) falls just short at 4.36:1, hence the custom "success" color
+// (theme/theme.ts). (dangerAlertStyles/dangerButtonStyles, for the Alert/Button below, live in
+// theme/dangerStyles.ts — a different Mantine quirk.)
 const statusColor: Record<string, string> = {
-  ACTIVE: "green.8",
+  ACTIVE: "success.8",
   ONBOARDING: "blue.8",
   SUSPENDED: "yellow.9",
   OFFBOARDING: "orange.8",

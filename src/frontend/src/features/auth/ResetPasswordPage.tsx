@@ -6,6 +6,7 @@ import { Link, useSearchParams } from "react-router-dom";
 import { z } from "zod";
 import { authApi } from "../../api/auth";
 import { TrellisApiError } from "../../api/client";
+import { dangerAlertStyles } from "../../theme/dangerStyles";
 
 const schema = z
   .object({
@@ -18,13 +19,6 @@ const schema = z
   });
 
 type FormValues = z.infer<typeof schema>;
-
-// BDR-NFR-007 (WCAG 2.1 AA) — Mantine's "light"-variant color resolver for Alert doesn't respect
-// an explicit "red.8" shade override the way Badge's filled variant does (found empirically via
-// tests/e2e's axe-core scan: the rendered title text stayed a ~3.9:1 red regardless). Styles API
-// override on the title bypasses variant resolution entirely, so the rendered color is exactly
-// this one — #a61e1e measures ~7.4:1 against Alert's pale red background.
-const dangerAlertStyles = { label: { color: "#a61e1e" } };
 
 /** The token arrives as a query param on the link `AuthService.IssuePasswordSetLinkAsync` sends — `{AppOptions.BaseUrl}/reset-password?token=...`. */
 export function ResetPasswordPage() {

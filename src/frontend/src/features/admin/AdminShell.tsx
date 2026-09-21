@@ -1,0 +1,53 @@
+import { Button, Group, Stack, Text } from "@mantine/core";
+import { NavLink, Outlet, useNavigate } from "react-router-dom";
+import { authApi } from "../../api/auth";
+import { useAuth } from "../../auth/AuthContext";
+
+/** Minimal Tenant Admin shell — nav between PropertyAsset's screens, matching frontend_architecture.md's Repository & Deployment tree (one persona-module subfolder per reachable backend module). */
+export function AdminShell() {
+  const navigate = useNavigate();
+  const { claims, logout } = useAuth();
+
+  const handleLogout = async () => {
+    try {
+      await authApi.logout();
+    } finally {
+      logout();
+      navigate("/login", { replace: true });
+    }
+  };
+
+  return (
+    <Stack gap={0}>
+      <Group
+        justify="space-between"
+        p="md"
+        style={{ borderBottom: "1px solid var(--mantine-color-gray-3)" }}
+      >
+        <Group gap="lg">
+          <NavLink
+            to="/admin/properties"
+            style={({ isActive }) => ({ fontWeight: isActive ? 700 : 400 })}
+          >
+            Properties
+          </NavLink>
+          <NavLink
+            to="/admin/owners"
+            style={({ isActive }) => ({ fontWeight: isActive ? 700 : 400 })}
+          >
+            Owners
+          </NavLink>
+        </Group>
+        <Group>
+          <Text c="gray.7" size="sm">
+            {claims?.email}
+          </Text>
+          <Button variant="subtle" onClick={handleLogout}>
+            Sign out
+          </Button>
+        </Group>
+      </Group>
+      <Outlet />
+    </Stack>
+  );
+}

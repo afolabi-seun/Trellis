@@ -42,7 +42,7 @@ export function subscribeToAccessToken(listener: () => void): () => void {
 }
 
 interface RequestOptions {
-  method?: "GET" | "POST";
+  method?: "GET" | "POST" | "PATCH" | "DELETE";
   body?: unknown;
   query?: Record<string, string | number | undefined>;
   /** Skip the Authorization header and the 401-triggered refresh retry — the four anonymous auth endpoints. */
