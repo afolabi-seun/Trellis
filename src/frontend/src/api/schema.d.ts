@@ -435,6 +435,322 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/owners": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OwnerResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["OwnerResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["OwnerResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["OwnerCreateRequest"];
+                    "text/json": components["schemas"]["OwnerCreateRequest"];
+                    "application/*+json": components["schemas"]["OwnerCreateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OwnerResponseApiResponse"];
+                        "application/json": components["schemas"]["OwnerResponseApiResponse"];
+                        "text/json": components["schemas"]["OwnerResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owners/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OwnerResponseApiResponse"];
+                        "application/json": components["schemas"]["OwnerResponseApiResponse"];
+                        "text/json": components["schemas"]["OwnerResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OwnerResponseApiResponse"];
+                        "application/json": components["schemas"]["OwnerResponseApiResponse"];
+                        "text/json": components["schemas"]["OwnerResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["OwnerUpdateRequest"];
+                    "text/json": components["schemas"]["OwnerUpdateRequest"];
+                    "application/*+json": components["schemas"]["OwnerUpdateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OwnerResponseApiResponse"];
+                        "application/json": components["schemas"]["OwnerResponseApiResponse"];
+                        "text/json": components["schemas"]["OwnerResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/properties": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PropertyResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["PropertyResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["PropertyResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["PropertyCreateRequest"];
+                    "text/json": components["schemas"]["PropertyCreateRequest"];
+                    "application/*+json": components["schemas"]["PropertyCreateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PropertyResponseApiResponse"];
+                        "application/json": components["schemas"]["PropertyResponseApiResponse"];
+                        "text/json": components["schemas"]["PropertyResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/properties/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PropertyResponseApiResponse"];
+                        "application/json": components["schemas"]["PropertyResponseApiResponse"];
+                        "text/json": components["schemas"]["PropertyResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PropertyResponseApiResponse"];
+                        "application/json": components["schemas"]["PropertyResponseApiResponse"];
+                        "text/json": components["schemas"]["PropertyResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["PropertyUpdateRequest"];
+                    "text/json": components["schemas"]["PropertyUpdateRequest"];
+                    "application/*+json": components["schemas"]["PropertyUpdateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PropertyResponseApiResponse"];
+                        "application/json": components["schemas"]["PropertyResponseApiResponse"];
+                        "text/json": components["schemas"]["PropertyResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
     "/platform/tenants": {
         parameters: {
             query?: never;
@@ -580,6 +896,168 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/properties/{propertyId}/units": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path: {
+                    propertyId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UnitAssetResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["UnitAssetResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["UnitAssetResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    propertyId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UnitAssetCreateRequest"];
+                    "text/json": components["schemas"]["UnitAssetCreateRequest"];
+                    "application/*+json": components["schemas"]["UnitAssetCreateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UnitAssetResponseApiResponse"];
+                        "application/json": components["schemas"]["UnitAssetResponseApiResponse"];
+                        "text/json": components["schemas"]["UnitAssetResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UnitAssetResponseApiResponse"];
+                        "application/json": components["schemas"]["UnitAssetResponseApiResponse"];
+                        "text/json": components["schemas"]["UnitAssetResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UnitAssetResponseApiResponse"];
+                        "application/json": components["schemas"]["UnitAssetResponseApiResponse"];
+                        "text/json": components["schemas"]["UnitAssetResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["UnitAssetUpdateRequest"];
+                    "text/json": components["schemas"]["UnitAssetUpdateRequest"];
+                    "application/*+json": components["schemas"]["UnitAssetUpdateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["UnitAssetResponseApiResponse"];
+                        "application/json": components["schemas"]["UnitAssetResponseApiResponse"];
+                        "text/json": components["schemas"]["UnitAssetResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -649,12 +1127,121 @@ export interface components {
             error?: components["schemas"]["ApiError"];
             meta: components["schemas"]["ApiMeta"];
         };
+        OwnerCreateRequest: {
+            name?: string | null;
+            email?: string | null;
+            phone?: string | null;
+        };
+        OwnerResponse: {
+            /** Format: uuid */
+            ownerId?: string;
+            name?: string | null;
+            email?: string | null;
+            phone?: string | null;
+            status?: string | null;
+            rowVersion?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        OwnerResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["OwnerResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        OwnerResponsePagedResponse: {
+            items?: components["schemas"]["OwnerResponse"][] | null;
+            nextCursor?: string | null;
+            hasMore?: boolean;
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        OwnerResponsePagedResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["OwnerResponsePagedResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        OwnerUpdateRequest: {
+            name?: string | null;
+            email?: string | null;
+            phone?: string | null;
+            rowVersion?: string | null;
+        };
         PasswordForgotRequest: {
             username?: string | null;
         };
         PasswordResetRequest: {
             token?: string | null;
             newPassword?: string | null;
+        };
+        PropertyCreateRequest: {
+            /** Format: uuid */
+            ownerId?: string;
+            address?: string | null;
+            propertyType?: string | null;
+            /** Format: double */
+            sizeSqft?: number | null;
+            /** Format: date */
+            acquisitionDate?: string | null;
+            /** Format: double */
+            acquisitionValue?: number | null;
+            /** Format: double */
+            currentValuation?: number | null;
+        };
+        PropertyResponse: {
+            /** Format: uuid */
+            propertyId?: string;
+            /** Format: uuid */
+            ownerId?: string;
+            address?: string | null;
+            propertyType?: string | null;
+            status?: string | null;
+            /** Format: double */
+            sizeSqft?: number | null;
+            /** Format: date */
+            acquisitionDate?: string | null;
+            /** Format: double */
+            acquisitionValue?: number | null;
+            /** Format: double */
+            currentValuation?: number | null;
+            rowVersion?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        PropertyResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["PropertyResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        PropertyResponsePagedResponse: {
+            items?: components["schemas"]["PropertyResponse"][] | null;
+            nextCursor?: string | null;
+            hasMore?: boolean;
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        PropertyResponsePagedResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["PropertyResponsePagedResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        PropertyUpdateRequest: {
+            /** Format: uuid */
+            ownerId?: string;
+            address?: string | null;
+            propertyType?: string | null;
+            /** Format: double */
+            sizeSqft?: number | null;
+            /** Format: date */
+            acquisitionDate?: string | null;
+            /** Format: double */
+            acquisitionValue?: number | null;
+            /** Format: double */
+            currentValuation?: number | null;
+            rowVersion?: string | null;
         };
         RecoveryCodesRegenerateRequest: {
             currentPassword?: string | null;
@@ -712,6 +1299,55 @@ export interface components {
             data?: components["schemas"]["TokenResponse"];
             error?: components["schemas"]["ApiError"];
             meta: components["schemas"]["ApiMeta"];
+        };
+        UnitAssetCreateRequest: {
+            label?: string | null;
+            /** Format: double */
+            sizeSqft?: number | null;
+            /** Format: double */
+            acquisitionValue?: number | null;
+        };
+        UnitAssetResponse: {
+            /** Format: uuid */
+            unitAssetId?: string;
+            /** Format: uuid */
+            propertyId?: string;
+            label?: string | null;
+            status?: string | null;
+            /** Format: double */
+            sizeSqft?: number | null;
+            /** Format: double */
+            acquisitionValue?: number | null;
+            rowVersion?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        UnitAssetResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["UnitAssetResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        UnitAssetResponsePagedResponse: {
+            items?: components["schemas"]["UnitAssetResponse"][] | null;
+            nextCursor?: string | null;
+            hasMore?: boolean;
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        UnitAssetResponsePagedResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["UnitAssetResponsePagedResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        UnitAssetUpdateRequest: {
+            label?: string | null;
+            /** Format: double */
+            sizeSqft?: number | null;
+            /** Format: double */
+            acquisitionValue?: number | null;
+            rowVersion?: string | null;
         };
     };
     responses: never;

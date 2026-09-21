@@ -65,4 +65,16 @@ public static class ErrorCodeRegistry
         /// <summary>TRL-E-AUT-1006 — the refresh_token cookie is missing, doesn't match any session, or that session is revoked/expired.</summary>
         public const string RefreshTokenInvalid = "TRL-E-AUT-1006";
     }
+
+    public static class PropertyAsset
+    {
+        /// <summary>TRL-E-AST-3000 — an Archive/status-transition request the entity's current status doesn't allow.</summary>
+        public const string InvalidStatusTransition = "TRL-E-AST-3000";
+
+        /// <summary>TRL-E-AST-3001 — can't archive an Owner while it still has an active Property (the FK would dangle in spirit, even though it's never hard-deleted).</summary>
+        public const string OwnerHasActiveProperties = "TRL-E-AST-3001";
+
+        /// <summary>TRL-E-AST-3002 — can't archive a Property while it still has an active UnitAsset (BDR-AST-003: documents/workflow attach at this level).</summary>
+        public const string PropertyHasActiveUnitAssets = "TRL-E-AST-3002";
+    }
 }

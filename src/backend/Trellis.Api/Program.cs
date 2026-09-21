@@ -7,6 +7,7 @@ using Trellis.Api.Core.Logging;
 using Trellis.Api.Core.Middleware;
 using Trellis.Api.Modules.Auth;
 using Trellis.Api.Modules.Notification;
+using Trellis.Api.Modules.PropertyAsset;
 using Trellis.Api.Modules.Tenant;
 
 // devops_environments.md, "Configuration & Secrets Per Environment": .env exists only in Local
@@ -30,10 +31,12 @@ builder.Services.AddTrellisSwaggerGen();
 
 builder.Services.AddTrellisCore(builder.Configuration);
 
-// Tenant → Notification → Auth, per data_model.md's migration dependency order.
+// Tenant → Notification → Auth → PropertyAsset, per data_model.md's migration dependency order
+// and roadmap.md's Phase 1 → Phase 2 sequencing.
 builder.Services.AddTenantModule(builder.Configuration);
 builder.Services.AddNotificationModule(builder.Configuration);
 builder.Services.AddAuthModule(builder.Configuration);
+builder.Services.AddPropertyAssetModule(builder.Configuration);
 
 var app = builder.Build();
 

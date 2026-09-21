@@ -3,6 +3,7 @@ using Npgsql;
 using Testcontainers.PostgreSql;
 using Trellis.Api.Core.Data;
 using Trellis.Api.Modules.Auth.Infrastructure.Data;
+using Trellis.Api.Modules.PropertyAsset.Infrastructure.Data;
 using Xunit;
 
 namespace Trellis.Tests.Isolation;
@@ -63,12 +64,13 @@ public sealed class PostgresIsolationFixture : IAsyncLifetime
             Password = "trellis_app_dev_only",
         }.ConnectionString;
 
-        // Tenant → Notification → Auth, same order Program.cs registers modules in
-        // (data_model.md's migration dependency order) — Core's audit table migrates first.
+        // Tenant → Notification → Auth → PropertyAsset, same order Program.cs registers modules
+        // in (data_model.md's migration dependency order) — Core's audit table migrates first.
         await MigrateAsync(() => new CoreDbContext(BuildOptions<CoreDbContext>()));
         await MigrateAsync(() => new Trellis.Api.Modules.Tenant.Infrastructure.Data.TenantDbContext(BuildOptions<Trellis.Api.Modules.Tenant.Infrastructure.Data.TenantDbContext>()));
         await MigrateAsync(() => new Trellis.Api.Modules.Notification.Infrastructure.Data.NotificationDbContext(BuildOptions<Trellis.Api.Modules.Notification.Infrastructure.Data.NotificationDbContext>()));
         await MigrateAsync(() => new AuthDbContext(BuildOptions<AuthDbContext>()));
+        await MigrateAsync(() => new PropertyDbContext(BuildOptions<PropertyDbContext>()));
     }
 
     public async Task DisposeAsync() => await _container.DisposeAsync();
@@ -86,6 +88,16 @@ public sealed class PostgresIsolationFixture : IAsyncLifetime
             .AddInterceptors(new TenantScopeConnectionInterceptor())
             .Options;
         return new AuthDbContext(options);
+    }
+
+    /// <summary>Same shape as <see cref="CreateAppAuthContext"/>, for PropertyAsset's own isolation/concurrency tests.</summary>
+    public PropertyDbContext CreateAppPropertyContext()
+    {
+        var options = new DbContextOptionsBuilder<PropertyDbContext>()
+            .UseNpgsql(AppConnectionString)
+            .AddInterceptors(new TenantScopeConnectionInterceptor())
+            .Options;
+        return new PropertyDbContext(options);
     }
 
     private DbContextOptions<TContext> BuildOptions<TContext>() where TContext : DbContext =>

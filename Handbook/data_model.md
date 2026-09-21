@@ -114,6 +114,23 @@ See `security_guide.md` for the full reset flow this table supports.
 user, on regeneration. See `security_guide.md` for the full flow, including the deliberately
 manual fallback (a Support-mediated MFA reset) when both TOTP and recovery codes are lost.
 
+### trellis_property.owner (schema filled in at Phase 2 implementation — previously only referenced as an FK target, never given its own columns)
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| owner_id | UUID | PK | |
+| tenant_id | UUID | NOT NULL | Owning tenant |
+| name | VARCHAR(200) | NOT NULL | |
+| email | VARCHAR(255) | NULLABLE | |
+| phone | VARCHAR(30) | NULLABLE | |
+| status | VARCHAR(20) | NOT NULL DEFAULT 'ACTIVE' | ACTIVE\|ARCHIVED |
+| created_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | |
+| updated_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | |
+
+Supports BDR-OWN-001. Never a hard delete (`ARCHIVED`, not removed) — a `property.owner_id` FK
+must keep resolving even for a retired owner, and BDR-OWN-003's future reporting needs the
+historical record either way.
+
 ### trellis_property.property
 
 | Column | Type | Constraints | Description |
@@ -123,10 +140,16 @@ manual fallback (a Support-mediated MFA reset) when both TOTP and recovery codes
 | owner_id | UUID | FK → trellis_property.owner NOT NULL | |
 | address | TEXT | NOT NULL | |
 | property_type | VARCHAR(30) | NOT NULL | RESIDENTIAL\|COMMERCIAL\|MIXED_USE |
-| status | VARCHAR(20) | NOT NULL DEFAULT 'ACTIVE' | |
+| status | VARCHAR(20) | NOT NULL DEFAULT 'ACTIVE' | ACTIVE\|ARCHIVED |
+| size_sqft | NUMERIC | NULLABLE | Added at Phase 2 implementation — BDR-AST-002 (Must priority) names "size" among the required core attributes; the originally documented schema didn't have it |
+| acquisition_date | DATE | NULLABLE | Added at Phase 2 implementation, same BDR-AST-002 gap |
+| acquisition_value | NUMERIC(14,2) | NULLABLE | Added at Phase 2 implementation, same BDR-AST-002 gap |
+| current_valuation | NUMERIC(14,2) | NULLABLE | Added at Phase 2 implementation, same BDR-AST-002 gap |
 | created_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | |
+| updated_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | |
 
-Supports BDR-AST-001, BDR-AST-002.
+Supports BDR-AST-001, BDR-AST-002. Never a hard delete, same reasoning as `owner` — BDR-AST-003's
+documents/workflow history attach at this record and can't be left dangling.
 
 ### trellis_property.unit_asset
 
@@ -136,10 +159,14 @@ Supports BDR-AST-001, BDR-AST-002.
 | tenant_id | UUID | NOT NULL | Denormalised for RLS — always matches parent property's tenant_id |
 | property_id | UUID | FK → property NOT NULL | |
 | label | VARCHAR(100) | NOT NULL | e.g. "Unit 4B", "Rooftop HVAC" |
-| status | VARCHAR(20) | NOT NULL DEFAULT 'ACTIVE' | |
+| status | VARCHAR(20) | NOT NULL DEFAULT 'ACTIVE' | ACTIVE\|ARCHIVED |
+| size_sqft | NUMERIC | NULLABLE | Added at Phase 2 implementation, same BDR-AST-002 gap as `property` |
+| acquisition_value | NUMERIC(14,2) | NULLABLE | Added at Phase 2 implementation, same BDR-AST-002 gap — acquisition_date omitted at this level, since a unit/asset's acquisition date is rarely tracked separately from its parent property's |
+| created_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | Added at Phase 2 implementation — the originally documented schema had no timestamps at all, but keyset pagination needs a stable, meaningful ordering key |
+| updated_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | |
 
 Documents, workflow instances, and inspections attach at the `property_id` or
-`unit_asset_id` level (BDR-AST-003).
+`unit_asset_id` level (BDR-AST-003). Never a hard delete, same reasoning as `property`.
 
 ### trellis_vendor.vendor
 

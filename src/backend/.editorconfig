@@ -31,6 +31,15 @@ dotnet_style_qualification_for_method = false:suggestion
 # Main / a composition-root shim is a bug, not a style nit.
 dotnet_diagnostic.VSTHRD002.severity = warning
 
+# `Property` is coding_standards.md/testing_strategy.md/data_model.md's own chosen name for the
+# PropertyAsset module's aggregate root, quoted verbatim across all three docs (PropertyResponse,
+# IPropertyRepository, GetProperty_WhenTenantContextMismatched_Returns404NotLeak, ...) well before
+# the module was built. CA1716 flags it (and every property/parameter named after it) as
+# reserved-word-adjacent for VB.NET interop — a real concern in a library meant for cross-language
+# consumption, not for an internal aggregate root in a C#-only API. Renaming it would make this
+# codebase diverge from its own already-published documentation rather than fix anything.
+dotnet_diagnostic.CA1716.severity = none
+
 # EF Core's own `dotnet ef migrations add` generates Migrations/*.cs and *.Designer.cs — tool
 # output, not hand-written code, and it doesn't follow this file's conventions (e.g. it always
 # inlines composite-index column arrays, which CA1861 flags). Found the hard way: the first
