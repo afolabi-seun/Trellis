@@ -69,6 +69,16 @@ public static class AuthModuleExtensions
         services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
             .AddJwtBearer(options =>
             {
+                // ASP.NET Core's JwtSecurityTokenHandler remaps well-known short claim names
+                // ("sub", "role", "email", ...) to long Microsoft/xmlsoap claim URIs by default —
+                // found the hard way: TenantScopeMiddleware's context.User.FindFirst("role") and
+                // AuthController.CurrentUserId()'s FindFirstValue("sub") both silently found
+                // nothing, since the actual claim type on ClaimsPrincipal was the remapped URI,
+                // not the literal name security_guide.md's JWT Structure documents. The practical
+                // effect: is_system was never set for a real Super Admin request, so every RLS-
+                // protected write in one (e.g. provisioning a tenant's first admin) failed. Off,
+                // so claim types on ClaimsPrincipal match the JWT payload exactly as issued.
+                options.MapInboundClaims = false;
                 options.TokenValidationParameters = new TokenValidationParameters
                 {
                     ValidIssuer = "Trellis",
@@ -78,6 +88,12 @@ public static class AuthModuleExtensions
                     ValidateAudience = true,
                     ValidateLifetime = true,
                     ValidateIssuerSigningKey = true,
+                    // [Authorize(Roles = "...")] and ClaimsPrincipal.IsInRole() both read
+                    // ClaimsIdentity.RoleClaimType (ClaimTypes.Role, another long URI, by
+                    // default) — repointed at the literal "role" claim now that inbound mapping
+                    // is off, so role-based authorization keeps working unchanged.
+                    RoleClaimType = "role",
+                    NameClaimType = "sub",
                 };
             });
 

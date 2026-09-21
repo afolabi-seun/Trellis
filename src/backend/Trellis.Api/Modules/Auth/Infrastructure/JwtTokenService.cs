@@ -81,7 +81,12 @@ public sealed class JwtTokenService : IJwtTokenService
 
     public Guid? ValidatePartialToken(string partialToken)
     {
-        var handler = new JwtSecurityTokenHandler();
+        // A JwtSecurityTokenHandler instance defaults MapInboundClaims to true independently of
+        // AuthModuleExtensions' JwtBearerOptions setting — same remapping gotcha documented
+        // there (found via this exact method: "sub" silently came back null, so every MFA
+        // verification failed regardless of TOTP/recovery-code correctness). Off here too, so
+        // FindFirst("sub") below actually finds the claim as issued.
+        var handler = new JwtSecurityTokenHandler { MapInboundClaims = false };
         var parameters = ValidationParameters();
 
         try
