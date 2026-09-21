@@ -29,7 +29,7 @@ export function ForgotPasswordPage() {
         <Stack gap="lg">
           <div>
             <Title order={2}>Reset your password</Title>
-            <Text c="dimmed" size="sm">
+            <Text c="gray.7" size="sm">
               Enter your username and we&apos;ll send a reset link if an account exists.
             </Text>
           </div>

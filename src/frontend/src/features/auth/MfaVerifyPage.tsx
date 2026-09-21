@@ -59,7 +59,7 @@ export function MfaVerifyPage() {
         <Stack gap="lg">
           <div>
             <Title order={2}>Two-factor verification</Title>
-            <Text c="dimmed" size="sm">
+            <Text c="gray.7" size="sm">
               {usingRecoveryCode
                 ? "Enter one of your recovery codes."
                 : "Enter the 6-digit code from your authenticator app."}

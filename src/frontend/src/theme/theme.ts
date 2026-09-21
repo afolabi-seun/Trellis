@@ -33,6 +33,11 @@ const sage: MantineColorsTuple = [
 
 export const theme = createTheme({
   primaryColor: "sage",
+  // BDR-NFR-007 (WCAG 2.1 AA) — Mantine's default primaryShade (6) is this palette's
+  // "#639875", which measures 3.34:1 white-on-sage, below the 4.5:1 floor for normal text
+  // (found by the Playwright/axe-core suite in tests/e2e, the check this file's own earlier
+  // comment flagged as still outstanding). Shade 8 ("#456c53") measures ~5.96:1.
+  primaryShade: 8,
   colors: { navy, sage },
   fontFamily: "'IBM Plex Sans', system-ui, sans-serif",
   headings: { fontFamily: "'DM Sans', system-ui, sans-serif" },

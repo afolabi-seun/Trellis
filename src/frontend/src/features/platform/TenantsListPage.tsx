@@ -29,12 +29,22 @@ const provisionSchema = z.object({
 
 type ProvisionFormValues = z.infer<typeof provisionSchema>;
 
+// BDR-NFR-007 (WCAG 2.1 AA), both found via tests/e2e's axe-core scan:
+// - Badge's filled variant DOES respect an explicit "color.shade" override — default shade 6
+//   fails 4.5:1 white-text contrast for several of these; shade 8 clears it for all five.
+// - Alert/Button's "subtle"/"light" variants do NOT respect the same override (confirmed
+//   empirically, stayed ~3.1-3.9:1 regardless) — Styles API override on `label` bypasses
+//   Mantine's variant color resolver entirely instead. See ResetPasswordPage.tsx's identical
+//   constant.
+const dangerAlertStyles = { label: { color: "#a61e1e" } };
+const dangerButtonStyles = { label: { color: "#a61e1e" } };
+
 const statusColor: Record<string, string> = {
-  ACTIVE: "green",
-  ONBOARDING: "blue",
-  SUSPENDED: "yellow",
-  OFFBOARDING: "orange",
-  OFFBOARDED: "gray",
+  ACTIVE: "green.8",
+  ONBOARDING: "blue.8",
+  SUSPENDED: "yellow.9",
+  OFFBOARDING: "orange.8",
+  OFFBOARDED: "gray.8",
 };
 
 /** api_standards.md's `/platform/tenants` — SUPER_ADMIN's tenant list/provisioning screen (roadmap.md's Phase 1 frontend row). */
@@ -84,7 +94,7 @@ export function TenantsListPage() {
       <Group justify="space-between">
         <Title order={2}>Tenants</Title>
         <Group>
-          <Text c="dimmed" size="sm">
+          <Text c="gray.7" size="sm">
             {claims?.email}
           </Text>
           <Button onClick={openModal}>Provision tenant</Button>
@@ -95,7 +105,7 @@ export function TenantsListPage() {
       </Group>
 
       {tenantsQuery.isError && (
-        <Alert color="red" title="Could not load tenants">
+        <Alert color="red" title="Could not load tenants" styles={dangerAlertStyles}>
           {tenantsQuery.error instanceof TrellisApiError
             ? tenantsQuery.error.message
             : "Something went wrong."}
@@ -119,7 +129,7 @@ export function TenantsListPage() {
               <Table.Td>{tenant.tenantName}</Table.Td>
               <Table.Td>{tenant.countryCode}</Table.Td>
               <Table.Td>
-                <Badge color={statusColor[tenant.status ?? ""] ?? "gray"}>{tenant.status}</Badge>
+                <Badge color={statusColor[tenant.status ?? ""] ?? "gray.8"}>{tenant.status}</Badge>
               </Table.Td>
               <Table.Td>{tenant.subscriptionTier}</Table.Td>
               <Table.Td>
@@ -130,6 +140,7 @@ export function TenantsListPage() {
                   <Button
                     size="xs"
                     color="red"
+                    styles={dangerButtonStyles}
                     variant="subtle"
                     loading={
                       offboardMutation.isPending && offboardMutation.variables === tenant.tenantId
@@ -153,12 +164,12 @@ export function TenantsListPage() {
       </Table>
 
       {tenantsQuery.isSuccess && tenantsQuery.data.items?.length === 0 && (
-        <Text c="dimmed">No tenants yet. Provision the first one to get started.</Text>
+        <Text c="gray.7">No tenants yet. Provision the first one to get started.</Text>
       )}
 
       <Modal opened={modalOpened} onClose={closeModal} title="Provision a new tenant">
         {provisionMutation.isError && (
-          <Alert color="red" title="Could not provision tenant" mb="md">
+          <Alert color="red" title="Could not provision tenant" mb="md" styles={dangerAlertStyles}>
             {provisionMutation.error instanceof TrellisApiError
               ? provisionMutation.error.message
               : "Something went wrong."}

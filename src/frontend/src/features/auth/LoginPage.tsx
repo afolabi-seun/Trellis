@@ -67,7 +67,7 @@ export function LoginPage() {
         <Stack gap="lg">
           <div>
             <Title order={2}>Sign in</Title>
-            <Text c="dimmed" size="sm">
+            <Text c="gray.7" size="sm">
               Trellis platform access
             </Text>
           </div>
