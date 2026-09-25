@@ -402,6 +402,610 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/departments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DepartmentResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["DepartmentResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["DepartmentResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DepartmentCreateRequest"];
+                    "text/json": components["schemas"]["DepartmentCreateRequest"];
+                    "application/*+json": components["schemas"]["DepartmentCreateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DepartmentResponseApiResponse"];
+                        "application/json": components["schemas"]["DepartmentResponseApiResponse"];
+                        "text/json": components["schemas"]["DepartmentResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/departments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DepartmentResponseApiResponse"];
+                        "application/json": components["schemas"]["DepartmentResponseApiResponse"];
+                        "text/json": components["schemas"]["DepartmentResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DepartmentResponseApiResponse"];
+                        "application/json": components["schemas"]["DepartmentResponseApiResponse"];
+                        "text/json": components["schemas"]["DepartmentResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DepartmentUpdateRequest"];
+                    "text/json": components["schemas"]["DepartmentUpdateRequest"];
+                    "application/*+json": components["schemas"]["DepartmentUpdateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DepartmentResponseApiResponse"];
+                        "application/json": components["schemas"]["DepartmentResponseApiResponse"];
+                        "text/json": components["schemas"]["DepartmentResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DocumentResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["DocumentResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["DocumentResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "multipart/form-data": {
+                        DocumentType?: string;
+                        /** Format: date */
+                        ExpiresAt?: string;
+                        /** Format: uuid */
+                        PropertyId?: string;
+                        /** Format: uuid */
+                        UnitAssetId?: string;
+                        /** Format: uuid */
+                        OwnerId?: string;
+                        /** Format: binary */
+                        File?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DocumentResponseApiResponse"];
+                        "application/json": components["schemas"]["DocumentResponseApiResponse"];
+                        "text/json": components["schemas"]["DocumentResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/properties/{propertyId}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path: {
+                    propertyId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DocumentResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["DocumentResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["DocumentResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    propertyId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "multipart/form-data": {
+                        DocumentType?: string;
+                        /** Format: date */
+                        ExpiresAt?: string;
+                        /** Format: uuid */
+                        PropertyId?: string;
+                        /** Format: uuid */
+                        UnitAssetId?: string;
+                        /** Format: uuid */
+                        OwnerId?: string;
+                        /** Format: binary */
+                        File?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DocumentResponseApiResponse"];
+                        "application/json": components["schemas"]["DocumentResponseApiResponse"];
+                        "text/json": components["schemas"]["DocumentResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/units/{unitAssetId}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path: {
+                    unitAssetId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DocumentResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["DocumentResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["DocumentResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    unitAssetId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "multipart/form-data": {
+                        DocumentType?: string;
+                        /** Format: date */
+                        ExpiresAt?: string;
+                        /** Format: uuid */
+                        PropertyId?: string;
+                        /** Format: uuid */
+                        UnitAssetId?: string;
+                        /** Format: uuid */
+                        OwnerId?: string;
+                        /** Format: binary */
+                        File?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DocumentResponseApiResponse"];
+                        "application/json": components["schemas"]["DocumentResponseApiResponse"];
+                        "text/json": components["schemas"]["DocumentResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/owners/{ownerId}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path: {
+                    ownerId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DocumentResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["DocumentResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["DocumentResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    ownerId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "multipart/form-data": {
+                        DocumentType?: string;
+                        /** Format: date */
+                        ExpiresAt?: string;
+                        /** Format: uuid */
+                        PropertyId?: string;
+                        /** Format: uuid */
+                        UnitAssetId?: string;
+                        /** Format: uuid */
+                        OwnerId?: string;
+                        /** Format: binary */
+                        File?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DocumentResponseApiResponse"];
+                        "application/json": components["schemas"]["DocumentResponseApiResponse"];
+                        "text/json": components["schemas"]["DocumentResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/documents/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DocumentResponseApiResponse"];
+                        "application/json": components["schemas"]["DocumentResponseApiResponse"];
+                        "text/json": components["schemas"]["DocumentResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DocumentResponseApiResponse"];
+                        "application/json": components["schemas"]["DocumentResponseApiResponse"];
+                        "text/json": components["schemas"]["DocumentResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DocumentUpdateRequest"];
+                    "text/json": components["schemas"]["DocumentUpdateRequest"];
+                    "application/*+json": components["schemas"]["DocumentUpdateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DocumentResponseApiResponse"];
+                        "application/json": components["schemas"]["DocumentResponseApiResponse"];
+                        "text/json": components["schemas"]["DocumentResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/documents/{id}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/.well-known/jwks.json": {
         parameters: {
             query?: never;
@@ -1058,6 +1662,360 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/workflow-instances": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["WorkflowInstanceResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["WorkflowInstanceResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["WorkflowInstanceResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["WorkflowInstanceCreateRequest"];
+                    "text/json": components["schemas"]["WorkflowInstanceCreateRequest"];
+                    "application/*+json": components["schemas"]["WorkflowInstanceCreateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["WorkflowInstanceResponseApiResponse"];
+                        "application/json": components["schemas"]["WorkflowInstanceResponseApiResponse"];
+                        "text/json": components["schemas"]["WorkflowInstanceResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow-instances/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["WorkflowInstanceResponseApiResponse"];
+                        "application/json": components["schemas"]["WorkflowInstanceResponseApiResponse"];
+                        "text/json": components["schemas"]["WorkflowInstanceResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow-instances/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["WorkflowActionRequest"];
+                    "text/json": components["schemas"]["WorkflowActionRequest"];
+                    "application/*+json": components["schemas"]["WorkflowActionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["WorkflowInstanceResponseApiResponse"];
+                        "application/json": components["schemas"]["WorkflowInstanceResponseApiResponse"];
+                        "text/json": components["schemas"]["WorkflowInstanceResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow-instances/{id}/reject": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["WorkflowActionRequest"];
+                    "text/json": components["schemas"]["WorkflowActionRequest"];
+                    "application/*+json": components["schemas"]["WorkflowActionRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["WorkflowInstanceResponseApiResponse"];
+                        "application/json": components["schemas"]["WorkflowInstanceResponseApiResponse"];
+                        "text/json": components["schemas"]["WorkflowInstanceResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow-templates": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["WorkflowTemplateResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["WorkflowTemplateResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["WorkflowTemplateResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["WorkflowTemplateCreateRequest"];
+                    "text/json": components["schemas"]["WorkflowTemplateCreateRequest"];
+                    "application/*+json": components["schemas"]["WorkflowTemplateCreateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["WorkflowTemplateResponseApiResponse"];
+                        "application/json": components["schemas"]["WorkflowTemplateResponseApiResponse"];
+                        "text/json": components["schemas"]["WorkflowTemplateResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow-templates/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["WorkflowTemplateResponseApiResponse"];
+                        "application/json": components["schemas"]["WorkflowTemplateResponseApiResponse"];
+                        "text/json": components["schemas"]["WorkflowTemplateResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["WorkflowTemplateResponseApiResponse"];
+                        "application/json": components["schemas"]["WorkflowTemplateResponseApiResponse"];
+                        "text/json": components["schemas"]["WorkflowTemplateResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["WorkflowTemplateUpdateRequest"];
+                    "text/json": components["schemas"]["WorkflowTemplateUpdateRequest"];
+                    "application/*+json": components["schemas"]["WorkflowTemplateUpdateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["WorkflowTemplateResponseApiResponse"];
+                        "application/json": components["schemas"]["WorkflowTemplateResponseApiResponse"];
+                        "text/json": components["schemas"]["WorkflowTemplateResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
 }
 export type webhooks = Record<string, never>;
 export interface components {
@@ -1076,6 +2034,97 @@ export interface components {
             requestId: string | null;
             /** Format: date-time */
             timestamp: string;
+        };
+        DepartmentCreateRequest: {
+            name?: string | null;
+        };
+        DepartmentResponse: {
+            /** Format: uuid */
+            departmentId?: string;
+            name?: string | null;
+            status?: string | null;
+            rowVersion?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        DepartmentResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["DepartmentResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        DepartmentResponsePagedResponse: {
+            items?: components["schemas"]["DepartmentResponse"][] | null;
+            nextCursor?: string | null;
+            hasMore?: boolean;
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        DepartmentResponsePagedResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["DepartmentResponsePagedResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        DepartmentUpdateRequest: {
+            name?: string | null;
+            rowVersion?: string | null;
+        };
+        DocumentResponse: {
+            /** Format: uuid */
+            documentId?: string;
+            /** Format: uuid */
+            propertyId?: string | null;
+            /** Format: uuid */
+            unitAssetId?: string | null;
+            /** Format: uuid */
+            ownerId?: string | null;
+            documentType?: string | null;
+            /** Format: date */
+            expiresAt?: string | null;
+            status?: string | null;
+            currentVersion?: components["schemas"]["DocumentVersionResponse"];
+            rowVersion?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        DocumentResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["DocumentResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        DocumentResponsePagedResponse: {
+            items?: components["schemas"]["DocumentResponse"][] | null;
+            nextCursor?: string | null;
+            hasMore?: boolean;
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        DocumentResponsePagedResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["DocumentResponsePagedResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        DocumentUpdateRequest: {
+            documentType?: string | null;
+            /** Format: date */
+            expiresAt?: string | null;
+            rowVersion?: string | null;
+        };
+        DocumentVersionResponse: {
+            /** Format: uuid */
+            documentVersionId?: string;
+            /** Format: int32 */
+            versionNumber?: number;
+            fileName?: string | null;
+            contentType?: string | null;
+            /** Format: int64 */
+            fileSizeBytes?: number;
+            scanStatus?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
         };
         LoginRequest: {
             username?: string | null;
@@ -1347,6 +2396,149 @@ export interface components {
             sizeSqft?: number | null;
             /** Format: double */
             acquisitionValue?: number | null;
+            rowVersion?: string | null;
+        };
+        WorkflowActionRequest: {
+            note?: string | null;
+        };
+        WorkflowInstanceCreateRequest: {
+            /** Format: uuid */
+            workflowTemplateId?: string;
+            /** Format: uuid */
+            propertyId?: string | null;
+            /** Format: uuid */
+            requestingDepartmentId?: string | null;
+            /** Format: double */
+            costAmount?: number | null;
+        };
+        WorkflowInstanceResponse: {
+            /** Format: uuid */
+            workflowInstanceId?: string;
+            /** Format: uuid */
+            workflowTemplateId?: string;
+            /** Format: uuid */
+            propertyId?: string | null;
+            /** Format: uuid */
+            requestingDepartmentId?: string | null;
+            /** Format: double */
+            costAmount?: number | null;
+            status?: string | null;
+            /** Format: int32 */
+            currentStepOrder?: number;
+            /** Format: uuid */
+            createdBy?: string;
+            steps?: components["schemas"]["WorkflowStepInstanceResponse"][] | null;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        WorkflowInstanceResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["WorkflowInstanceResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        WorkflowInstanceResponsePagedResponse: {
+            items?: components["schemas"]["WorkflowInstanceResponse"][] | null;
+            nextCursor?: string | null;
+            hasMore?: boolean;
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        WorkflowInstanceResponsePagedResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["WorkflowInstanceResponsePagedResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        WorkflowRoutingRuleInput: {
+            criterion?: string | null;
+            operator?: string | null;
+            comparisonValue?: string | null;
+            /** Format: uuid */
+            targetDepartmentId?: string;
+        };
+        WorkflowRoutingRuleResponse: {
+            /** Format: uuid */
+            workflowRoutingRuleId?: string;
+            criterion?: string | null;
+            operator?: string | null;
+            comparisonValue?: string | null;
+            /** Format: uuid */
+            targetDepartmentId?: string;
+        };
+        WorkflowStepInstanceResponse: {
+            /** Format: uuid */
+            workflowStepInstanceId?: string;
+            /** Format: int32 */
+            stepOrder?: number;
+            name?: string | null;
+            /** Format: uuid */
+            routedDepartmentId?: string;
+            status?: string | null;
+            /** Format: uuid */
+            decidedBy?: string | null;
+            /** Format: date-time */
+            decidedAt?: string | null;
+            decisionNote?: string | null;
+        };
+        WorkflowStepTemplateInput: {
+            name?: string | null;
+            /** Format: uuid */
+            defaultDepartmentId?: string;
+            rules?: components["schemas"]["WorkflowRoutingRuleInput"][] | null;
+        };
+        WorkflowStepTemplateResponse: {
+            /** Format: uuid */
+            workflowStepTemplateId?: string;
+            /** Format: int32 */
+            stepOrder?: number;
+            name?: string | null;
+            /** Format: uuid */
+            defaultDepartmentId?: string;
+            rules?: components["schemas"]["WorkflowRoutingRuleResponse"][] | null;
+        };
+        WorkflowTemplateCreateRequest: {
+            name?: string | null;
+            description?: string | null;
+            requestType?: string | null;
+            steps?: components["schemas"]["WorkflowStepTemplateInput"][] | null;
+        };
+        WorkflowTemplateResponse: {
+            /** Format: uuid */
+            workflowTemplateId?: string;
+            name?: string | null;
+            description?: string | null;
+            requestType?: string | null;
+            status?: string | null;
+            steps?: components["schemas"]["WorkflowStepTemplateResponse"][] | null;
+            rowVersion?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        WorkflowTemplateResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["WorkflowTemplateResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        WorkflowTemplateResponsePagedResponse: {
+            items?: components["schemas"]["WorkflowTemplateResponse"][] | null;
+            nextCursor?: string | null;
+            hasMore?: boolean;
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        WorkflowTemplateResponsePagedResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["WorkflowTemplateResponsePagedResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        WorkflowTemplateUpdateRequest: {
+            name?: string | null;
+            description?: string | null;
+            requestType?: string | null;
+            steps?: components["schemas"]["WorkflowStepTemplateInput"][] | null;
             rowVersion?: string | null;
         };
     };

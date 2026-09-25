@@ -37,6 +37,30 @@ export function AdminShell() {
           >
             Owners
           </NavLink>
+          <NavLink
+            to="/admin/departments"
+            style={({ isActive }) => ({ fontWeight: isActive ? 700 : 400 })}
+          >
+            Departments
+          </NavLink>
+          <NavLink
+            to="/admin/workflow-templates"
+            style={({ isActive }) => ({ fontWeight: isActive ? 700 : 400 })}
+          >
+            Workflow templates
+          </NavLink>
+          <NavLink
+            to="/admin/workflow-instances"
+            style={({ isActive }) => ({ fontWeight: isActive ? 700 : 400 })}
+          >
+            Workflow instances
+          </NavLink>
+          <NavLink
+            to="/admin/documents"
+            style={({ isActive }) => ({ fontWeight: isActive ? 700 : 400 })}
+          >
+            Documents
+          </NavLink>
         </Group>
         <Group>
           <Text c="gray.7" size="sm">

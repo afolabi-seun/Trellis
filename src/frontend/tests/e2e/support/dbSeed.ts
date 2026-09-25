@@ -43,6 +43,82 @@ export async function seedTenantAdmin(username: string, tenantId: string): Promi
   }
 }
 
+/** workflow.spec.ts's approving user — TenantAdminOrDepartmentLead's DEPARTMENT_STAFF branch needs department_ids set at seed time (the JWT bakes them in at login, department_id claims aren't editable after the fact). */
+export async function seedDepartmentStaff(
+  username: string,
+  tenantId: string,
+  departmentIds: string[],
+): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(
+      `insert into trellis_auth.app_user (user_id, tenant_id, username, password_hash, role, department_ids, status)
+       values (gen_random_uuid(), $1, $2, $3, 'DEPARTMENT_STAFF', $4, 'ACTIVE')`,
+      [tenantId, username, SEED_PASSWORD_HASH, departmentIds],
+    );
+  } finally {
+    await client.end();
+  }
+}
+
+/** Seeded directly (not through the UI) so its id is known ahead of time, for seedDepartmentStaff's department_ids to reference. */
+export async function seedDepartment(
+  departmentId: string,
+  tenantId: string,
+  name: string,
+): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(
+      `insert into trellis_workflow.department (department_id, tenant_id, name, status, created_at, updated_at)
+       values ($1, $2, $3, 'ACTIVE', now(), now())`,
+      [departmentId, tenantId, name],
+    );
+  } finally {
+    await client.end();
+  }
+}
+
+export async function deleteWorkflowDataForTenant(tenantId: string): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(`delete from trellis_workflow.workflow_step_instance where tenant_id = $1`, [
+      tenantId,
+    ]);
+    await client.query(`delete from trellis_workflow.workflow_instance where tenant_id = $1`, [
+      tenantId,
+    ]);
+    await client.query(`delete from trellis_workflow.workflow_routing_rule where tenant_id = $1`, [
+      tenantId,
+    ]);
+    await client.query(`delete from trellis_workflow.workflow_step_template where tenant_id = $1`, [
+      tenantId,
+    ]);
+    await client.query(`delete from trellis_workflow.workflow_template where tenant_id = $1`, [
+      tenantId,
+    ]);
+    await client.query(`delete from trellis_workflow.department where tenant_id = $1`, [tenantId]);
+  } finally {
+    await client.end();
+  }
+}
+
+export async function deleteDocumentDataForTenant(tenantId: string): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(`delete from trellis_document.document_version where tenant_id = $1`, [
+      tenantId,
+    ]);
+    await client.query(`delete from trellis_document.document where tenant_id = $1`, [tenantId]);
+  } finally {
+    await client.end();
+  }
+}
+
 /** propertyasset.spec.ts's own cleanup — Owner/Property/UnitAsset are archived (never hard-deleted) by the app, so tests still delete their rows directly to keep the DB clean between runs. */
 export async function deletePropertyAssetDataForTenant(tenantId: string): Promise<void> {
   const client = new Client({ connectionString: CONNECTION_STRING });

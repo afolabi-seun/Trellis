@@ -43,7 +43,8 @@ export function subscribeToAccessToken(listener: () => void): () => void {
 
 interface RequestOptions {
   method?: "GET" | "POST" | "PATCH" | "DELETE";
-  body?: unknown;
+  /** A FormData body (document upload) is sent as-is, with no Content-Type header — the browser sets the multipart boundary itself; anything else is JSON-encoded. */
+  body?: unknown | FormData;
   query?: Record<string, string | number | undefined>;
   /** Skip the Authorization header and the 401-triggered refresh retry — the four anonymous auth endpoints. */
   anonymous?: boolean;
@@ -80,8 +81,10 @@ async function doFetch(path: string, options: RequestOptions): Promise<Response>
     }
   }
 
+  const isFormData = options.body instanceof FormData;
+
   const headers: Record<string, string> = {};
-  if (options.body !== undefined) {
+  if (options.body !== undefined && !isFormData) {
     headers["Content-Type"] = "application/json";
   }
   if (!options.anonymous && accessToken) {
@@ -94,7 +97,12 @@ async function doFetch(path: string, options: RequestOptions): Promise<Response>
     // The refresh_token cookie is httpOnly and scoped to /api/v1/auth/refresh — the browser
     // attaches it automatically; the app never reads or sets it directly (security_guide.md).
     credentials: "include",
-    body: options.body !== undefined ? JSON.stringify(options.body) : undefined,
+    body:
+      options.body === undefined
+        ? undefined
+        : isFormData
+          ? (options.body as FormData)
+          : JSON.stringify(options.body),
   });
 }
 
