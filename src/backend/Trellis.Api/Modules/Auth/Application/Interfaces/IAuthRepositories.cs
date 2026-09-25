@@ -11,6 +11,9 @@ public interface IAppUserRepository
     /// <summary>Username is globally unique (data_model.md) — not tenant-scoped, so this isn't tenant-filtered.</summary>
     Task<AppUser?> GetByUsernameAsync(string username);
 
+    /// <summary>Every TENANT_ADMIN plus every DEPARTMENT_STAFF whose DepartmentIds contains <paramref name="departmentId"/> — Workflow's own notify-the-newly-active-step's-department fan-out (BDR-WF-003).</summary>
+    Task<IReadOnlyList<AppUser>> GetByDepartmentAsync(Guid tenantId, Guid departmentId);
+
     Task SaveChangesAsync();
 }
 

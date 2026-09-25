@@ -12,5 +12,5 @@ public static class ModuleRegistry
 {
     // Notification has no Presentation/Controllers, so it never registers its own OpenAPI group
     // (project_architecture.md's Module Catalogue).
-    public static IReadOnlyCollection<string> Keys { get; } = ["tenant", "auth", "propertyasset"];
+    public static IReadOnlyCollection<string> Keys { get; } = ["tenant", "auth", "propertyasset", "document", "workflow"];
 }

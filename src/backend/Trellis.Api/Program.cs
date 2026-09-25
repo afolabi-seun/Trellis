@@ -5,10 +5,13 @@ using Trellis.Api.Configuration;
 using Trellis.Api.Core;
 using Trellis.Api.Core.Logging;
 using Trellis.Api.Core.Middleware;
+using Trellis.Api.Core.Validation;
 using Trellis.Api.Modules.Auth;
+using Trellis.Api.Modules.Document;
 using Trellis.Api.Modules.Notification;
 using Trellis.Api.Modules.PropertyAsset;
 using Trellis.Api.Modules.Tenant;
+using Trellis.Api.Modules.Workflow;
 
 // devops_environments.md, "Configuration & Secrets Per Environment": .env exists only in Local
 // (gitignored — never committed). Development/Staging/Production have no file on disk; the
@@ -26,17 +29,21 @@ builder.Host.UseSerilog((context, services, configuration) => configuration
     .Enrich.With<RedactingEnricher>()
     .WriteTo.Console(formatProvider: CultureInfo.InvariantCulture));
 
-builder.Services.AddControllers();
+// ValidationActionFilter's own doc comment explains why this registration needed adding at all.
+builder.Services.AddControllers(options => options.Filters.Add<ValidationActionFilter>());
 builder.Services.AddTrellisSwaggerGen();
 
 builder.Services.AddTrellisCore(builder.Configuration);
 
-// Tenant → Notification → Auth → PropertyAsset, per data_model.md's migration dependency order
-// and roadmap.md's Phase 1 → Phase 2 sequencing.
+// Tenant → Notification → Auth → PropertyAsset → Document → Workflow, per data_model.md's
+// migration dependency order (Vendor, between PropertyAsset and Document, isn't built until
+// Phase 4) and roadmap.md's Phase 1 → Phase 2 → Phase 3 sequencing.
 builder.Services.AddTenantModule(builder.Configuration);
 builder.Services.AddNotificationModule(builder.Configuration);
 builder.Services.AddAuthModule(builder.Configuration);
 builder.Services.AddPropertyAssetModule(builder.Configuration);
+builder.Services.AddDocumentModule(builder.Configuration);
+builder.Services.AddWorkflowModule(builder.Configuration);
 
 var app = builder.Build();
 

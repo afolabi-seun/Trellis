@@ -1,3 +1,4 @@
+using FluentValidation;
 using Microsoft.EntityFrameworkCore;
 using Trellis.Api.Core.Audit;
 using Trellis.Api.Core.Configuration;
@@ -39,6 +40,11 @@ public static class CoreModuleExtensions
 
         services.AddScoped<IAuditService, AuditService>();
         services.AddSingleton<ISecretProvider, EnvironmentSecretProvider>();
+
+        // Every module's AbstractValidator<TRequest> subclasses, from every module in this
+        // single-project assembly (data_model.md's EF Core Conventions note applies here too) —
+        // see ValidationActionFilter's doc comment for why this call needed adding at all.
+        services.AddValidatorsFromAssembly(typeof(CoreModuleExtensions).Assembly);
 
         return services;
     }

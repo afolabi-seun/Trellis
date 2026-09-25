@@ -9,3 +9,7 @@ TestResults/
 .env
 .env.*
 !.env.example
+
+# LocalDiskFileStorage's local dev/test upload target (Core/Files/FileStorageOptions) — real
+# uploaded file bytes from running the API locally, never committed.
+Trellis.Api/data/

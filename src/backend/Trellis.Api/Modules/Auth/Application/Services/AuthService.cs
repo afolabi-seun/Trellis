@@ -271,6 +271,18 @@ public sealed class AuthService(
         return ServiceResult<object>.Success(new { });
     }
 
+    public async Task<IReadOnlyList<AppUserSummary>> GetUsersByDepartmentAsync(Guid tenantId, Guid departmentId)
+    {
+        var users = await userRepository.GetByDepartmentAsync(tenantId, departmentId);
+        return users.Select(u => new AppUserSummary(u.UserId, u.Username, u.TenantId)).ToList();
+    }
+
+    public async Task<AppUserSummary?> GetUserByIdAsync(Guid userId)
+    {
+        var user = await userRepository.GetByIdAsync(userId);
+        return user is null ? null : new AppUserSummary(user.UserId, user.Username, user.TenantId);
+    }
+
     private async Task<ServiceResult<LoginResult>> IssueSessionAsync(AppUser user)
     {
         var refreshToken = GenerateOpaqueToken();

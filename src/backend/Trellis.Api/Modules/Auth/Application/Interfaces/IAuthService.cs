@@ -38,4 +38,16 @@ public interface IAuthService
     Task RequestPasswordResetAsync(string username, string? requestedIp);
 
     Task<ServiceResult<object>> ResetPasswordAsync(string token, string newPassword);
+
+    /// <summary>
+    /// The one legitimate cross-module read Workflow needs from Auth — every TENANT_ADMIN plus
+    /// every DEPARTMENT_STAFF member of <paramref name="departmentId"/>, so a newly-active
+    /// WorkflowStepInstance can notify the people who can act on it (BDR-WF-003). Exposed as a
+    /// service method, never direct table access (the same rule Tenant's own
+    /// CreateTenantAdminAsync call established in Phase 1).
+    /// </summary>
+    Task<IReadOnlyList<AppUserSummary>> GetUsersByDepartmentAsync(Guid tenantId, Guid departmentId);
+
+    /// <summary>Document's expiry-alert background service resolves a document's uploader through this — the one legitimate cross-module read it needs from Auth, same reasoning as <see cref="GetUsersByDepartmentAsync"/>.</summary>
+    Task<AppUserSummary?> GetUserByIdAsync(Guid userId);
 }

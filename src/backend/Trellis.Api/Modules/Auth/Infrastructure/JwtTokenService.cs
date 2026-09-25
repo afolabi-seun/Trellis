@@ -57,6 +57,14 @@ public sealed class JwtTokenService : IJwtTokenService
             claims.Add(new Claim("tenant_id", tenantId.ToString()));
         }
 
+        // TenantAdminOrDepartmentLead (Workflow's approval gate) reads these straight off the
+        // token — security_guide.md's no-per-request-revalidation-against-Auth principle — so a
+        // DEPARTMENT_STAFF user's memberships must ride the access token like tenant_id/role do.
+        if (user.DepartmentIds is { Length: > 0 } departmentIds)
+        {
+            claims.AddRange(departmentIds.Select(id => new Claim("department_id", id.ToString())));
+        }
+
         return WriteToken(claims, TimeSpan.FromMinutes(_options.AccessTokenExpiryMinutes));
     }
 

@@ -77,4 +77,31 @@ public static class ErrorCodeRegistry
         /// <summary>TRL-E-AST-3002 — can't archive a Property while it still has an active UnitAsset (BDR-AST-003: documents/workflow attach at this level).</summary>
         public const string PropertyHasActiveUnitAssets = "TRL-E-AST-3002";
     }
+
+    public static class Document
+    {
+        /// <summary>TRL-E-DOC-4000 — an Archive request the document's current status doesn't allow.</summary>
+        public const string InvalidStatusTransition = "TRL-E-DOC-4000";
+
+        /// <summary>TRL-E-DOC-4001 — the uploaded file's actual bytes (magic-number sniffed) don't match an allowed type for where it's being uploaded (security_guide.md's File Upload Security).</summary>
+        public const string FileTypeNotAllowed = "TRL-E-DOC-4001";
+
+        /// <summary>TRL-E-DOC-4002 — more than one of {propertyId, unitAssetId, ownerId} was set; a document attaches to at most one.</summary>
+        public const string MultipleAttachmentTargets = "TRL-E-DOC-4002";
+
+        /// <summary>TRL-E-DOC-4003 — the caller isn't this version's uploader, and scan_status isn't CLEAN yet (security_guide.md: invisible to everyone but the uploader until a scan clears).</summary>
+        public const string DocumentNotYetVisible = "TRL-E-DOC-4003";
+    }
+
+    public static class Workflow
+    {
+        /// <summary>TRL-E-WF-5000 — an Archive/status-transition request the entity's current status doesn't allow.</summary>
+        public const string InvalidStatusTransition = "TRL-E-WF-5000";
+
+        /// <summary>TRL-E-WF-5001 — Approve/Reject called on a workflow instance that isn't IN_PROGRESS, or whose active step isn't the one being acted on.</summary>
+        public const string NoStepAwaitingDecision = "TRL-E-WF-5001";
+
+        /// <summary>TRL-E-WF-5002 — TenantAdminOrDepartmentLead: the caller is DEPARTMENT_STAFF but not a member of the active step's routed department.</summary>
+        public const string NotAuthorizedForStepDepartment = "TRL-E-WF-5002";
+    }
 }

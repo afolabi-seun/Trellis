@@ -25,4 +25,19 @@ public static class AuditTypes
         public const string MfaRecoveryCodeUsed = "MFA_RECOVERY_CODE_USED";
         public const string MfaRecoveryCodesRegenerated = "MFA_RECOVERY_CODES_REGENERATED";
     }
+
+    /// <summary>BDR-WF-004 — every routing/approval decision is audited, not just visible via WorkflowStepInstance's own history columns.</summary>
+    public static class Workflow
+    {
+        public const string WorkflowInstanceCreated = "WORKFLOW_INSTANCE_CREATED";
+        public const string WorkflowStepApproved = "WORKFLOW_STEP_APPROVED";
+        public const string WorkflowStepRejected = "WORKFLOW_STEP_REJECTED";
+    }
+
+    /// <summary>data_model.md's audit_type registry names these two explicitly.</summary>
+    public static class Document
+    {
+        public const string DocumentUploaded = "DOCUMENT_UPLOADED";
+        public const string DocumentExpiryAlerted = "DOCUMENT_EXPIRY_ALERTED";
+    }
 }
