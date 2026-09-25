@@ -13,6 +13,7 @@ export interface DocumentUploadFields {
   propertyId?: string;
   unitAssetId?: string;
   ownerId?: string;
+  workflowInstanceId?: string;
   file: File;
 }
 
@@ -23,6 +24,7 @@ function toFormData(fields: DocumentUploadFields): FormData {
   if (fields.propertyId) form.set("propertyId", fields.propertyId);
   if (fields.unitAssetId) form.set("unitAssetId", fields.unitAssetId);
   if (fields.ownerId) form.set("ownerId", fields.ownerId);
+  if (fields.workflowInstanceId) form.set("workflowInstanceId", fields.workflowInstanceId);
   form.set("file", fields.file);
   return form;
 }
@@ -46,8 +48,23 @@ export const documentsApi = {
       query: { cursor, limit },
     }),
 
+  /** Also the route a Vendor's evidence upload reaches — VENDOR_USER, TENANT_ADMIN, and DEPARTMENT_STAFF are all allowed here (WorkflowInstanceDocumentsController). */
+  listByWorkflowInstance: (workflowInstanceId: string, cursor?: string, limit = 25) =>
+    apiFetch<DocumentResponsePagedResponse>(
+      `/api/v1/workflow-instances/${workflowInstanceId}/documents`,
+      {
+        query: { cursor, limit },
+      },
+    ),
+
   create: (fields: DocumentUploadFields) =>
     apiFetch<DocumentResponse>("/api/v1/documents", { method: "POST", body: toFormData(fields) }),
+
+  createForWorkflowInstance: (workflowInstanceId: string, fields: DocumentUploadFields) =>
+    apiFetch<DocumentResponse>(`/api/v1/workflow-instances/${workflowInstanceId}/documents`, {
+      method: "POST",
+      body: toFormData(fields),
+    }),
 
   getById: (documentId: string) => apiFetch<DocumentResponse>(`/api/v1/documents/${documentId}`),
 

@@ -5,6 +5,7 @@ import { DocumentsLibraryPage } from "./features/admin/document/DocumentsLibrary
 import { OwnersListPage } from "./features/admin/propertyasset/OwnersListPage";
 import { PropertiesListPage } from "./features/admin/propertyasset/PropertiesListPage";
 import { PropertyDetailPage } from "./features/admin/propertyasset/PropertyDetailPage";
+import { VendorsListPage } from "./features/admin/vendor/VendorsListPage";
 import { DepartmentsListPage } from "./features/admin/workflow/DepartmentsListPage";
 import { WorkflowInstancesBoardPage } from "./features/admin/workflow/WorkflowInstancesBoardPage";
 import { WorkflowTemplatesListPage } from "./features/admin/workflow/WorkflowTemplatesListPage";
@@ -13,15 +14,9 @@ import { LoginPage } from "./features/auth/LoginPage";
 import { MfaVerifyPage } from "./features/auth/MfaVerifyPage";
 import { ResetPasswordPage } from "./features/auth/ResetPasswordPage";
 import { TenantsListPage } from "./features/platform/TenantsListPage";
-
-// frontend_architecture.md, "One SPA, Role-Based Routing" — the Vendor tree has no real screen
-// yet (a later phase). Real screens land module-by-module per roadmap.md; UI-layer routing is
-// UX, not the security boundary — the API enforces access regardless of what this router renders
-// (see the same doc's caveat).
-
-function Placeholder({ label }: { label: string }) {
-  return <div>{label}</div>;
-}
+import { VendorAssignmentDetailPage } from "./features/vendor/VendorAssignmentDetailPage";
+import { VendorAssignmentsListPage } from "./features/vendor/VendorAssignmentsListPage";
+import { VendorShell } from "./features/vendor/VendorShell";
 
 export function App() {
   return (
@@ -41,11 +36,15 @@ export function App() {
           <Route path="workflow-templates" element={<WorkflowTemplatesListPage />} />
           <Route path="workflow-instances" element={<WorkflowInstancesBoardPage />} />
           <Route path="documents" element={<DocumentsLibraryPage />} />
+          <Route path="vendors" element={<VendorsListPage />} />
         </Route>
       </Route>
 
       <Route element={<RequireRole allowedRoles={["VENDOR_USER"]} />}>
-        <Route path="/vendor/*" element={<Placeholder label="Vendor Portal" />} />
+        <Route path="/vendor" element={<VendorShell />}>
+          <Route index element={<VendorAssignmentsListPage />} />
+          <Route path="assignments/:workItemId" element={<VendorAssignmentDetailPage />} />
+        </Route>
       </Route>
 
       <Route element={<RequireRole allowedRoles={["SUPER_ADMIN"]} />}>

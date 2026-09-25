@@ -14,9 +14,13 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
 import { TrellisApiError } from "../../../api/client";
+import { tenantVendorRelationshipsApi } from "../../../api/tenantVendorRelationships";
+import { vendorAssignmentsApi } from "../../../api/vendorAssignments";
+import { vendorsApi } from "../../../api/vendors";
 import { workflowInstancesApi } from "../../../api/workflowInstances";
 import { workflowTemplatesApi } from "../../../api/workflowTemplates";
 import { dangerAlertStyles, dangerButtonStyles } from "../../../theme/dangerStyles";
@@ -47,6 +51,8 @@ const stepStatusColor: Record<string, string> = {
 export function WorkflowInstancesBoardPage() {
   const queryClient = useQueryClient();
   const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
+  const [assigningInstanceId, setAssigningInstanceId] = useState<string | null>(null);
+  const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
 
   const instancesQuery = useQuery({
     queryKey: ["workflow", "instances"],
@@ -56,6 +62,45 @@ export function WorkflowInstancesBoardPage() {
   const templatesQuery = useQuery({
     queryKey: ["workflow", "templates"],
     queryFn: () => workflowTemplatesApi.list(),
+  });
+
+  const relationshipsQuery = useQuery({
+    queryKey: ["vendor", "relationships"],
+    queryFn: () => tenantVendorRelationshipsApi.list(),
+  });
+
+  const vendorsQuery = useQuery({
+    queryKey: ["vendor", "vendors"],
+    queryFn: () => vendorsApi.search(),
+  });
+
+  const vendorNameById = new Map(
+    (vendorsQuery.data?.items ?? []).map((v) => [v.vendorId, v.vendorName]),
+  );
+
+  const activeVendorOptions =
+    relationshipsQuery.data?.items
+      ?.filter((r) => r.status === "ACTIVE")
+      .map((r) => ({ value: r.vendorId!, label: vendorNameById.get(r.vendorId) ?? r.vendorId! })) ??
+    [];
+
+  const assignVendorMutation = useMutation({
+    mutationFn: ({
+      workflowInstanceId,
+      vendorId,
+    }: {
+      workflowInstanceId: string;
+      vendorId: string;
+    }) =>
+      vendorAssignmentsApi.create({
+        vendorId,
+        workItemType: "WORKFLOW_INSTANCE",
+        workItemId: workflowInstanceId,
+      }),
+    onSuccess: () => {
+      setAssigningInstanceId(null);
+      setSelectedVendorId(null);
+    },
   });
 
   const templateOptions =
@@ -122,6 +167,14 @@ export function WorkflowInstancesBoardPage() {
         </Alert>
       )}
 
+      {assignVendorMutation.isError && (
+        <Alert color="red" title="Could not assign vendor" styles={dangerAlertStyles}>
+          {assignVendorMutation.error instanceof TrellisApiError
+            ? assignVendorMutation.error.message
+            : "Something went wrong."}
+        </Alert>
+      )}
+
       <Stack gap="md">
         {instancesQuery.data?.items?.map((instance) => {
           const currentStep = instance.steps?.find((s) => s.status === "IN_PROGRESS");
@@ -139,39 +192,82 @@ export function WorkflowInstancesBoardPage() {
                     {instance.status}
                   </Badge>
                 </Group>
-                {currentStep && (
-                  <Group gap="xs">
-                    <Button
-                      size="xs"
-                      loading={
-                        approveMutation.isPending &&
-                        approveMutation.variables === instance.workflowInstanceId
-                      }
-                      onClick={() =>
-                        instance.workflowInstanceId &&
-                        approveMutation.mutate(instance.workflowInstanceId)
-                      }
-                    >
-                      Approve
-                    </Button>
-                    <Button
-                      size="xs"
-                      variant="outline"
-                      styles={dangerButtonStyles}
-                      loading={
-                        rejectMutation.isPending &&
-                        rejectMutation.variables === instance.workflowInstanceId
-                      }
-                      onClick={() =>
-                        instance.workflowInstanceId &&
-                        rejectMutation.mutate(instance.workflowInstanceId)
-                      }
-                    >
-                      Reject
-                    </Button>
-                  </Group>
-                )}
+                <Group gap="xs">
+                  <Button
+                    size="xs"
+                    variant="subtle"
+                    onClick={() => {
+                      setAssigningInstanceId(instance.workflowInstanceId ?? null);
+                      setSelectedVendorId(null);
+                    }}
+                  >
+                    Assign vendor
+                  </Button>
+                  {currentStep && (
+                    <>
+                      <Button
+                        size="xs"
+                        loading={
+                          approveMutation.isPending &&
+                          approveMutation.variables === instance.workflowInstanceId
+                        }
+                        onClick={() =>
+                          instance.workflowInstanceId &&
+                          approveMutation.mutate(instance.workflowInstanceId)
+                        }
+                      >
+                        Approve
+                      </Button>
+                      <Button
+                        size="xs"
+                        variant="outline"
+                        styles={dangerButtonStyles}
+                        loading={
+                          rejectMutation.isPending &&
+                          rejectMutation.variables === instance.workflowInstanceId
+                        }
+                        onClick={() =>
+                          instance.workflowInstanceId &&
+                          rejectMutation.mutate(instance.workflowInstanceId)
+                        }
+                      >
+                        Reject
+                      </Button>
+                    </>
+                  )}
+                </Group>
               </Group>
+
+              {assigningInstanceId === instance.workflowInstanceId && (
+                <Group align="flex-end" gap="xs">
+                  <Select
+                    label="Vendor"
+                    placeholder="Pick an actively engaged vendor"
+                    data={activeVendorOptions}
+                    value={selectedVendorId}
+                    onChange={setSelectedVendorId}
+                    w={260}
+                  />
+                  <Button
+                    size="xs"
+                    loading={assignVendorMutation.isPending}
+                    disabled={!selectedVendorId}
+                    onClick={() =>
+                      instance.workflowInstanceId &&
+                      selectedVendorId &&
+                      assignVendorMutation.mutate({
+                        workflowInstanceId: instance.workflowInstanceId,
+                        vendorId: selectedVendorId,
+                      })
+                    }
+                  >
+                    Assign
+                  </Button>
+                  <Button size="xs" variant="subtle" onClick={() => setAssigningInstanceId(null)}>
+                    Cancel
+                  </Button>
+                </Group>
+              )}
 
               <Table>
                 <Table.Thead>

@@ -612,6 +612,8 @@ export interface paths {
                         UnitAssetId?: string;
                         /** Format: uuid */
                         OwnerId?: string;
+                        /** Format: uuid */
+                        WorkflowInstanceId?: string;
                         /** Format: binary */
                         File?: string;
                     };
@@ -693,6 +695,8 @@ export interface paths {
                         UnitAssetId?: string;
                         /** Format: uuid */
                         OwnerId?: string;
+                        /** Format: uuid */
+                        WorkflowInstanceId?: string;
                         /** Format: binary */
                         File?: string;
                     };
@@ -774,6 +778,8 @@ export interface paths {
                         UnitAssetId?: string;
                         /** Format: uuid */
                         OwnerId?: string;
+                        /** Format: uuid */
+                        WorkflowInstanceId?: string;
                         /** Format: binary */
                         File?: string;
                     };
@@ -855,6 +861,8 @@ export interface paths {
                         UnitAssetId?: string;
                         /** Format: uuid */
                         OwnerId?: string;
+                        /** Format: uuid */
+                        WorkflowInstanceId?: string;
                         /** Format: binary */
                         File?: string;
                     };
@@ -1500,6 +1508,108 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/tenant-vendor-relationships": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TenantVendorRelationshipResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["TenantVendorRelationshipResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["TenantVendorRelationshipResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: {
+                    vendorId?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TenantVendorRelationshipResponseApiResponse"];
+                        "application/json": components["schemas"]["TenantVendorRelationshipResponseApiResponse"];
+                        "text/json": components["schemas"]["TenantVendorRelationshipResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/tenant-vendor-relationships/{id}/terminate": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TenantVendorRelationshipResponseApiResponse"];
+                        "application/json": components["schemas"]["TenantVendorRelationshipResponseApiResponse"];
+                        "text/json": components["schemas"]["TenantVendorRelationshipResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/properties/{propertyId}/units": {
         parameters: {
             query?: never;
@@ -1660,6 +1770,504 @@ export interface paths {
                 };
             };
         };
+        trace?: never;
+    };
+    "/api/v1/vendor-assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VendorAssignmentResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["VendorAssignmentResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["VendorAssignmentResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["VendorAssignmentCreateRequest"];
+                    "text/json": components["schemas"]["VendorAssignmentCreateRequest"];
+                    "application/*+json": components["schemas"]["VendorAssignmentCreateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VendorAssignmentResponseApiResponse"];
+                        "application/json": components["schemas"]["VendorAssignmentResponseApiResponse"];
+                        "text/json": components["schemas"]["VendorAssignmentResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vendor-assignments/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VendorAssignmentResponseApiResponse"];
+                        "application/json": components["schemas"]["VendorAssignmentResponseApiResponse"];
+                        "text/json": components["schemas"]["VendorAssignmentResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vendor-portal/assignments": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VendorAssignmentVendorViewPagedResponseApiResponse"];
+                        "application/json": components["schemas"]["VendorAssignmentVendorViewPagedResponseApiResponse"];
+                        "text/json": components["schemas"]["VendorAssignmentVendorViewPagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vendor-portal/assignments/{workItemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    workItemId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VendorAssignmentDetailViewApiResponse"];
+                        "application/json": components["schemas"]["VendorAssignmentDetailViewApiResponse"];
+                        "text/json": components["schemas"]["VendorAssignmentDetailViewApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vendor-portal/assignments/{workItemId}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    workItemId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VendorAssignmentResponseApiResponse"];
+                        "application/json": components["schemas"]["VendorAssignmentResponseApiResponse"];
+                        "text/json": components["schemas"]["VendorAssignmentResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vendor-portal/assignments/{workItemId}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    workItemId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VendorAssignmentResponseApiResponse"];
+                        "application/json": components["schemas"]["VendorAssignmentResponseApiResponse"];
+                        "text/json": components["schemas"]["VendorAssignmentResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vendors": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    search?: string;
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VendorResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["VendorResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["VendorResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["VendorCreateRequest"];
+                    "text/json": components["schemas"]["VendorCreateRequest"];
+                    "application/*+json": components["schemas"]["VendorCreateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VendorResponseApiResponse"];
+                        "application/json": components["schemas"]["VendorResponseApiResponse"];
+                        "text/json": components["schemas"]["VendorResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vendors/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VendorResponseApiResponse"];
+                        "application/json": components["schemas"]["VendorResponseApiResponse"];
+                        "text/json": components["schemas"]["VendorResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vendors/{id}/invite-user": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["VendorInviteUserRequest"];
+                    "text/json": components["schemas"]["VendorInviteUserRequest"];
+                    "application/*+json": components["schemas"]["VendorInviteUserRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VendorResponseApiResponse"];
+                        "application/json": components["schemas"]["VendorResponseApiResponse"];
+                        "text/json": components["schemas"]["VendorResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/workflow-instances/{workItemId}/documents": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path: {
+                    workItemId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DocumentResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["DocumentResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["DocumentResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    workItemId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "multipart/form-data": {
+                        DocumentType?: string;
+                        /** Format: date */
+                        ExpiresAt?: string;
+                        /** Format: uuid */
+                        PropertyId?: string;
+                        /** Format: uuid */
+                        UnitAssetId?: string;
+                        /** Format: uuid */
+                        OwnerId?: string;
+                        /** Format: uuid */
+                        WorkflowInstanceId?: string;
+                        /** Format: binary */
+                        File?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DocumentResponseApiResponse"];
+                        "application/json": components["schemas"]["DocumentResponseApiResponse"];
+                        "text/json": components["schemas"]["DocumentResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/workflow-instances": {
@@ -2079,6 +2687,8 @@ export interface components {
             unitAssetId?: string | null;
             /** Format: uuid */
             ownerId?: string | null;
+            /** Format: uuid */
+            workflowInstanceId?: string | null;
             documentType?: string | null;
             /** Format: date */
             expiresAt?: string | null;
@@ -2338,6 +2948,40 @@ export interface components {
             error?: components["schemas"]["ApiError"];
             meta: components["schemas"]["ApiMeta"];
         };
+        TenantVendorRelationshipResponse: {
+            /** Format: uuid */
+            tenantVendorRelationshipId?: string;
+            /** Format: uuid */
+            tenantId?: string;
+            /** Format: uuid */
+            vendorId?: string;
+            status?: string | null;
+            /** Format: date-time */
+            terminatedAt?: string | null;
+            /** Format: uuid */
+            terminatedByUserId?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        TenantVendorRelationshipResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["TenantVendorRelationshipResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        TenantVendorRelationshipResponsePagedResponse: {
+            items?: components["schemas"]["TenantVendorRelationshipResponse"][] | null;
+            nextCursor?: string | null;
+            hasMore?: boolean;
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        TenantVendorRelationshipResponsePagedResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["TenantVendorRelationshipResponsePagedResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
         TokenResponse: {
             accessToken?: string | null;
             /** Format: date-time */
@@ -2397,6 +3041,122 @@ export interface components {
             /** Format: double */
             acquisitionValue?: number | null;
             rowVersion?: string | null;
+        };
+        VendorAssignmentCreateRequest: {
+            /** Format: uuid */
+            vendorId?: string;
+            workItemType?: string | null;
+            /** Format: uuid */
+            workItemId?: string;
+        };
+        VendorAssignmentDetailView: {
+            assignment?: components["schemas"]["VendorAssignmentResponse"];
+            tenantName?: string | null;
+            workItem?: components["schemas"]["VendorWorkflowInstanceView"];
+        };
+        VendorAssignmentDetailViewApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["VendorAssignmentDetailView"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        VendorAssignmentResponse: {
+            /** Format: uuid */
+            assignmentId?: string;
+            /** Format: uuid */
+            vendorId?: string;
+            /** Format: uuid */
+            tenantId?: string;
+            workItemType?: string | null;
+            /** Format: uuid */
+            workItemId?: string;
+            status?: string | null;
+            /** Format: date-time */
+            assignedAt?: string;
+            /** Format: date-time */
+            closedAt?: string | null;
+        };
+        VendorAssignmentResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["VendorAssignmentResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        VendorAssignmentResponsePagedResponse: {
+            items?: components["schemas"]["VendorAssignmentResponse"][] | null;
+            nextCursor?: string | null;
+            hasMore?: boolean;
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        VendorAssignmentResponsePagedResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["VendorAssignmentResponsePagedResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        VendorAssignmentVendorView: {
+            assignment?: components["schemas"]["VendorAssignmentResponse"];
+            tenantName?: string | null;
+        };
+        VendorAssignmentVendorViewPagedResponse: {
+            items?: components["schemas"]["VendorAssignmentVendorView"][] | null;
+            nextCursor?: string | null;
+            hasMore?: boolean;
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        VendorAssignmentVendorViewPagedResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["VendorAssignmentVendorViewPagedResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        VendorCreateRequest: {
+            vendorName?: string | null;
+            category?: string | null;
+        };
+        VendorInviteUserRequest: {
+            email?: string | null;
+        };
+        VendorResponse: {
+            /** Format: uuid */
+            vendorId?: string;
+            vendorName?: string | null;
+            category?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        VendorResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["VendorResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        VendorResponsePagedResponse: {
+            items?: components["schemas"]["VendorResponse"][] | null;
+            nextCursor?: string | null;
+            hasMore?: boolean;
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        VendorResponsePagedResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["VendorResponsePagedResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        VendorWorkflowInstanceView: {
+            /** Format: uuid */
+            workflowInstanceId?: string;
+            /** Format: uuid */
+            propertyId?: string | null;
+            status?: string | null;
+            /** Format: int32 */
+            currentStepOrder?: number;
+            steps?: components["schemas"]["WorkflowStepInstanceResponse"][] | null;
+            /** Format: date-time */
+            createdAt?: string;
         };
         WorkflowActionRequest: {
             note?: string | null;

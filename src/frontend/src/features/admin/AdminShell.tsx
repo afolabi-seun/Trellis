@@ -61,6 +61,12 @@ export function AdminShell() {
           >
             Documents
           </NavLink>
+          <NavLink
+            to="/admin/vendors"
+            style={({ isActive }) => ({ fontWeight: isActive ? 700 : 400 })}
+          >
+            Vendors
+          </NavLink>
         </Group>
         <Group>
           <Text c="gray.7" size="sm">

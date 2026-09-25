@@ -17,7 +17,7 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { TrellisApiError } from "../../../api/client";
 import { documentsApi } from "../../../api/documents";
-import { dangerAlertStyles } from "../../../theme/dangerStyles";
+import { dangerAlertStyles, dangerButtonStyles } from "../../../theme/dangerStyles";
 
 const documentTypeOptions = [
   { value: "LEASE", label: "Lease" },
@@ -140,6 +140,7 @@ export function DocumentsLibraryPage() {
                       size="xs"
                       variant="subtle"
                       color="red"
+                      styles={dangerButtonStyles}
                       loading={
                         archiveMutation.isPending && archiveMutation.variables === doc.documentId
                       }
@@ -196,6 +197,7 @@ export function DocumentsLibraryPage() {
               "image/jpeg": [".jpg", ".jpeg"],
               "image/png": [".png"],
             }}
+            inputProps={{ "aria-label": "Document file" }}
           >
             <Text ta="center">{file ? file.name : "Drag a file here, or click to select one"}</Text>
           </Dropzone>

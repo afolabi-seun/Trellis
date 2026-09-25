@@ -29,6 +29,21 @@ export async function seedSuperAdmin(username: string): Promise<void> {
   }
 }
 
+/** Seeded directly (not through the Super Admin provisioning flow) so its id is known ahead of time — needed wherever a test asserts a server-resolved tenant name, e.g. vendor.spec.ts's cross-tenant view (ITenantService.GetByIdAsync). */
+export async function seedTenant(tenantId: string, tenantName: string): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(
+      `insert into trellis_tenant.tenant (tenant_id, tenant_name, country_code, status, subscription_tier, created_at, updated_at)
+       values ($1, $2, 'US', 'ACTIVE', 'STARTER', now(), now())`,
+      [tenantId, tenantName],
+    );
+  } finally {
+    await client.end();
+  }
+}
+
 export async function seedTenantAdmin(username: string, tenantId: string): Promise<void> {
   const client = new Client({ connectionString: CONNECTION_STRING });
   await client.connect();
@@ -127,6 +142,118 @@ export async function deletePropertyAssetDataForTenant(tenantId: string): Promis
     await client.query(`delete from trellis_property.unit_asset where tenant_id = $1`, [tenantId]);
     await client.query(`delete from trellis_property.property where tenant_id = $1`, [tenantId]);
     await client.query(`delete from trellis_property.owner where tenant_id = $1`, [tenantId]);
+  } finally {
+    await client.end();
+  }
+}
+
+/** Seeded directly (not through the UI) so its id is known ahead of time, for vendor-assignment seeding to reference — mirrors seedDepartment's own reasoning. workflow_template_id and created_by are arbitrary uuids; nothing validates either FK-lessly. */
+export async function seedWorkflowInstance(
+  workflowInstanceId: string,
+  tenantId: string,
+): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(
+      `insert into trellis_workflow.workflow_instance
+         (workflow_instance_id, tenant_id, workflow_template_id, cost_amount, status, current_step_order, created_by, created_at, updated_at)
+       values ($1, $2, gen_random_uuid(), 500, 'IN_PROGRESS', 1, gen_random_uuid(), now(), now())`,
+      [workflowInstanceId, tenantId],
+    );
+  } finally {
+    await client.end();
+  }
+}
+
+/** vendor.spec.ts's cross-tenant vendor — global (no tenant_id), created once and engaged by two separate tenants. */
+export async function seedVendor(vendorId: string, vendorName: string): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(
+      `insert into trellis_vendor.vendor (vendor_id, vendor_name, category, created_at)
+       values ($1, $2, 'MAINTENANCE', now())`,
+      [vendorId, vendorName],
+    );
+  } finally {
+    await client.end();
+  }
+}
+
+export async function seedTenantVendorRelationship(
+  tenantId: string,
+  vendorId: string,
+): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(
+      `insert into trellis_vendor.tenant_vendor_relationship
+         (tenant_vendor_relationship_id, tenant_id, vendor_id, status, created_at)
+       values (gen_random_uuid(), $1, $2, 'ACTIVE', now())`,
+      [tenantId, vendorId],
+    );
+  } finally {
+    await client.end();
+  }
+}
+
+/** The vendor's one login — no tenant_id (BDR-VEN-004), a first-class app_user row per security_guide.md. */
+export async function seedVendorUser(username: string, vendorId: string): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(
+      `insert into trellis_auth.app_user (user_id, tenant_id, vendor_id, username, password_hash, role, status)
+       values (gen_random_uuid(), null, $1, $2, $3, 'VENDOR_USER', 'ACTIVE')`,
+      [vendorId, username, SEED_PASSWORD_HASH],
+    );
+  } finally {
+    await client.end();
+  }
+}
+
+export async function seedVendorAssignment(
+  vendorId: string,
+  tenantId: string,
+  workItemId: string,
+): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(
+      `insert into trellis_vendor.vendor_assignment
+         (assignment_id, vendor_id, tenant_id, work_item_type, work_item_id, status, assigned_at)
+       values (gen_random_uuid(), $1, $2, 'WORKFLOW_INSTANCE', $3, 'ASSIGNED', now())`,
+      [vendorId, tenantId, workItemId],
+    );
+  } finally {
+    await client.end();
+  }
+}
+
+export async function deleteVendorDataForTenant(tenantId: string): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(`delete from trellis_vendor.vendor_assignment where tenant_id = $1`, [
+      tenantId,
+    ]);
+    await client.query(
+      `delete from trellis_vendor.tenant_vendor_relationship where tenant_id = $1`,
+      [tenantId],
+    );
+  } finally {
+    await client.end();
+  }
+}
+
+export async function deleteVendor(vendorId: string): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(`delete from trellis_vendor.vendor where vendor_id = $1`, [vendorId]);
   } finally {
     await client.end();
   }
