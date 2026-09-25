@@ -20,11 +20,14 @@ public enum DocumentStatus
 }
 
 /// <summary>
-/// BDR-DOC-001 — links to at most one of {Property, UnitAsset, Owner} (Vendor is Phase 4, per
-/// the Phase 3 plan's decision #6), or none at all (a tenant-level document, e.g. a company
-/// policy). That at-most-one rule is enforced at the request layer (DocumentService), not here —
-/// no clean partial-exclusivity constraint in Postgres worth the complexity, same reasoning the
-/// plan gives. Status/UpdatedAt/RowVersion are gap-fills, same as every other entity
+/// BDR-DOC-001 — links to at most one of {Property, UnitAsset, Owner, WorkflowInstance}, or none
+/// at all (a tenant-level document, e.g. a company policy). The 4th target
+/// (<see cref="WorkflowInstanceId"/>) was added in Phase 4 for BDR-VEN-003's vendor evidence
+/// upload — a document attaches to the *work item* a Vendor is assigned to, not to the
+/// tenant-less Vendor identity itself (which has no tenant_id to hang this document's own RLS
+/// off). That at-most-one rule is enforced at the request layer (DocumentService), not here — no
+/// clean partial-exclusivity constraint in Postgres worth the complexity, same reasoning the
+/// Phase 3 plan gave. Status/UpdatedAt/RowVersion are gap-fills, same as every other entity
 /// data_model.md originally documented without them (Owner's own precedent).
 /// </summary>
 public sealed class DocumentRecord : ITenantOwned
@@ -34,6 +37,7 @@ public sealed class DocumentRecord : ITenantOwned
     public Guid? PropertyId { get; private set; }
     public Guid? UnitAssetId { get; private set; }
     public Guid? OwnerId { get; private set; }
+    public Guid? WorkflowInstanceId { get; private set; }
     public DocumentType DocumentType { get; private set; }
     public Guid? CurrentVersionId { get; private set; }
     public DateOnly? ExpiresAt { get; private set; }
@@ -48,7 +52,8 @@ public sealed class DocumentRecord : ITenantOwned
     private DocumentRecord() { }
 
     public static DocumentRecord Create(
-        Guid tenantId, Guid? propertyId, Guid? unitAssetId, Guid? ownerId, DocumentType documentType, DateOnly? expiresAt)
+        Guid tenantId, Guid? propertyId, Guid? unitAssetId, Guid? ownerId, Guid? workflowInstanceId,
+        DocumentType documentType, DateOnly? expiresAt)
     {
         var now = DateTimeOffset.UtcNow;
         return new DocumentRecord
@@ -58,6 +63,7 @@ public sealed class DocumentRecord : ITenantOwned
             PropertyId = propertyId,
             UnitAssetId = unitAssetId,
             OwnerId = ownerId,
+            WorkflowInstanceId = workflowInstanceId,
             DocumentType = documentType,
             ExpiresAt = expiresAt,
             Status = DocumentStatus.Active,

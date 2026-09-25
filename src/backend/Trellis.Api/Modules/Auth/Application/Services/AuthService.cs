@@ -47,6 +47,26 @@ public sealed class AuthService(
         return ServiceResult<AppUserSummary>.Success(new AppUserSummary(user.UserId, user.Username, user.TenantId));
     }
 
+    public async Task<ServiceResult<AppUserSummary>> CreateVendorUserAsync(Guid vendorId, string email)
+    {
+        // trellis_auth.app_user's plain tenant_isolation policy evaluates
+        // `tenant_id::text = current_tenant_id` — for a row with tenant_id IS NULL that's SQL
+        // NULL (never true), regardless of the inserting caller's own tenant context. A Vendor's
+        // app_user row would be rejected by RLS on INSERT from an ordinary Tenant Admin request
+        // without this — same category of gap as LoginAsync's own identity-resolution bypass,
+        // for a different reason (inserting a tenant-less row from inside a tenant-scoped
+        // request, not resolving identity before a tenant is known).
+        using var systemScope = SystemContext.Enter();
+
+        var user = AppUser.CreateVendorUser(vendorId, email);
+        await userRepository.AddAsync(user);
+        await userRepository.SaveChangesAsync();
+
+        await IssuePasswordSetLinkAsync(user, requestedIp: null);
+
+        return ServiceResult<AppUserSummary>.Success(new AppUserSummary(user.UserId, user.Username, user.TenantId));
+    }
+
     public async Task<ServiceResult<LoginResult>> LoginAsync(string username, string password)
     {
         // The whole flow — not just the username lookup — runs before any tenant context can
@@ -283,6 +303,12 @@ public sealed class AuthService(
         return user is null ? null : new AppUserSummary(user.UserId, user.Username, user.TenantId);
     }
 
+    /// <summary>Only branch at token issuance (security_guide.md's Vendor Authentication) — a Vendor's token carries vendor_id instead of tenant_id, since its access spans tenants rather than belonging to one.</summary>
+    private string IssueAccessTokenForUser(AppUser user, Guid sessionId) =>
+        user.Role == UserRole.VendorUser
+            ? jwtTokenService.IssueVendorAccessToken(user.UserId, user.VendorId!.Value, sessionId)
+            : jwtTokenService.IssueAccessToken(user, sessionId);
+
     private async Task<ServiceResult<LoginResult>> IssueSessionAsync(AppUser user)
     {
         var refreshToken = GenerateOpaqueToken();
@@ -290,7 +316,7 @@ public sealed class AuthService(
         await sessionRepository.AddAsync(session);
         await sessionRepository.SaveChangesAsync();
 
-        var accessToken = jwtTokenService.IssueAccessToken(user, session.SessionId);
+        var accessToken = IssueAccessTokenForUser(user, session.SessionId);
 
         await auditService.RecordAsync(user.TenantId, user.UserId, AuditActorType.HumanUser, AuditTypes.Auth.AuthSuccess);
 
@@ -328,7 +354,7 @@ public sealed class AuthService(
             return ServiceResult<LoginResult>.Forbidden(ErrorCodeRegistry.Auth.RefreshTokenInvalid);
         }
 
-        var accessToken = jwtTokenService.IssueAccessToken(user, session.SessionId);
+        var accessToken = IssueAccessTokenForUser(user, session.SessionId);
 
         return ServiceResult<LoginResult>.Success(new LoginResult(
             false, null, accessToken, DateTimeOffset.UtcNow.AddMinutes(_options.AccessTokenExpiryMinutes), null));

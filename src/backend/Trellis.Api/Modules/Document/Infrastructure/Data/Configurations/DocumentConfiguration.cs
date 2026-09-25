@@ -18,6 +18,7 @@ public sealed class DocumentConfiguration : IEntityTypeConfiguration<DocumentRec
         builder.Property(d => d.PropertyId).HasColumnName("property_id");
         builder.Property(d => d.UnitAssetId).HasColumnName("unit_asset_id");
         builder.Property(d => d.OwnerId).HasColumnName("owner_id");
+        builder.Property(d => d.WorkflowInstanceId).HasColumnName("workflow_instance_id");
 
         // DocumentType.InsuranceCert is a compound name — see WorkflowInstanceConfiguration's
         // identical comment for why a bare ToUpperInvariant() would be wrong here.
@@ -42,6 +43,7 @@ public sealed class DocumentConfiguration : IEntityTypeConfiguration<DocumentRec
         builder.HasIndex(d => d.PropertyId);
         builder.HasIndex(d => d.UnitAssetId);
         builder.HasIndex(d => d.OwnerId);
+        builder.HasIndex(d => d.WorkflowInstanceId);
         builder.HasIndex(d => new { d.ExpiresAt, d.LastAlertedAt });
     }
 }

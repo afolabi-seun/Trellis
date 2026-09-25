@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Trellis.Api.Core.Audit;
+using Trellis.Api.Core.Data;
 using Trellis.Api.Core.Dtos;
 using Trellis.Api.Core.Helpers;
 using Trellis.Api.Core.Middleware;
@@ -20,7 +21,8 @@ public sealed class WorkflowInstanceService(
     IWorkflowTemplateRepository templateRepository,
     IAuditService auditService,
     INotificationService notificationService,
-    IAuthService authService) : IWorkflowInstanceService
+    IAuthService authService,
+    IVendorAssignmentReader vendorAssignmentReader) : IWorkflowInstanceService
 {
     private const string TenantAdminRole = "TENANT_ADMIN";
     private const string DepartmentStaffRole = "DEPARTMENT_STAFF";
@@ -167,6 +169,22 @@ public sealed class WorkflowInstanceService(
         return ServiceResult<WorkflowInstanceResponse>.Success(ToResponse(instance));
     }
 
+    public async Task<ServiceResult<VendorWorkflowInstanceView>> GetForVendorAsync(Guid vendorId, Guid workflowInstanceId)
+    {
+        // Layer 2 (VendorScopedRepository's own documented pattern) — checked before the query,
+        // not just relied on via RLS alone, same redundant-by-design belt+braces every
+        // tenant-scoped repository already has.
+        if (!await vendorAssignmentReader.IsAssignedAsync(vendorId, WorkItemTypes.WorkflowInstance, workflowInstanceId))
+        {
+            return ServiceResult<VendorWorkflowInstanceView>.NotFound();
+        }
+
+        var instance = await repository.GetForVendorAsync(workflowInstanceId);
+        return instance is null
+            ? ServiceResult<VendorWorkflowInstanceView>.NotFound()
+            : ServiceResult<VendorWorkflowInstanceView>.Success(ToVendorView(instance));
+    }
+
     /// <summary>TenantAdminOrDepartmentLead — TENANT_ADMIN always passes; DEPARTMENT_STAFF passes iff a member of the active step's routed department. No seniority concept exists anywhere in the schema, so "Lead" is simplified to "any staff member of the required department."</summary>
     private static bool IsAuthorizedForStep(string callerRole, IReadOnlyCollection<Guid> callerDepartmentIds, WorkflowStepInstance step) =>
         callerRole == TenantAdminRole
@@ -201,6 +219,14 @@ public sealed class WorkflowInstanceService(
         instance.Status.ToUpperSnakeCase(),
         instance.CurrentStepOrder,
         instance.CreatedBy,
+        instance.Steps.OrderBy(s => s.StepOrder).Select(ToStepResponse).ToList(),
+        instance.CreatedAt);
+
+    private static VendorWorkflowInstanceView ToVendorView(WorkflowInstance instance) => new(
+        instance.WorkflowInstanceId,
+        instance.PropertyId,
+        instance.Status.ToUpperSnakeCase(),
+        instance.CurrentStepOrder,
         instance.Steps.OrderBy(s => s.StepOrder).Select(ToStepResponse).ToList(),
         instance.CreatedAt);
 

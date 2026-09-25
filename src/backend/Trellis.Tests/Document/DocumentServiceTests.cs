@@ -11,6 +11,7 @@ using Trellis.Api.Modules.Document.Application.Services;
 using Trellis.Api.Modules.Document.Application.Validators;
 using Trellis.Api.Modules.Document.Domain.Entities;
 using Trellis.Api.Modules.PropertyAsset.Application.Interfaces;
+using Trellis.Api.Modules.Workflow.Application.Interfaces;
 using Xunit;
 
 namespace Trellis.Tests.Document;
@@ -25,17 +26,18 @@ public sealed class DocumentServiceTests
     private readonly IPropertyService _propertyService = Substitute.For<IPropertyService>();
     private readonly IUnitAssetService _unitAssetService = Substitute.For<IUnitAssetService>();
     private readonly IOwnerService _ownerService = Substitute.For<IOwnerService>();
+    private readonly IWorkflowInstanceService _workflowInstanceService = Substitute.For<IWorkflowInstanceService>();
 
     public DocumentServiceTests() => TenantContext.Current = new TenantContext(Guid.NewGuid());
 
     private DocumentService CreateSut() => new(
         _repository, _versionRepository, new DocumentUploadRequestValidator(), _fileStorage, _fileScanner,
-        _auditService, _propertyService, _unitAssetService, _ownerService);
+        _auditService, _propertyService, _unitAssetService, _ownerService, _workflowInstanceService);
 
     [Fact]
     public async Task CreateAsync_WhenMoreThanOneAttachmentTargetSet_ReturnsBusinessRuleViolation()
     {
-        var request = new DocumentUploadRequest("LEASE", null, Guid.NewGuid(), Guid.NewGuid(), null);
+        var request = new DocumentUploadRequest("LEASE", null, Guid.NewGuid(), Guid.NewGuid(), null, null);
         using var content = new MemoryStream([0x25, 0x50, 0x44, 0x46]);
 
         var sut = CreateSut();
@@ -48,7 +50,7 @@ public sealed class DocumentServiceTests
     [Fact]
     public async Task CreateAsync_WhenFileTypeNotAllowed_ReturnsBusinessRuleViolation()
     {
-        var request = new DocumentUploadRequest("LEASE", null, null, null, null);
+        var request = new DocumentUploadRequest("LEASE", null, null, null, null, null);
         // An .exe renamed to .pdf — magic number sniffing catches what the extension can't.
         using var content = new MemoryStream([0x4D, 0x5A, 0x90, 0x00]);
 
@@ -62,7 +64,7 @@ public sealed class DocumentServiceTests
     [Fact]
     public async Task CreateAsync_WhenDocumentTypeInvalid_ReturnsValidationFailed()
     {
-        var request = new DocumentUploadRequest("NOT_A_REAL_TYPE", null, null, null, null);
+        var request = new DocumentUploadRequest("NOT_A_REAL_TYPE", null, null, null, null, null);
         using var content = new MemoryStream([0x25, 0x50, 0x44, 0x46]);
 
         var sut = CreateSut();
@@ -74,7 +76,7 @@ public sealed class DocumentServiceTests
     [Fact]
     public async Task UpdateAsync_WhenSaveThrowsConcurrencyException_ReturnsConcurrencyConflict()
     {
-        var document = DocumentRecord.Create(TenantContext.Current!.TenantId, null, null, null, DocumentType.Lease, null);
+        var document = DocumentRecord.Create(TenantContext.Current!.TenantId, null, null, null, null, DocumentType.Lease, null);
         _repository.GetByIdAsync(document.DocumentId).Returns(document);
         _repository.SaveChangesAsync().Returns(Task.FromException(new DbUpdateConcurrencyException()));
 
@@ -89,7 +91,7 @@ public sealed class DocumentServiceTests
     {
         var uploaderId = Guid.NewGuid();
         var otherUserId = Guid.NewGuid();
-        var document = DocumentRecord.Create(TenantContext.Current!.TenantId, null, null, null, DocumentType.Lease, null);
+        var document = DocumentRecord.Create(TenantContext.Current!.TenantId, null, null, null, null, DocumentType.Lease, null);
         var version = DocumentVersion.Create(
             TenantContext.Current!.TenantId, document.DocumentId, 1, "lease.pdf", "application/pdf", 100, "key", uploaderId);
         document.SetCurrentVersion(version.DocumentVersionId);
@@ -107,7 +109,7 @@ public sealed class DocumentServiceTests
     public async Task DownloadAsync_WhenScanNotCleanButCallerIsUploader_Succeeds()
     {
         var uploaderId = Guid.NewGuid();
-        var document = DocumentRecord.Create(TenantContext.Current!.TenantId, null, null, null, DocumentType.Lease, null);
+        var document = DocumentRecord.Create(TenantContext.Current!.TenantId, null, null, null, null, DocumentType.Lease, null);
         var version = DocumentVersion.Create(
             TenantContext.Current!.TenantId, document.DocumentId, 1, "lease.pdf", "application/pdf", 100, "key", uploaderId);
         document.SetCurrentVersion(version.DocumentVersionId);

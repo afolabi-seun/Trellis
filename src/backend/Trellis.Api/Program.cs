@@ -11,6 +11,7 @@ using Trellis.Api.Modules.Document;
 using Trellis.Api.Modules.Notification;
 using Trellis.Api.Modules.PropertyAsset;
 using Trellis.Api.Modules.Tenant;
+using Trellis.Api.Modules.Vendor;
 using Trellis.Api.Modules.Workflow;
 
 // devops_environments.md, "Configuration & Secrets Per Environment": .env exists only in Local
@@ -35,13 +36,15 @@ builder.Services.AddTrellisSwaggerGen();
 
 builder.Services.AddTrellisCore(builder.Configuration);
 
-// Tenant → Notification → Auth → PropertyAsset → Document → Workflow, per data_model.md's
-// migration dependency order (Vendor, between PropertyAsset and Document, isn't built until
-// Phase 4) and roadmap.md's Phase 1 → Phase 2 → Phase 3 sequencing.
+// Tenant → Notification → Auth → PropertyAsset → Vendor → Document → Workflow, per
+// data_model.md's migration dependency order and roadmap.md's Phase 1 → Phase 4 sequencing.
+// Vendor registers before Document/Workflow since both now depend on its published
+// IVendorAssignmentReader (Workflow's vendor-safe projection, Document's evidence upload).
 builder.Services.AddTenantModule(builder.Configuration);
 builder.Services.AddNotificationModule(builder.Configuration);
 builder.Services.AddAuthModule(builder.Configuration);
 builder.Services.AddPropertyAssetModule(builder.Configuration);
+builder.Services.AddVendorModule(builder.Configuration);
 builder.Services.AddDocumentModule(builder.Configuration);
 builder.Services.AddWorkflowModule(builder.Configuration);
 

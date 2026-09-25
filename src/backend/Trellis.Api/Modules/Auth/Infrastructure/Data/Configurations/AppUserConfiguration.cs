@@ -36,6 +36,7 @@ public sealed class AppUserConfiguration : IEntityTypeConfiguration<AppUser>
 
         builder.Property(u => u.UserId).HasColumnName("user_id");
         builder.Property(u => u.TenantId).HasColumnName("tenant_id");
+        builder.Property(u => u.VendorId).HasColumnName("vendor_id");
         builder.Property(u => u.Username).HasColumnName("username").HasMaxLength(100).IsRequired();
         builder.Property(u => u.PasswordHash).HasColumnName("password_hash").HasMaxLength(255);
 

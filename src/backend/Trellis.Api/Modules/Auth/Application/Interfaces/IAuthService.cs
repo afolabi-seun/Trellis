@@ -16,6 +16,15 @@ public interface IAuthService
     /// </summary>
     Task<ServiceResult<AppUserSummary>> CreateTenantAdminAsync(Guid tenantId, string adminEmail);
 
+    /// <summary>
+    /// Creates a Vendor's one login (BDR-VEN-004) — called once per vendor, by whichever Tenant
+    /// Admin first invites them; every later tenant relationship reuses this same AppUser via
+    /// the Vendor's platform-wide, tenant-less identity. Wraps the insert in SystemContext.Enter()
+    /// (see the implementation's own doc comment) since app_user's tenant_isolation policy would
+    /// otherwise reject a tenant_id IS NULL row from an ordinary tenant-scoped caller.
+    /// </summary>
+    Task<ServiceResult<AppUserSummary>> CreateVendorUserAsync(Guid vendorId, string email);
+
     /// <summary>security_guide.md's login flow — Argon2id verification, lockout, and the MFA branch.</summary>
     Task<ServiceResult<LoginResult>> LoginAsync(string username, string password);
 

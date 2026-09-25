@@ -16,6 +16,11 @@ public sealed class WorkflowInstanceRepository(WorkflowDbContext dbContext)
             .Include(i => i.Steps)
             .FirstOrDefaultAsync(i => i.WorkflowInstanceId == workflowInstanceId);
 
+    public Task<WorkflowInstance?> GetForVendorAsync(Guid workflowInstanceId) =>
+        dbContext.WorkflowInstances
+            .Include(i => i.Steps)
+            .FirstOrDefaultAsync(i => i.WorkflowInstanceId == workflowInstanceId);
+
     public async Task<(IReadOnlyList<WorkflowInstance> Items, bool HasMore, int TotalCount)> ListAsync(
         (DateTimeOffset CreatedAt, Guid Id)? cursor, int limit)
     {

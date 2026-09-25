@@ -61,8 +61,10 @@ public sealed class TenantScopeConnectionInterceptor : DbConnectionInterceptor
         // all). Plain empty string here now — no more DBNull.Value, since text comparison never
         // needed the NULL semantics that turned out not to work anyway.
         command.CommandText = "SELECT set_config('app.current_tenant_id', @tenantId, false), " +
+                               "set_config('app.current_vendor_id', @vendorId, false), " +
                                "set_config('app.is_system', @isSystem, false);";
         command.Parameters.AddWithValue("tenantId", TenantContext.Current?.TenantId.ToString() ?? string.Empty);
+        command.Parameters.AddWithValue("vendorId", VendorContext.Current?.VendorId.ToString() ?? string.Empty);
         command.Parameters.AddWithValue("isSystem", SystemContext.IsSystem ? "true" : "false");
         return command;
     }

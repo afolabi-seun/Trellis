@@ -24,4 +24,13 @@ public interface IWorkflowInstanceService
 
     Task<ServiceResult<WorkflowInstanceResponse>> RejectAsync(
         Guid workflowInstanceId, Guid callerUserId, string callerRole, IReadOnlyCollection<Guid> callerDepartmentIds, WorkflowActionRequest request);
+
+    /// <summary>
+    /// The vendor-facing read — real RLS read under the caller's own VendorContext (layer 1,
+    /// tenant_or_vendor_isolation) + an explicit IVendorAssignmentReader check (layer 2) +
+    /// VendorWorkflowInstanceView's own field omission (BDR-VEN-002). Called from Vendor's own
+    /// endpoint, never reachable through WorkflowInstancesController's TENANT_ADMIN/
+    /// DEPARTMENT_STAFF-only [Authorize].
+    /// </summary>
+    Task<ServiceResult<VendorWorkflowInstanceView>> GetForVendorAsync(Guid vendorId, Guid workflowInstanceId);
 }

@@ -22,6 +22,13 @@ public interface IDocumentService
 
     Task<ServiceResult<PagedResponse<DocumentResponse>>> ListByOwnerAsync(Guid ownerId, string? cursor, int limit);
 
+    Task<ServiceResult<PagedResponse<DocumentResponse>>> ListByWorkflowInstanceAsync(Guid workflowInstanceId, string? cursor, int limit);
+
+    /// <summary>BDR-VEN-003 — a Vendor's evidence upload, reached only after VendorAssignedToWorkItemAttribute has verified the caller's assignment. tenantId is resolved by the caller from the vendor_assignment row itself, never from TenantContext.Current (a vendor-context request has none) or trusted from the request body.</summary>
+    Task<ServiceResult<DocumentResponse>> CreateVendorEvidenceAsync(
+        Guid tenantId, Guid workflowInstanceId, string documentType, Stream fileContent, string fileName,
+        string declaredContentType, long fileSizeBytes, Guid uploadedBy);
+
     Task<ServiceResult<DocumentResponse>> UpdateAsync(Guid documentId, DocumentUpdateRequest request);
 
     Task<ServiceResult<DocumentResponse>> ArchiveAsync(Guid documentId);

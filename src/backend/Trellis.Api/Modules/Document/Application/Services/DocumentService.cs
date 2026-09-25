@@ -12,6 +12,7 @@ using Trellis.Api.Modules.Document.Application.Interfaces;
 using Trellis.Api.Modules.Document.Domain.Entities;
 using Trellis.Api.Modules.Document.Domain.Exceptions;
 using Trellis.Api.Modules.PropertyAsset.Application.Interfaces;
+using Trellis.Api.Modules.Workflow.Application.Interfaces;
 
 namespace Trellis.Api.Modules.Document.Application.Services;
 
@@ -24,7 +25,8 @@ public sealed class DocumentService(
     IAuditService auditService,
     IPropertyService propertyService,
     IUnitAssetService unitAssetService,
-    IOwnerService ownerService) : IDocumentService
+    IOwnerService ownerService,
+    IWorkflowInstanceService workflowInstanceService) : IDocumentService
 {
     public async Task<ServiceResult<DocumentResponse>> CreateAsync(
         DocumentUploadRequest request, Stream fileContent, string fileName, string declaredContentType, long fileSizeBytes, Guid uploadedBy)
@@ -36,7 +38,7 @@ public sealed class DocumentService(
                 validation.Errors.Select(e => new ValidationDetail(e.PropertyName, e.ErrorMessage)).ToList());
         }
 
-        var targetCount = new[] { request.PropertyId, request.UnitAssetId, request.OwnerId }.Count(id => id is not null);
+        var targetCount = new[] { request.PropertyId, request.UnitAssetId, request.OwnerId, request.WorkflowInstanceId }.Count(id => id is not null);
         if (targetCount > 1)
         {
             return ServiceResult<DocumentResponse>.BusinessRuleViolation(ErrorCodeRegistry.Document.MultipleAttachmentTargets);
@@ -57,14 +59,54 @@ public sealed class DocumentService(
             return ServiceResult<DocumentResponse>.NotFound();
         }
 
+        if (request.WorkflowInstanceId is { } workflowInstanceId
+            && (await workflowInstanceService.GetByIdAsync(workflowInstanceId)).Outcome != ServiceResultOutcome.Success)
+        {
+            return ServiceResult<DocumentResponse>.NotFound();
+        }
+
         if (!await FileTypeValidator.IsAllowedDocumentTypeAsync(fileContent))
         {
             return ServiceResult<DocumentResponse>.BusinessRuleViolation(ErrorCodeRegistry.Document.FileTypeNotAllowed);
         }
 
         var tenantId = TenantContext.Current!.TenantId;
-        var documentType = EnumStringConverter.ParseUpperSnakeCase<DocumentType>(request.DocumentType);
-        var document = DocumentRecord.Create(tenantId, request.PropertyId, request.UnitAssetId, request.OwnerId, documentType, request.ExpiresAt);
+        return await CreateInternalAsync(
+            tenantId, request.PropertyId, request.UnitAssetId, request.OwnerId, request.WorkflowInstanceId,
+            request.DocumentType, request.ExpiresAt, fileContent, fileName, declaredContentType, fileSizeBytes, uploadedBy);
+    }
+
+    public async Task<ServiceResult<DocumentResponse>> CreateVendorEvidenceAsync(
+        Guid tenantId, Guid workflowInstanceId, string documentType, Stream fileContent, string fileName,
+        string declaredContentType, long fileSizeBytes, Guid uploadedBy)
+    {
+        // Never re-derives tenantId from TenantContext.Current — a vendor-context caller has none
+        // (only VendorContext.Current), and the caller (Vendor module, after
+        // VendorAssignedToWorkItemAttribute already verified the assignment) resolves it from the
+        // vendor_assignment row itself, never trusted from the request body.
+        if (!EnumStringConverter.TryParseUpperSnakeCase<DocumentType>(documentType, out _))
+        {
+            return ServiceResult<DocumentResponse>.ValidationFailed(
+                [new ValidationDetail("documentType", "documentType must be one of LEASE, INSURANCE_CERT, LICENCE, INVOICE, OTHER.")]);
+        }
+
+        if (!await FileTypeValidator.IsAllowedDocumentTypeAsync(fileContent))
+        {
+            return ServiceResult<DocumentResponse>.BusinessRuleViolation(ErrorCodeRegistry.Document.FileTypeNotAllowed);
+        }
+
+        return await CreateInternalAsync(
+            tenantId, null, null, null, workflowInstanceId, documentType, null,
+            fileContent, fileName, declaredContentType, fileSizeBytes, uploadedBy);
+    }
+
+    private async Task<ServiceResult<DocumentResponse>> CreateInternalAsync(
+        Guid tenantId, Guid? propertyId, Guid? unitAssetId, Guid? ownerId, Guid? workflowInstanceId,
+        string documentTypeValue, DateOnly? expiresAt, Stream fileContent, string fileName, string declaredContentType,
+        long fileSizeBytes, Guid uploadedBy)
+    {
+        var documentType = EnumStringConverter.ParseUpperSnakeCase<DocumentType>(documentTypeValue);
+        var document = DocumentRecord.Create(tenantId, propertyId, unitAssetId, ownerId, workflowInstanceId, documentType, expiresAt);
 
         var storageKey = await fileStorage.SaveAsync(fileContent, fileName);
         var version = DocumentVersion.Create(tenantId, document.DocumentId, 1, fileName, declaredContentType, fileSizeBytes, storageKey, uploadedBy);
@@ -124,6 +166,9 @@ public sealed class DocumentService(
 
         return await ToPagedResultAsync(await repository.ListByOwnerAsync(ownerId, CursorCodec.Decode(cursor), limit));
     }
+
+    public async Task<ServiceResult<PagedResponse<DocumentResponse>>> ListByWorkflowInstanceAsync(Guid workflowInstanceId, string? cursor, int limit) =>
+        await ToPagedResultAsync(await repository.ListByWorkflowInstanceAsync(workflowInstanceId, CursorCodec.Decode(cursor), limit));
 
     public async Task<ServiceResult<DocumentResponse>> UpdateAsync(Guid documentId, DocumentUpdateRequest request)
     {
@@ -218,10 +263,21 @@ public sealed class DocumentService(
     {
         var (items, hasMore, totalCount) = page;
         var nextCursor = hasMore && items.Count > 0 ? CursorCodec.Encode(items[^1].CreatedAt, items[^1].DocumentId) : null;
-        var responses = await Task.WhenAll(items.Select(ToResponseAsync));
+
+        // Sequential, not Task.WhenAll — ToResponseAsync shares this request's single scoped
+        // DocumentDbContext instance via versionRepository; running those concurrently throws
+        // ("A second operation was started on this context instance before a previous operation
+        // completed"). Never triggered by Phase 3's own smoke tests (always 0-1 items with a
+        // CurrentVersion in a list at a time) — found live during Phase 4's own vendor-assignment
+        // testing, which hit the identical pattern with 2+ items.
+        var responses = new List<DocumentResponse>();
+        foreach (var item in items)
+        {
+            responses.Add(await ToResponseAsync(item));
+        }
 
         return ServiceResult<PagedResponse<DocumentResponse>>.Success(
-            new PagedResponse<DocumentResponse>(responses.ToList(), nextCursor, hasMore, totalCount));
+            new PagedResponse<DocumentResponse>(responses, nextCursor, hasMore, totalCount));
     }
 
     private async Task<DocumentResponse> ToResponseAsync(DocumentRecord document)
@@ -243,6 +299,7 @@ public sealed class DocumentService(
             document.PropertyId,
             document.UnitAssetId,
             document.OwnerId,
+            document.WorkflowInstanceId,
             document.DocumentType.ToUpperSnakeCase(),
             document.ExpiresAt,
             document.Status.ToString().ToUpperInvariant(),

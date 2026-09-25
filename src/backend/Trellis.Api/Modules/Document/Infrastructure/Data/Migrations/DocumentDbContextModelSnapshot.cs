@@ -77,6 +77,10 @@ namespace Trellis.Api.Modules.Document.Infrastructure.Data.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("updated_at");
 
+                    b.Property<Guid?>("WorkflowInstanceId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("workflow_instance_id");
+
                     b.Property<uint>("xmin")
                         .IsConcurrencyToken()
                         .ValueGeneratedOnAddOrUpdate()
@@ -92,6 +96,8 @@ namespace Trellis.Api.Modules.Document.Infrastructure.Data.Migrations
                     b.HasIndex("TenantId");
 
                     b.HasIndex("UnitAssetId");
+
+                    b.HasIndex("WorkflowInstanceId");
 
                     b.HasIndex("ExpiresAt", "LastAlertedAt");
 

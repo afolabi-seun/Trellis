@@ -5,6 +5,7 @@ using Trellis.Api.Core.Data;
 using Trellis.Api.Modules.Auth.Infrastructure.Data;
 using Trellis.Api.Modules.Document.Infrastructure.Data;
 using Trellis.Api.Modules.PropertyAsset.Infrastructure.Data;
+using Trellis.Api.Modules.Vendor.Infrastructure.Data;
 using Trellis.Api.Modules.Workflow.Infrastructure.Data;
 using Xunit;
 
@@ -66,14 +67,19 @@ public sealed class PostgresIsolationFixture : IAsyncLifetime
             Password = "trellis_app_dev_only",
         }.ConnectionString;
 
-        // Tenant → Notification → Auth → PropertyAsset → Document → Workflow, same order
-        // Program.cs registers modules in (data_model.md's migration dependency order) — Core's
-        // audit table migrates first.
+        // Tenant → Notification → Auth → PropertyAsset → Vendor → Document → Workflow, same
+        // order Program.cs registers modules in (data_model.md's migration dependency order) —
+        // Core's audit table migrates first. Vendor must migrate before Document/Workflow: both
+        // modules' own follow-up migrations (AddVendorEvidenceToDocument,
+        // AddVendorIsolationToWorkflow) reference trellis_vendor.vendor_assignment in a
+        // CREATE POLICY expression, which Postgres validates against the real schema at creation
+        // time — the table must already exist.
         await MigrateAsync(() => new CoreDbContext(BuildOptions<CoreDbContext>()));
         await MigrateAsync(() => new Trellis.Api.Modules.Tenant.Infrastructure.Data.TenantDbContext(BuildOptions<Trellis.Api.Modules.Tenant.Infrastructure.Data.TenantDbContext>()));
         await MigrateAsync(() => new Trellis.Api.Modules.Notification.Infrastructure.Data.NotificationDbContext(BuildOptions<Trellis.Api.Modules.Notification.Infrastructure.Data.NotificationDbContext>()));
         await MigrateAsync(() => new AuthDbContext(BuildOptions<AuthDbContext>()));
         await MigrateAsync(() => new PropertyDbContext(BuildOptions<PropertyDbContext>()));
+        await MigrateAsync(() => new VendorDbContext(BuildOptions<VendorDbContext>()));
         await MigrateAsync(() => new DocumentDbContext(BuildOptions<DocumentDbContext>()));
         await MigrateAsync(() => new WorkflowDbContext(BuildOptions<WorkflowDbContext>()));
     }
@@ -123,6 +129,16 @@ public sealed class PostgresIsolationFixture : IAsyncLifetime
             .AddInterceptors(new TenantScopeConnectionInterceptor())
             .Options;
         return new DocumentDbContext(options);
+    }
+
+    /// <summary>Same shape as <see cref="CreateAppAuthContext"/>, for Vendor's own isolation tests.</summary>
+    public VendorDbContext CreateAppVendorContext()
+    {
+        var options = new DbContextOptionsBuilder<VendorDbContext>()
+            .UseNpgsql(AppConnectionString)
+            .AddInterceptors(new TenantScopeConnectionInterceptor())
+            .Options;
+        return new VendorDbContext(options);
     }
 
     private DbContextOptions<TContext> BuildOptions<TContext>() where TContext : DbContext =>

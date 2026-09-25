@@ -29,6 +29,10 @@ public sealed class DocumentRepository(DocumentDbContext dbContext) : TenantAwar
         Guid ownerId, (DateTimeOffset CreatedAt, Guid Id)? cursor, int limit) =>
         PageAsync(Scoped(dbContext.Documents).Where(d => d.OwnerId == ownerId), cursor, limit);
 
+    public Task<(IReadOnlyList<DocumentRecord> Items, bool HasMore, int TotalCount)> ListByWorkflowInstanceAsync(
+        Guid workflowInstanceId, (DateTimeOffset CreatedAt, Guid Id)? cursor, int limit) =>
+        PageAsync(dbContext.Documents.Where(d => d.WorkflowInstanceId == workflowInstanceId), cursor, limit);
+
     /// <summary>Runs under SystemContext.Enter() (the caller's responsibility, same as NotificationDispatchBackgroundService's own poll) — deliberately queries dbContext.Documents directly, not Scoped(), since it must see every tenant's due documents in one batch.</summary>
     public async Task<IReadOnlyList<DocumentRecord>> GetDueForExpiryAlertAsync(DateOnly lookaheadDate, int batchSize) =>
         await dbContext.Documents

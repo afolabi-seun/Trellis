@@ -104,4 +104,16 @@ public static class ErrorCodeRegistry
         /// <summary>TRL-E-WF-5002 — TenantAdminOrDepartmentLead: the caller is DEPARTMENT_STAFF but not a member of the active step's routed department.</summary>
         public const string NotAuthorizedForStepDepartment = "TRL-E-WF-5002";
     }
+
+    public static class Vendor
+    {
+        /// <summary>TRL-E-VEN-7000 — an Archive/status-transition request the entity's current status doesn't allow.</summary>
+        public const string InvalidStatusTransition = "TRL-E-VEN-7000";
+
+        /// <summary>TRL-E-VEN-7001 — BDR-VEN-006: no ACTIVE TenantVendorRelationship exists for the caller's tenant and the target vendor (never engaged, or already terminated).</summary>
+        public const string NoActiveVendorRelationship = "TRL-E-VEN-7001";
+
+        /// <summary>TRL-E-VEN-7002 — IAuthService.CreateVendorUserAsync failed (e.g. the username was already taken by an unrelated account).</summary>
+        public const string VendorUserCreationFailed = "TRL-E-VEN-7002";
+    }
 }

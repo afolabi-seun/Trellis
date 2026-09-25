@@ -27,7 +27,8 @@ public sealed class DocumentsController(IDocumentService documentService) : Cont
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(ApiResponse<DocumentResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> Create([FromForm] DocumentUploadForm form) =>
-        (await UploadAsync(new DocumentUploadRequest(form.DocumentType, form.ExpiresAt, form.PropertyId, form.UnitAssetId, form.OwnerId), form.File))
+        (await UploadAsync(
+            new DocumentUploadRequest(form.DocumentType, form.ExpiresAt, form.PropertyId, form.UnitAssetId, form.OwnerId, form.WorkflowInstanceId), form.File))
         .ToActionResult(HttpContext);
 
     [HttpGet("api/v1/properties/{propertyId:guid}/documents")]
@@ -39,7 +40,7 @@ public sealed class DocumentsController(IDocumentService documentService) : Cont
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(ApiResponse<DocumentResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> CreateForProperty(Guid propertyId, [FromForm] DocumentUploadForm form) =>
-        (await UploadAsync(new DocumentUploadRequest(form.DocumentType, form.ExpiresAt, propertyId, null, null), form.File))
+        (await UploadAsync(new DocumentUploadRequest(form.DocumentType, form.ExpiresAt, propertyId, null, null, null), form.File))
         .ToActionResult(HttpContext);
 
     [HttpGet("api/v1/units/{unitAssetId:guid}/documents")]
@@ -51,7 +52,7 @@ public sealed class DocumentsController(IDocumentService documentService) : Cont
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(ApiResponse<DocumentResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> CreateForUnit(Guid unitAssetId, [FromForm] DocumentUploadForm form) =>
-        (await UploadAsync(new DocumentUploadRequest(form.DocumentType, form.ExpiresAt, null, unitAssetId, null), form.File))
+        (await UploadAsync(new DocumentUploadRequest(form.DocumentType, form.ExpiresAt, null, unitAssetId, null, null), form.File))
         .ToActionResult(HttpContext);
 
     [HttpGet("api/v1/owners/{ownerId:guid}/documents")]
@@ -63,7 +64,7 @@ public sealed class DocumentsController(IDocumentService documentService) : Cont
     [Consumes("multipart/form-data")]
     [ProducesResponseType(typeof(ApiResponse<DocumentResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> CreateForOwner(Guid ownerId, [FromForm] DocumentUploadForm form) =>
-        (await UploadAsync(new DocumentUploadRequest(form.DocumentType, form.ExpiresAt, null, null, ownerId), form.File))
+        (await UploadAsync(new DocumentUploadRequest(form.DocumentType, form.ExpiresAt, null, null, ownerId, null), form.File))
         .ToActionResult(HttpContext);
 
     [HttpGet("api/v1/documents/{id:guid}")]

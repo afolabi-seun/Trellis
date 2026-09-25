@@ -2,6 +2,7 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using NSubstitute;
 using Trellis.Api.Core.Audit;
+using Trellis.Api.Core.Data;
 using Trellis.Api.Core.Results;
 using Trellis.Api.Modules.Auth.Application.Interfaces;
 using Trellis.Api.Modules.Notification.Application.Interfaces;
@@ -20,9 +21,10 @@ public sealed class WorkflowInstanceServiceTests
     private readonly IAuditService _auditService = Substitute.For<IAuditService>();
     private readonly INotificationService _notificationService = Substitute.For<INotificationService>();
     private readonly IAuthService _authService = Substitute.For<IAuthService>();
+    private readonly IVendorAssignmentReader _vendorAssignmentReader = Substitute.For<IVendorAssignmentReader>();
 
     private WorkflowInstanceService CreateSut() =>
-        new(_repository, _templateRepository, _auditService, _notificationService, _authService);
+        new(_repository, _templateRepository, _auditService, _notificationService, _authService, _vendorAssignmentReader);
 
     private static WorkflowInstance CreateSingleStepInstance(Guid tenantId, Guid routedDepartmentId)
     {

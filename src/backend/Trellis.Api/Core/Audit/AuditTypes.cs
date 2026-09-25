@@ -40,4 +40,12 @@ public static class AuditTypes
         public const string DocumentUploaded = "DOCUMENT_UPLOADED";
         public const string DocumentExpiryAlerted = "DOCUMENT_EXPIRY_ALERTED";
     }
+
+    /// <summary>data_model.md's audit_type registry names all three explicitly.</summary>
+    public static class Vendor
+    {
+        public const string VendorAssigned = "VENDOR_ASSIGNED";
+        public const string VendorStatusUpdated = "VENDOR_STATUS_UPDATED";
+        public const string VendorRelationshipTerminated = "VENDOR_RELATIONSHIP_TERMINATED";
+    }
 }

@@ -27,3 +27,12 @@ public sealed record WorkflowInstanceResponse(
     Guid CreatedBy,
     List<WorkflowStepInstanceResponse> Steps,
     DateTimeOffset CreatedAt);
+
+/// <summary>
+/// BDR-VEN-002 — a Vendor never gets CostAmount or RequestingDepartmentId (financials/internal
+/// routing detail), even though the tenant_or_vendor_isolation RLS grant would technically let
+/// the row itself through. A deliberate app-layer narrowing on top of what RLS alone allows, same
+/// "defense in depth beyond RLS" reasoning as Document's scan_status gate.
+/// </summary>
+public sealed record VendorWorkflowInstanceView(
+    Guid WorkflowInstanceId, Guid? PropertyId, string Status, int CurrentStepOrder, List<WorkflowStepInstanceResponse> Steps, DateTimeOffset CreatedAt);
