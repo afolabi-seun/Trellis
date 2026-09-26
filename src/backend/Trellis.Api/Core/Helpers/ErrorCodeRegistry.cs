@@ -116,4 +116,22 @@ public static class ErrorCodeRegistry
         /// <summary>TRL-E-VEN-7002 — IAuthService.CreateVendorUserAsync failed (e.g. the username was already taken by an unrelated account).</summary>
         public const string VendorUserCreationFailed = "TRL-E-VEN-7002";
     }
+
+    public static class Inspection
+    {
+        /// <summary>TRL-E-INS-8000 — a status-transition request the inspection's current status doesn't allow.</summary>
+        public const string InvalidStatusTransition = "TRL-E-INS-8000";
+
+        /// <summary>TRL-E-INS-8001 — neither or both of {propertyId, unitAssetId} were set; an inspection attaches to exactly one.</summary>
+        public const string MultipleAttachmentTargets = "TRL-E-INS-8001";
+
+        /// <summary>TRL-E-INS-8002 — the uploaded photo's actual bytes (magic-number sniffed) aren't JPG/PNG/HEIC (security_guide.md's narrower inspection-photo allow-list).</summary>
+        public const string FileTypeNotAllowed = "TRL-E-INS-8002";
+
+        /// <summary>TRL-E-INS-8003 — the caller isn't this photo's uploader, and scan_status isn't CLEAN yet.</summary>
+        public const string PhotoNotYetVisible = "TRL-E-INS-8003";
+
+        /// <summary>TRL-E-INS-8004 — VendorAssignmentService.CreateAsync: the target inspection already has an internal-staff assignee (BDR-INSP-001's assignment is mutually exclusive).</summary>
+        public const string AlreadyStaffAssigned = "TRL-E-INS-8004";
+    }
 }

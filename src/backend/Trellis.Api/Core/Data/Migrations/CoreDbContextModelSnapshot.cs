@@ -60,6 +60,35 @@ namespace Trellis.Api.Core.Data.Migrations
 
                     b.ToTable("audit_record", "trellis_audit");
                 });
+
+            modelBuilder.Entity("Trellis.Api.Core.Data.IdempotencyKey", b =>
+                {
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("Key")
+                        .HasMaxLength(200)
+                        .HasColumnType("character varying(200)")
+                        .HasColumnName("idempotency_key");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<DateTimeOffset>("ExpiresAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("expires_at");
+
+                    b.Property<string>("ResponseJson")
+                        .IsRequired()
+                        .HasColumnType("jsonb")
+                        .HasColumnName("response_json");
+
+                    b.HasKey("TenantId", "Key");
+
+                    b.ToTable("idempotency_key", "trellis_core");
+                });
 #pragma warning restore 612, 618
         }
     }

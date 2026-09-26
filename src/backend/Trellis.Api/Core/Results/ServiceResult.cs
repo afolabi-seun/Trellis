@@ -75,4 +75,14 @@ public sealed class ServiceResult<T>
 
     public static ServiceResult<T> Failure(string errorCode, string message) =>
         new(ServiceResultOutcome.Failure, errorCode: errorCode, message: message);
+
+    /// <summary>
+    /// Reconstructs a result from its constituent fields — <see cref="Helpers.IdempotencyExecutor"/>'s
+    /// only way back from a deserialized cache row, since every other factory above only covers one
+    /// specific <see cref="ServiceResultOutcome"/> shape and the private constructor isn't reachable
+    /// from outside this class.
+    /// </summary>
+    public static ServiceResult<T> FromCache(
+        ServiceResultOutcome outcome, T? data, string? errorCode, string? message, IReadOnlyList<ValidationDetail>? validationDetails) =>
+        new(outcome, data, errorCode, message, validationDetails);
 }

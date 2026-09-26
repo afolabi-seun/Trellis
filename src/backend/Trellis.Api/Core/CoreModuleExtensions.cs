@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Trellis.Api.Core.Audit;
 using Trellis.Api.Core.Configuration;
 using Trellis.Api.Core.Data;
+using Trellis.Api.Core.Files;
+using Trellis.Api.Core.Helpers;
 using Trellis.Api.Core.Secrets;
 
 namespace Trellis.Api.Core;
@@ -40,6 +42,19 @@ public static class CoreModuleExtensions
 
         services.AddScoped<IAuditService, AuditService>();
         services.AddSingleton<ISecretProvider, EnvironmentSecretProvider>();
+
+        services.AddScoped<IIdempotencyStore, PostgresIdempotencyStore>();
+        services.AddScoped<IdempotencyExecutor>();
+
+        // Hoisted here from DocumentModuleExtensions once Inspection (Phase 5) became a second
+        // real consumer — a generic, entity-agnostic seam (security_guide.md frames it alongside
+        // IPaymentGateway), not something either module should own.
+        services.AddOptions<FileStorageOptions>()
+            .Bind(config.GetSection("FileStorage"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+        services.AddScoped<IFileStorage, LocalDiskFileStorage>();
+        services.AddScoped<IFileScanner, NoOpFileScanner>();
 
         // Every module's AbstractValidator<TRequest> subclasses, from every module in this
         // single-project assembly (data_model.md's EF Core Conventions note applies here too) —

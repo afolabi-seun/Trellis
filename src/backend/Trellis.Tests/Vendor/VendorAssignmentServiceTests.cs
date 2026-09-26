@@ -5,6 +5,8 @@ using Trellis.Api.Core.Audit;
 using Trellis.Api.Core.Data;
 using Trellis.Api.Core.Middleware;
 using Trellis.Api.Core.Results;
+using Trellis.Api.Modules.Inspection.Application.Dtos;
+using Trellis.Api.Modules.Inspection.Application.Interfaces;
 using Trellis.Api.Modules.Tenant.Application.Interfaces;
 using Trellis.Api.Modules.Vendor.Application.Dtos;
 using Trellis.Api.Modules.Vendor.Application.Interfaces;
@@ -20,13 +22,14 @@ public sealed class VendorAssignmentServiceTests
     private readonly IVendorAssignmentRepository _repository = Substitute.For<IVendorAssignmentRepository>();
     private readonly ITenantVendorRelationshipRepository _relationshipRepository = Substitute.For<ITenantVendorRelationshipRepository>();
     private readonly IWorkflowInstanceService _workflowInstanceService = Substitute.For<IWorkflowInstanceService>();
+    private readonly IInspectionService _inspectionService = Substitute.For<IInspectionService>();
     private readonly ITenantService _tenantService = Substitute.For<ITenantService>();
     private readonly IAuditService _auditService = Substitute.For<IAuditService>();
 
     public VendorAssignmentServiceTests() => TenantContext.Current = new TenantContext(Guid.NewGuid());
 
     private VendorAssignmentService CreateSut() =>
-        new(_repository, _relationshipRepository, _workflowInstanceService, _tenantService, _auditService);
+        new(_repository, _relationshipRepository, _workflowInstanceService, _inspectionService, _tenantService, _auditService);
 
     [Fact]
     public async Task CreateAsync_WhenNoActiveRelationshipExists_ReturnsBusinessRuleViolation()
@@ -81,5 +84,24 @@ public sealed class VendorAssignmentServiceTests
         var result = await sut.StartAsync(vendorId, WorkItemTypes.WorkflowInstance, workItemId);
 
         result.Outcome.Should().Be(ServiceResultOutcome.NotFound);
+    }
+
+    [Fact]
+    public async Task CreateAsync_ForAnInspectionAlreadyAssignedToStaff_ReturnsBusinessRuleViolation()
+    {
+        var request = new VendorAssignmentCreateRequest(Guid.NewGuid(), WorkItemTypes.Inspection, Guid.NewGuid());
+        var relationship = TenantVendorRelationship.Create(TenantContext.Current!.TenantId, request.VendorId);
+        _relationshipRepository.GetByTenantAndVendorAsync(TenantContext.Current!.TenantId, request.VendorId).Returns(relationship);
+
+        var inspectionResponse = new InspectionReportResponse(
+            request.WorkItemId, null, Guid.NewGuid(), Guid.NewGuid(), "SCHEDULED", DateTimeOffset.UtcNow, null, null,
+            null, null, [], [], "AAAAAAAAAAA=", DateTimeOffset.UtcNow);
+        _inspectionService.GetByIdAsync(request.WorkItemId).Returns(ServiceResult<InspectionReportResponse>.Success(inspectionResponse));
+
+        var sut = CreateSut();
+        var result = await sut.CreateAsync(request, Guid.NewGuid());
+
+        result.Outcome.Should().Be(ServiceResultOutcome.BusinessRuleViolation);
+        await _repository.DidNotReceive().AddAsync(Arg.Any<VendorAssignment>());
     }
 }

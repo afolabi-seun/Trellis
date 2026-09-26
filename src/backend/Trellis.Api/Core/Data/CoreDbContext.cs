@@ -12,6 +12,7 @@ namespace Trellis.Api.Core.Data;
 public sealed class CoreDbContext(DbContextOptions<CoreDbContext> options) : DbContext(options)
 {
     public DbSet<AuditRecord> AuditRecords => Set<AuditRecord>();
+    public DbSet<IdempotencyKey> IdempotencyKeys => Set<IdempotencyKey>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) =>
         // data_model.md's own ApplyConfigurationsFromAssembly(assembly) example, taken literally,

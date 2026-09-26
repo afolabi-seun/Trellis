@@ -8,6 +8,7 @@ using Trellis.Api.Core.Middleware;
 using Trellis.Api.Core.Validation;
 using Trellis.Api.Modules.Auth;
 using Trellis.Api.Modules.Document;
+using Trellis.Api.Modules.Inspection;
 using Trellis.Api.Modules.Notification;
 using Trellis.Api.Modules.PropertyAsset;
 using Trellis.Api.Modules.Tenant;
@@ -36,10 +37,11 @@ builder.Services.AddTrellisSwaggerGen();
 
 builder.Services.AddTrellisCore(builder.Configuration);
 
-// Tenant → Notification → Auth → PropertyAsset → Vendor → Document → Workflow, per
-// data_model.md's migration dependency order and roadmap.md's Phase 1 → Phase 4 sequencing.
-// Vendor registers before Document/Workflow since both now depend on its published
-// IVendorAssignmentReader (Workflow's vendor-safe projection, Document's evidence upload).
+// Tenant → Notification → Auth → PropertyAsset → Vendor → Document → Workflow → Inspection, per
+// data_model.md's migration dependency order and roadmap.md's Phase 1 → Phase 5 sequencing.
+// Vendor registers before Document/Workflow/Inspection since all three now depend on its
+// published IVendorAssignmentReader (Workflow's vendor-safe projection, Document's evidence
+// upload, Inspection's own vendor-portal reads).
 builder.Services.AddTenantModule(builder.Configuration);
 builder.Services.AddNotificationModule(builder.Configuration);
 builder.Services.AddAuthModule(builder.Configuration);
@@ -47,6 +49,7 @@ builder.Services.AddPropertyAssetModule(builder.Configuration);
 builder.Services.AddVendorModule(builder.Configuration);
 builder.Services.AddDocumentModule(builder.Configuration);
 builder.Services.AddWorkflowModule(builder.Configuration);
+builder.Services.AddInspectionModule(builder.Configuration);
 
 var app = builder.Build();
 

@@ -48,4 +48,10 @@ public static class AuditTypes
         public const string VendorStatusUpdated = "VENDOR_STATUS_UPDATED";
         public const string VendorRelationshipTerminated = "VENDOR_RELATIONSHIP_TERMINATED";
     }
+
+    public static class Inspection
+    {
+        public const string InspectionScheduled = "INSPECTION_SCHEDULED";
+        public const string InspectionStatusUpdated = "INSPECTION_STATUS_UPDATED";
+    }
 }

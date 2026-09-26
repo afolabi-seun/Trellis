@@ -5,6 +5,7 @@ using Trellis.Api.Core.Dtos;
 using Trellis.Api.Core.Helpers;
 using Trellis.Api.Core.Middleware;
 using Trellis.Api.Core.Results;
+using Trellis.Api.Modules.Inspection.Application.Interfaces;
 using Trellis.Api.Modules.Tenant.Application.Interfaces;
 using Trellis.Api.Modules.Vendor.Application.Dtos;
 using Trellis.Api.Modules.Vendor.Application.Interfaces;
@@ -19,6 +20,7 @@ public sealed class VendorAssignmentService(
     IVendorAssignmentRepository repository,
     ITenantVendorRelationshipRepository relationshipRepository,
     IWorkflowInstanceService workflowInstanceService,
+    IInspectionService inspectionService,
     ITenantService tenantService,
     IAuditService auditService)
     : IVendorAssignmentService
@@ -39,6 +41,21 @@ public sealed class VendorAssignmentService(
             if (workItem.Outcome != ServiceResultOutcome.Success)
             {
                 return ServiceResult<VendorAssignmentResponse>.NotFound();
+            }
+        }
+        else if (request.WorkItemType == WorkItemTypes.Inspection)
+        {
+            var workItem = await inspectionService.GetByIdAsync(request.WorkItemId);
+            if (workItem.Outcome != ServiceResultOutcome.Success)
+            {
+                return ServiceResult<VendorAssignmentResponse>.NotFound();
+            }
+
+            // BDR-INSP-001's assignment is mutually exclusive: an inspection already assigned to
+            // an internal staff member at schedule time never also gets a Vendor assignment.
+            if (workItem.Data!.AssignedToUserId is not null)
+            {
+                return ServiceResult<VendorAssignmentResponse>.BusinessRuleViolation(ErrorCodeRegistry.Inspection.AlreadyStaffAssigned);
             }
         }
 

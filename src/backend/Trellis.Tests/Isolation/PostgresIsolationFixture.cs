@@ -4,6 +4,7 @@ using Testcontainers.PostgreSql;
 using Trellis.Api.Core.Data;
 using Trellis.Api.Modules.Auth.Infrastructure.Data;
 using Trellis.Api.Modules.Document.Infrastructure.Data;
+using Trellis.Api.Modules.Inspection.Infrastructure.Data;
 using Trellis.Api.Modules.Notification.Infrastructure.Data;
 using Trellis.Api.Modules.PropertyAsset.Infrastructure.Data;
 using Trellis.Api.Modules.Vendor.Infrastructure.Data;
@@ -83,6 +84,7 @@ public sealed class PostgresIsolationFixture : IAsyncLifetime
         await MigrateAsync(() => new VendorDbContext(BuildOptions<VendorDbContext>()));
         await MigrateAsync(() => new DocumentDbContext(BuildOptions<DocumentDbContext>()));
         await MigrateAsync(() => new WorkflowDbContext(BuildOptions<WorkflowDbContext>()));
+        await MigrateAsync(() => new InspectionDbContext(BuildOptions<InspectionDbContext>()));
     }
 
     public async Task DisposeAsync() => await _container.DisposeAsync();
@@ -150,6 +152,16 @@ public sealed class PostgresIsolationFixture : IAsyncLifetime
             .AddInterceptors(new TenantScopeConnectionInterceptor())
             .Options;
         return new VendorDbContext(options);
+    }
+
+    /// <summary>Same shape as <see cref="CreateAppAuthContext"/>, for Inspection's own isolation tests.</summary>
+    public InspectionDbContext CreateAppInspectionContext()
+    {
+        var options = new DbContextOptionsBuilder<InspectionDbContext>()
+            .UseNpgsql(AppConnectionString)
+            .AddInterceptors(new TenantScopeConnectionInterceptor())
+            .Options;
+        return new InspectionDbContext(options);
     }
 
     private DbContextOptions<TContext> BuildOptions<TContext>() where TContext : DbContext =>
