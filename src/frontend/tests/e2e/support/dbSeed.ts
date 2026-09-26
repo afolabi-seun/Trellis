@@ -218,6 +218,7 @@ export async function seedVendorAssignment(
   vendorId: string,
   tenantId: string,
   workItemId: string,
+  workItemType: string = "WORKFLOW_INSTANCE",
 ): Promise<void> {
   const client = new Client({ connectionString: CONNECTION_STRING });
   await client.connect();
@@ -225,9 +226,57 @@ export async function seedVendorAssignment(
     await client.query(
       `insert into trellis_vendor.vendor_assignment
          (assignment_id, vendor_id, tenant_id, work_item_type, work_item_id, status, assigned_at)
-       values (gen_random_uuid(), $1, $2, 'WORKFLOW_INSTANCE', $3, 'ASSIGNED', now())`,
-      [vendorId, tenantId, workItemId],
+       values (gen_random_uuid(), $1, $2, $3, $4, 'ASSIGNED', now())`,
+      [vendorId, tenantId, workItemType, workItemId],
     );
+  } finally {
+    await client.end();
+  }
+}
+
+/** inspection-offline.spec.ts's own seeded inspection — a fixed baseline of 5 checklist items, mirroring InspectionChecklistDefaults.BaselineLabels exactly so the offline capture UI has real items to edit. */
+export async function seedInspection(
+  inspectionId: string,
+  tenantId: string,
+  propertyId: string,
+): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(
+      `insert into trellis_inspection.inspection
+         (inspection_id, tenant_id, property_id, scheduled_by_user_id, status, scheduled_at, created_at, updated_at)
+       values ($1, $2, $3, gen_random_uuid(), 'SCHEDULED', now(), now(), now())`,
+      [inspectionId, tenantId, propertyId],
+    );
+
+    const labels = ["Smoke Detectors", "Plumbing", "HVAC", "Structural", "Electrical"];
+    for (const [index, label] of labels.entries()) {
+      await client.query(
+        `insert into trellis_inspection.inspection_item
+           (inspection_item_id, tenant_id, inspection_id, label, status, sort_order, created_at, updated_at)
+         values (gen_random_uuid(), $1, $2, $3, 'PENDING', $4, now(), now())`,
+        [tenantId, inspectionId, label, index],
+      );
+    }
+  } finally {
+    await client.end();
+  }
+}
+
+export async function deleteInspectionDataForTenant(tenantId: string): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(`delete from trellis_inspection.inspection_photo where tenant_id = $1`, [
+      tenantId,
+    ]);
+    await client.query(`delete from trellis_inspection.inspection_item where tenant_id = $1`, [
+      tenantId,
+    ]);
+    await client.query(`delete from trellis_inspection.inspection where tenant_id = $1`, [
+      tenantId,
+    ]);
   } finally {
     await client.end();
   }

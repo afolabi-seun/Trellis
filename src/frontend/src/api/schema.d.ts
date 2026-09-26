@@ -1014,6 +1014,563 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/inspections": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["InspectionReportResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["InspectionReportResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["InspectionReportResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["InspectionCreateRequest"];
+                    "text/json": components["schemas"]["InspectionCreateRequest"];
+                    "application/*+json": components["schemas"]["InspectionCreateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["InspectionReportResponseApiResponse"];
+                        "application/json": components["schemas"]["InspectionReportResponseApiResponse"];
+                        "text/json": components["schemas"]["InspectionReportResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inspections/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["InspectionReportResponseApiResponse"];
+                        "application/json": components["schemas"]["InspectionReportResponseApiResponse"];
+                        "text/json": components["schemas"]["InspectionReportResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inspections/{id}/items": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["InspectionItemAddRequest"];
+                    "text/json": components["schemas"]["InspectionItemAddRequest"];
+                    "application/*+json": components["schemas"]["InspectionItemAddRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["InspectionItemResponseApiResponse"];
+                        "application/json": components["schemas"]["InspectionItemResponseApiResponse"];
+                        "text/json": components["schemas"]["InspectionItemResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inspections/{id}/items/{itemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    itemId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["BooleanApiResponse"];
+                        "application/json": components["schemas"]["BooleanApiResponse"];
+                        "text/json": components["schemas"]["BooleanApiResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    itemId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["InspectionItemUpdateRequest"];
+                    "text/json": components["schemas"]["InspectionItemUpdateRequest"];
+                    "application/*+json": components["schemas"]["InspectionItemUpdateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["InspectionItemResponseApiResponse"];
+                        "application/json": components["schemas"]["InspectionItemResponseApiResponse"];
+                        "text/json": components["schemas"]["InspectionItemResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/inspections/{id}/photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: uuid */
+                        InspectionItemId?: string;
+                        /** Format: double */
+                        Latitude?: number;
+                        /** Format: double */
+                        Longitude?: number;
+                        /** Format: date-time */
+                        CapturedAt?: string;
+                        /** Format: binary */
+                        File?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["InspectionPhotoResponseApiResponse"];
+                        "application/json": components["schemas"]["InspectionPhotoResponseApiResponse"];
+                        "text/json": components["schemas"]["InspectionPhotoResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inspections/{id}/photos/{photoId}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    photoId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inspections/{id}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["InspectionReportResponseApiResponse"];
+                        "application/json": components["schemas"]["InspectionReportResponseApiResponse"];
+                        "text/json": components["schemas"]["InspectionReportResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/inspections/{id}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["InspectionCompleteStaffRequest"];
+                    "text/json": components["schemas"]["InspectionCompleteStaffRequest"];
+                    "application/*+json": components["schemas"]["InspectionCompleteStaffRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["InspectionReportResponseApiResponse"];
+                        "application/json": components["schemas"]["InspectionReportResponseApiResponse"];
+                        "text/json": components["schemas"]["InspectionReportResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vendor-portal/inspections/{workItemId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    workItemId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VendorInspectionViewApiResponse"];
+                        "application/json": components["schemas"]["VendorInspectionViewApiResponse"];
+                        "text/json": components["schemas"]["VendorInspectionViewApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vendor-portal/inspections/{workItemId}/start": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    workItemId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VendorInspectionViewApiResponse"];
+                        "application/json": components["schemas"]["VendorInspectionViewApiResponse"];
+                        "text/json": components["schemas"]["VendorInspectionViewApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vendor-portal/inspections/{workItemId}/photos/{photoId}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    workItemId: string;
+                    photoId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vendor-portal/inspections/{workItemId}/complete": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    workItemId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "multipart/form-data": {
+                        ItemsJson?: string;
+                        LocationJson?: string;
+                        PhotoMetaJson?: string;
+                        Photos?: string[];
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VendorInspectionViewApiResponse"];
+                        "application/json": components["schemas"]["VendorInspectionViewApiResponse"];
+                        "text/json": components["schemas"]["VendorInspectionViewApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/.well-known/jwks.json": {
         parameters: {
             query?: never;
@@ -2643,6 +3200,12 @@ export interface components {
             /** Format: date-time */
             timestamp: string;
         };
+        BooleanApiResponse: {
+            readonly status?: string | null;
+            readonly data?: boolean;
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
         DepartmentCreateRequest: {
             name?: string | null;
         };
@@ -2735,6 +3298,114 @@ export interface components {
             scanStatus?: string | null;
             /** Format: date-time */
             createdAt?: string;
+        };
+        InspectionCompleteStaffRequest: {
+            /** Format: double */
+            latitude?: number | null;
+            /** Format: double */
+            longitude?: number | null;
+        };
+        InspectionCreateRequest: {
+            /** Format: uuid */
+            propertyId?: string | null;
+            /** Format: uuid */
+            unitAssetId?: string | null;
+            /** Format: uuid */
+            assignedToUserId?: string | null;
+            /** Format: date-time */
+            scheduledAt?: string;
+        };
+        InspectionItemAddRequest: {
+            label?: string | null;
+        };
+        InspectionItemResponse: {
+            /** Format: uuid */
+            inspectionItemId?: string;
+            label?: string | null;
+            status?: string | null;
+            notes?: string | null;
+            /** Format: int32 */
+            sortOrder?: number;
+        };
+        InspectionItemResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["InspectionItemResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        InspectionItemUpdateRequest: {
+            status?: string | null;
+            notes?: string | null;
+        };
+        InspectionPhotoResponse: {
+            /** Format: uuid */
+            inspectionPhotoId?: string;
+            /** Format: uuid */
+            inspectionItemId?: string | null;
+            fileName?: string | null;
+            contentType?: string | null;
+            /** Format: int64 */
+            fileSizeBytes?: number;
+            scanStatus?: string | null;
+            /** Format: double */
+            latitude?: number | null;
+            /** Format: double */
+            longitude?: number | null;
+            /** Format: date-time */
+            capturedAt?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        InspectionPhotoResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["InspectionPhotoResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        InspectionReportResponse: {
+            /** Format: uuid */
+            inspectionId?: string;
+            /** Format: uuid */
+            propertyId?: string | null;
+            /** Format: uuid */
+            unitAssetId?: string | null;
+            /** Format: uuid */
+            assignedToUserId?: string | null;
+            status?: string | null;
+            /** Format: date-time */
+            scheduledAt?: string;
+            /** Format: date-time */
+            startedAt?: string | null;
+            /** Format: date-time */
+            completedAt?: string | null;
+            /** Format: double */
+            latitude?: number | null;
+            /** Format: double */
+            longitude?: number | null;
+            items?: components["schemas"]["InspectionItemResponse"][] | null;
+            photos?: components["schemas"]["InspectionPhotoResponse"][] | null;
+            rowVersion?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        InspectionReportResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["InspectionReportResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        InspectionReportResponsePagedResponse: {
+            items?: components["schemas"]["InspectionReportResponse"][] | null;
+            nextCursor?: string | null;
+            hasMore?: boolean;
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        InspectionReportResponsePagedResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["InspectionReportResponsePagedResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
         };
         LoginRequest: {
             username?: string | null;
@@ -3115,6 +3786,33 @@ export interface components {
         VendorCreateRequest: {
             vendorName?: string | null;
             category?: string | null;
+        };
+        VendorInspectionView: {
+            /** Format: uuid */
+            inspectionId?: string;
+            /** Format: uuid */
+            propertyId?: string | null;
+            /** Format: uuid */
+            unitAssetId?: string | null;
+            status?: string | null;
+            /** Format: date-time */
+            scheduledAt?: string;
+            /** Format: date-time */
+            startedAt?: string | null;
+            /** Format: double */
+            latitude?: number | null;
+            /** Format: double */
+            longitude?: number | null;
+            items?: components["schemas"]["InspectionItemResponse"][] | null;
+            photos?: components["schemas"]["InspectionPhotoResponse"][] | null;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        VendorInspectionViewApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["VendorInspectionView"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
         };
         VendorInviteUserRequest: {
             email?: string | null;

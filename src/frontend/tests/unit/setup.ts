@@ -1,4 +1,5 @@
 import "@testing-library/jest-dom/vitest";
+import "fake-indexeddb/auto";
 import { vi } from "vitest";
 
 // Unit tests never make a real network call (testing_strategy.md's Unit layer is mocked, no

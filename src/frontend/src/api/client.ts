@@ -48,6 +48,8 @@ interface RequestOptions {
   query?: Record<string, string | number | undefined>;
   /** Skip the Authorization header and the 401-triggered refresh retry — the four anonymous auth endpoints. */
   anonymous?: boolean;
+  /** Extra headers merged in on top of Content-Type/Authorization — e.g. X-Idempotency-Key on the Inspection vendor-portal completion route. */
+  headers?: Record<string, string>;
 }
 
 /**
@@ -89,6 +91,9 @@ async function doFetch(path: string, options: RequestOptions): Promise<Response>
   }
   if (!options.anonymous && accessToken) {
     headers.Authorization = `Bearer ${accessToken}`;
+  }
+  if (options.headers) {
+    Object.assign(headers, options.headers);
   }
 
   return fetch(url, {

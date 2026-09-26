@@ -2,6 +2,8 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { RequireRole } from "./auth/RequireRole";
 import { AdminShell } from "./features/admin/AdminShell";
 import { DocumentsLibraryPage } from "./features/admin/document/DocumentsLibraryPage";
+import { InspectionDetailPage } from "./features/admin/inspection/InspectionDetailPage";
+import { InspectionsListPage } from "./features/admin/inspection/InspectionsListPage";
 import { OwnersListPage } from "./features/admin/propertyasset/OwnersListPage";
 import { PropertiesListPage } from "./features/admin/propertyasset/PropertiesListPage";
 import { PropertyDetailPage } from "./features/admin/propertyasset/PropertyDetailPage";
@@ -16,6 +18,7 @@ import { ResetPasswordPage } from "./features/auth/ResetPasswordPage";
 import { TenantsListPage } from "./features/platform/TenantsListPage";
 import { VendorAssignmentDetailPage } from "./features/vendor/VendorAssignmentDetailPage";
 import { VendorAssignmentsListPage } from "./features/vendor/VendorAssignmentsListPage";
+import { VendorInspectionCapturePage } from "./features/vendor/VendorInspectionCapturePage";
 import { VendorShell } from "./features/vendor/VendorShell";
 
 export function App() {
@@ -37,6 +40,8 @@ export function App() {
           <Route path="workflow-instances" element={<WorkflowInstancesBoardPage />} />
           <Route path="documents" element={<DocumentsLibraryPage />} />
           <Route path="vendors" element={<VendorsListPage />} />
+          <Route path="inspections" element={<InspectionsListPage />} />
+          <Route path="inspections/:id" element={<InspectionDetailPage />} />
         </Route>
       </Route>
 
@@ -44,6 +49,7 @@ export function App() {
         <Route path="/vendor" element={<VendorShell />}>
           <Route index element={<VendorAssignmentsListPage />} />
           <Route path="assignments/:workItemId" element={<VendorAssignmentDetailPage />} />
+          <Route path="inspections/:workItemId" element={<VendorInspectionCapturePage />} />
         </Route>
       </Route>
 

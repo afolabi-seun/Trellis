@@ -10,6 +10,16 @@ const assignmentStatusColor: Record<string, string> = {
   CLOSED: "gray.8",
 };
 
+/** Vendor-side routes, keyed by work item type (WorkItemTypes.cs) since a WorkflowInstance and an Inspection have different detail pages. */
+function detailPathFor(
+  workItemType: string | null | undefined,
+  workItemId: string | undefined,
+): string {
+  return workItemType === "INSPECTION"
+    ? `/vendor/inspections/${workItemId}`
+    : `/vendor/assignments/${workItemId}`;
+}
+
 /** Exit criterion: one Vendor login, assignments across every tenant that engaged it — tenant name resolved server-side, never from a claim. */
 export function VendorAssignmentsListPage() {
   const assignmentsQuery = useQuery({
@@ -25,6 +35,7 @@ export function VendorAssignmentsListPage() {
         <Table.Thead>
           <Table.Tr>
             <Table.Th>Tenant</Table.Th>
+            <Table.Th>Type</Table.Th>
             <Table.Th>Status</Table.Th>
             <Table.Th>Assigned</Table.Th>
           </Table.Tr>
@@ -35,11 +46,14 @@ export function VendorAssignmentsListPage() {
               <Table.Td>
                 <Text
                   component={Link}
-                  to={`/vendor/assignments/${item.assignment?.workItemId}`}
+                  to={detailPathFor(item.assignment?.workItemType, item.assignment?.workItemId)}
                   fw={600}
                 >
                   {item.tenantName}
                 </Text>
+              </Table.Td>
+              <Table.Td>
+                {item.assignment?.workItemType === "INSPECTION" ? "Inspection" : "Maintenance"}
               </Table.Td>
               <Table.Td>
                 <Badge color={assignmentStatusColor[item.assignment?.status ?? ""] ?? "gray.6"}>
