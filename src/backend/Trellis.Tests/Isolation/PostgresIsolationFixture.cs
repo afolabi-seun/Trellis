@@ -4,6 +4,7 @@ using Testcontainers.PostgreSql;
 using Trellis.Api.Core.Data;
 using Trellis.Api.Modules.Auth.Infrastructure.Data;
 using Trellis.Api.Modules.Document.Infrastructure.Data;
+using Trellis.Api.Modules.Notification.Infrastructure.Data;
 using Trellis.Api.Modules.PropertyAsset.Infrastructure.Data;
 using Trellis.Api.Modules.Vendor.Infrastructure.Data;
 using Trellis.Api.Modules.Workflow.Infrastructure.Data;
@@ -76,7 +77,7 @@ public sealed class PostgresIsolationFixture : IAsyncLifetime
         // time — the table must already exist.
         await MigrateAsync(() => new CoreDbContext(BuildOptions<CoreDbContext>()));
         await MigrateAsync(() => new Trellis.Api.Modules.Tenant.Infrastructure.Data.TenantDbContext(BuildOptions<Trellis.Api.Modules.Tenant.Infrastructure.Data.TenantDbContext>()));
-        await MigrateAsync(() => new Trellis.Api.Modules.Notification.Infrastructure.Data.NotificationDbContext(BuildOptions<Trellis.Api.Modules.Notification.Infrastructure.Data.NotificationDbContext>()));
+        await MigrateAsync(() => new NotificationDbContext(BuildOptions<NotificationDbContext>()));
         await MigrateAsync(() => new AuthDbContext(BuildOptions<AuthDbContext>()));
         await MigrateAsync(() => new PropertyDbContext(BuildOptions<PropertyDbContext>()));
         await MigrateAsync(() => new VendorDbContext(BuildOptions<VendorDbContext>()));
@@ -99,6 +100,16 @@ public sealed class PostgresIsolationFixture : IAsyncLifetime
             .AddInterceptors(new TenantScopeConnectionInterceptor())
             .Options;
         return new AuthDbContext(options);
+    }
+
+    /// <summary>Same shape as <see cref="CreateAppAuthContext"/>, for Notification's own isolation tests.</summary>
+    public NotificationDbContext CreateAppNotificationContext()
+    {
+        var options = new DbContextOptionsBuilder<NotificationDbContext>()
+            .UseNpgsql(AppConnectionString)
+            .AddInterceptors(new TenantScopeConnectionInterceptor())
+            .Options;
+        return new NotificationDbContext(options);
     }
 
     /// <summary>Same shape as <see cref="CreateAppAuthContext"/>, for PropertyAsset's own isolation/concurrency tests.</summary>
