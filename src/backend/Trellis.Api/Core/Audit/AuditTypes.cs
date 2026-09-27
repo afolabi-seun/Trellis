@@ -54,4 +54,14 @@ public static class AuditTypes
         public const string InspectionScheduled = "INSPECTION_SCHEDULED";
         public const string InspectionStatusUpdated = "INSPECTION_STATUS_UPDATED";
     }
+
+    /// <summary>BDR-AI-004 — every extraction/routing decision is audited, not just visible via the entity's own reviewed_by/reviewed_at columns (Workflow's own AuditTypes precedent). Fires alongside, not instead of, the dedicated trellis_ai.override_log table for the override case specifically.</summary>
+    public static class Ai
+    {
+        public const string ExtractionCompleted = "AI_EXTRACTION_COMPLETED";
+        public const string ExtractionConfirmed = "AI_EXTRACTION_CONFIRMED";
+        public const string RoutingSuggestionCreated = "AI_ROUTING_SUGGESTION_CREATED";
+        public const string RoutingSuggestionLinked = "AI_ROUTING_SUGGESTION_LINKED";
+        public const string SuggestionOverridden = "AI_SUGGESTION_OVERRIDDEN";
+    }
 }

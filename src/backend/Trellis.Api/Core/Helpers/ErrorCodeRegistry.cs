@@ -134,4 +134,16 @@ public static class ErrorCodeRegistry
         /// <summary>TRL-E-INS-8004 — VendorAssignmentService.CreateAsync: the target inspection already has an internal-staff assignee (BDR-INSP-001's assignment is mutually exclusive).</summary>
         public const string AlreadyStaffAssigned = "TRL-E-INS-8004";
     }
+
+    public static class Ai
+    {
+        /// <summary>TRL-E-AI-9000 — billing_design.md: the Ai module is reserved for PROFESSIONAL+ tenants; the caller's tenant is still on STARTER.</summary>
+        public const string TierNotEntitled = "TRL-E-AI-9000";
+
+        /// <summary>TRL-E-AI-9001 — ConfirmAsync called on an extraction job that isn't in a confirmable state (already Confirmed, or still Pending).</summary>
+        public const string ExtractionAlreadyReviewed = "TRL-E-AI-9001";
+
+        /// <summary>TRL-E-AI-9002 — LinkAsync called on a routing suggestion already linked to a WorkflowInstance.</summary>
+        public const string RoutingSuggestionAlreadyLinked = "TRL-E-AI-9002";
+    }
 }

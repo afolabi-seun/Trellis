@@ -5,6 +5,7 @@ using Trellis.Api.Core.Audit;
 using Trellis.Api.Core.Files;
 using Trellis.Api.Core.Middleware;
 using Trellis.Api.Core.Results;
+using Trellis.Api.Modules.Ai.Application.Interfaces;
 using Trellis.Api.Modules.Document.Application.Dtos;
 using Trellis.Api.Modules.Document.Application.Interfaces;
 using Trellis.Api.Modules.Document.Application.Services;
@@ -27,12 +28,13 @@ public sealed class DocumentServiceTests
     private readonly IUnitAssetService _unitAssetService = Substitute.For<IUnitAssetService>();
     private readonly IOwnerService _ownerService = Substitute.For<IOwnerService>();
     private readonly IWorkflowInstanceService _workflowInstanceService = Substitute.For<IWorkflowInstanceService>();
+    private readonly IExtractionService _extractionService = Substitute.For<IExtractionService>();
 
     public DocumentServiceTests() => TenantContext.Current = new TenantContext(Guid.NewGuid());
 
     private DocumentService CreateSut() => new(
         _repository, _versionRepository, new DocumentUploadRequestValidator(), _fileStorage, _fileScanner,
-        _auditService, _propertyService, _unitAssetService, _ownerService, _workflowInstanceService);
+        _auditService, _propertyService, _unitAssetService, _ownerService, _workflowInstanceService, _extractionService);
 
     [Fact]
     public async Task CreateAsync_WhenMoreThanOneAttachmentTargetSet_ReturnsBusinessRuleViolation()

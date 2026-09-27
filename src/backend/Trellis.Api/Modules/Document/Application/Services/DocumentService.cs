@@ -7,6 +7,7 @@ using Trellis.Api.Core.Helpers;
 using Trellis.Api.Core.Middleware;
 using Trellis.Api.Core.Resilience;
 using Trellis.Api.Core.Results;
+using Trellis.Api.Modules.Ai.Application.Interfaces;
 using Trellis.Api.Modules.Document.Application.Dtos;
 using Trellis.Api.Modules.Document.Application.Interfaces;
 using Trellis.Api.Modules.Document.Domain.Entities;
@@ -26,7 +27,8 @@ public sealed class DocumentService(
     IPropertyService propertyService,
     IUnitAssetService unitAssetService,
     IOwnerService ownerService,
-    IWorkflowInstanceService workflowInstanceService) : IDocumentService
+    IWorkflowInstanceService workflowInstanceService,
+    IExtractionService extractionService) : IDocumentService
 {
     public async Task<ServiceResult<DocumentResponse>> CreateAsync(
         DocumentUploadRequest request, Stream fileContent, string fileName, string declaredContentType, long fileSizeBytes, Guid uploadedBy)
@@ -121,6 +123,18 @@ public sealed class DocumentService(
             $"{{\"documentId\":\"{document.DocumentId}\"}}");
 
         await ScanAsync(version);
+
+        // BDR-AI-001: only lease/insurance/compliance documents trigger extraction — Invoice/Other
+        // never do. Inline, right after the malware scan (Phase 6 decision 2), same request/
+        // DbContext, same degrade-never-throw shape ScanAsync itself already uses. Silently no-ops
+        // for a STARTER tenant (IExtractionService.ExtractAsync's own tier-gate check) — this
+        // upload path must never even know Ai tiers exist.
+        if (documentType is DocumentType.Lease or DocumentType.InsuranceCert or DocumentType.Licence)
+        {
+            await extractionService.ExtractAsync(
+                tenantId, document.DocumentId, version.DocumentVersionId, documentType.ToUpperSnakeCase(), version.StorageKey, version.FileName, uploadedBy);
+        }
+
         await versionRepository.SaveChangesAsync();
 
         return ServiceResult<DocumentResponse>.Success(await ToResponseAsync(document));
