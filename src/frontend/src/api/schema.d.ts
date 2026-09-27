@@ -4,6 +4,321 @@
  */
 
 export interface paths {
+    "/api/v1/ai/extraction-jobs": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ExtractionJobResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["ExtractionJobResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["ExtractionJobResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/extraction-jobs/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ExtractionJobResponseApiResponse"];
+                        "application/json": components["schemas"]["ExtractionJobResponseApiResponse"];
+                        "text/json": components["schemas"]["ExtractionJobResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/extraction-jobs/{id}/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ExtractionConfirmRequest"];
+                    "text/json": components["schemas"]["ExtractionConfirmRequest"];
+                    "application/*+json": components["schemas"]["ExtractionConfirmRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ExtractionJobResponseApiResponse"];
+                        "application/json": components["schemas"]["ExtractionJobResponseApiResponse"];
+                        "text/json": components["schemas"]["ExtractionJobResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/ai/override-log": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OverrideLogResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["OverrideLogResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["OverrideLogResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/routing-suggestions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RoutingSuggestionResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["RoutingSuggestionResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["RoutingSuggestionResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RoutingSuggestionCreateRequest"];
+                    "text/json": components["schemas"]["RoutingSuggestionCreateRequest"];
+                    "application/*+json": components["schemas"]["RoutingSuggestionCreateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RoutingSuggestionResponseApiResponse"];
+                        "application/json": components["schemas"]["RoutingSuggestionResponseApiResponse"];
+                        "text/json": components["schemas"]["RoutingSuggestionResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/routing-suggestions/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RoutingSuggestionResponseApiResponse"];
+                        "application/json": components["schemas"]["RoutingSuggestionResponseApiResponse"];
+                        "text/json": components["schemas"]["RoutingSuggestionResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/ai/routing-suggestions/{id}/link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RoutingSuggestionLinkRequest"];
+                    "text/json": components["schemas"]["RoutingSuggestionLinkRequest"];
+                    "application/*+json": components["schemas"]["RoutingSuggestionLinkRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RoutingSuggestionResponseApiResponse"];
+                        "application/json": components["schemas"]["RoutingSuggestionResponseApiResponse"];
+                        "text/json": components["schemas"]["RoutingSuggestionResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
     "/api/v1/auth/login": {
         parameters: {
             query?: never;
@@ -3299,6 +3614,55 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
         };
+        ExtractedFieldDto: {
+            fieldName?: string | null;
+            value?: string | null;
+        };
+        ExtractionConfirmRequest: {
+            fields?: components["schemas"]["ExtractedFieldDto"][] | null;
+            rowVersion?: string | null;
+        };
+        ExtractionJobResponse: {
+            /** Format: uuid */
+            extractionJobId?: string;
+            /** Format: uuid */
+            documentId?: string;
+            /** Format: uuid */
+            documentVersionId?: string;
+            documentType?: string | null;
+            status?: string | null;
+            extractedFields?: components["schemas"]["ExtractedFieldDto"][] | null;
+            /** Format: double */
+            confidence?: number | null;
+            confirmedFields?: components["schemas"]["ExtractedFieldDto"][] | null;
+            failureReason?: string | null;
+            /** Format: uuid */
+            reviewedBy?: string | null;
+            /** Format: date-time */
+            reviewedAt?: string | null;
+            rowVersion?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        ExtractionJobResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["ExtractionJobResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        ExtractionJobResponsePagedResponse: {
+            items?: components["schemas"]["ExtractionJobResponse"][] | null;
+            nextCursor?: string | null;
+            hasMore?: boolean;
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        ExtractionJobResponsePagedResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["ExtractionJobResponsePagedResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
         InspectionCompleteStaffRequest: {
             /** Format: double */
             latitude?: number | null;
@@ -3457,6 +3821,32 @@ export interface components {
             error?: components["schemas"]["ApiError"];
             meta: components["schemas"]["ApiMeta"];
         };
+        OverrideLogResponse: {
+            /** Format: uuid */
+            overrideLogId?: string;
+            suggestionType?: string | null;
+            /** Format: uuid */
+            suggestionId?: string;
+            originalValueJson?: string | null;
+            correctedValueJson?: string | null;
+            /** Format: uuid */
+            overriddenBy?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        OverrideLogResponsePagedResponse: {
+            items?: components["schemas"]["OverrideLogResponse"][] | null;
+            nextCursor?: string | null;
+            hasMore?: boolean;
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        OverrideLogResponsePagedResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["OverrideLogResponsePagedResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
         OwnerCreateRequest: {
             name?: string | null;
             email?: string | null;
@@ -3582,6 +3972,55 @@ export interface components {
         RecoveryCodesRegenerateResponseApiResponse: {
             readonly status?: string | null;
             data?: components["schemas"]["RecoveryCodesRegenerateResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        RoutingSuggestionCreateRequest: {
+            description?: string | null;
+            /** Format: uuid */
+            propertyId?: string | null;
+        };
+        RoutingSuggestionLinkRequest: {
+            /** Format: uuid */
+            workflowInstanceId?: string;
+            /** Format: uuid */
+            finalDepartmentId?: string | null;
+        };
+        RoutingSuggestionResponse: {
+            /** Format: uuid */
+            routingSuggestionId?: string;
+            description?: string | null;
+            /** Format: uuid */
+            propertyId?: string | null;
+            /** Format: uuid */
+            suggestedDepartmentId?: string | null;
+            suggestedVendorCategory?: string | null;
+            /** Format: double */
+            confidence?: number | null;
+            status?: string | null;
+            /** Format: uuid */
+            finalDepartmentId?: string | null;
+            /** Format: uuid */
+            workflowInstanceId?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        RoutingSuggestionResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["RoutingSuggestionResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        RoutingSuggestionResponsePagedResponse: {
+            items?: components["schemas"]["RoutingSuggestionResponse"][] | null;
+            nextCursor?: string | null;
+            hasMore?: boolean;
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        RoutingSuggestionResponsePagedResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["RoutingSuggestionResponsePagedResponse"];
             error?: components["schemas"]["ApiError"];
             meta: components["schemas"]["ApiMeta"];
         };

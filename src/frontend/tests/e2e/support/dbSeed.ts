@@ -29,15 +29,19 @@ export async function seedSuperAdmin(username: string): Promise<void> {
   }
 }
 
-/** Seeded directly (not through the Super Admin provisioning flow) so its id is known ahead of time — needed wherever a test asserts a server-resolved tenant name, e.g. vendor.spec.ts's cross-tenant view (ITenantService.GetByIdAsync). */
-export async function seedTenant(tenantId: string, tenantName: string): Promise<void> {
+/** Seeded directly (not through the Super Admin provisioning flow) so its id is known ahead of time — needed wherever a test asserts a server-resolved tenant name, e.g. vendor.spec.ts's cross-tenant view (ITenantService.GetByIdAsync). Defaults to STARTER; ai.spec.ts passes PROFESSIONAL to exercise the Ai tier gate. */
+export async function seedTenant(
+  tenantId: string,
+  tenantName: string,
+  tier: string = "STARTER",
+): Promise<void> {
   const client = new Client({ connectionString: CONNECTION_STRING });
   await client.connect();
   try {
     await client.query(
       `insert into trellis_tenant.tenant (tenant_id, tenant_name, country_code, status, subscription_tier, created_at, updated_at)
-       values ($1, $2, 'US', 'ACTIVE', 'STARTER', now(), now())`,
-      [tenantId, tenantName],
+       values ($1, $2, 'US', 'ACTIVE', $3, now(), now())`,
+      [tenantId, tenantName, tier],
     );
   } finally {
     await client.end();
@@ -323,6 +327,38 @@ export async function deleteTenantByName(tenantName: string): Promise<void> {
   await client.connect();
   try {
     await client.query(`delete from trellis_tenant.tenant where tenant_name = $1`, [tenantName]);
+  } finally {
+    await client.end();
+  }
+}
+
+export async function deleteAiDataForTenant(tenantId: string): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(`delete from trellis_ai.override_log where tenant_id = $1`, [tenantId]);
+    await client.query(`delete from trellis_ai.routing_suggestion where tenant_id = $1`, [
+      tenantId,
+    ]);
+    await client.query(`delete from trellis_ai.extraction_job where tenant_id = $1`, [tenantId]);
+  } finally {
+    await client.end();
+  }
+}
+
+/** ai.spec.ts's own read-back — there's no override-log UI surface (BDR-AI-004's structured-query table is for future retraining, not a screen), so the e2e proof queries the row directly instead. */
+export async function countOverrideLogEntriesForTenant(
+  tenantId: string,
+  suggestionType: string,
+): Promise<number> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    const result = await client.query(
+      `select count(*)::int as count from trellis_ai.override_log where tenant_id = $1 and suggestion_type = $2`,
+      [tenantId, suggestionType],
+    );
+    return result.rows[0].count;
   } finally {
     await client.end();
   }

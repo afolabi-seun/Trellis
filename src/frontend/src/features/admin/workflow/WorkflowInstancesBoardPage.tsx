@@ -10,6 +10,7 @@ import {
   Stack,
   Table,
   Text,
+  Textarea,
   Title,
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
@@ -17,16 +18,21 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { Controller, useForm } from "react-hook-form";
 import { z } from "zod";
+import { aiRoutingApi } from "../../../api/aiRouting";
 import { TrellisApiError } from "../../../api/client";
+import { departmentsApi } from "../../../api/departments";
 import { tenantVendorRelationshipsApi } from "../../../api/tenantVendorRelationships";
 import { vendorAssignmentsApi } from "../../../api/vendorAssignments";
 import { vendorsApi } from "../../../api/vendors";
 import { workflowInstancesApi } from "../../../api/workflowInstances";
 import { workflowTemplatesApi } from "../../../api/workflowTemplates";
+import { RoutingSuggestionHint } from "../ai/RoutingSuggestionHint";
 import { dangerAlertStyles, dangerButtonStyles } from "../../../theme/dangerStyles";
 
 const instanceSchema = z.object({
   workflowTemplateId: z.string().min(1, "A template is required."),
+  description: z.string().optional(),
+  requestingDepartmentId: z.string().optional(),
   costAmount: z.number().optional(),
 });
 
@@ -53,6 +59,9 @@ export function WorkflowInstancesBoardPage() {
   const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
   const [assigningInstanceId, setAssigningInstanceId] = useState<string | null>(null);
   const [selectedVendorId, setSelectedVendorId] = useState<string | null>(null);
+  const [suggestion, setSuggestion] = useState<Awaited<
+    ReturnType<typeof aiRoutingApi.create>
+  > | null>(null);
 
   const instancesQuery = useQuery({
     queryKey: ["workflow", "instances"],
@@ -63,6 +72,17 @@ export function WorkflowInstancesBoardPage() {
     queryKey: ["workflow", "templates"],
     queryFn: () => workflowTemplatesApi.list(),
   });
+
+  const departmentsQuery = useQuery({
+    queryKey: ["workflow", "departments"],
+    queryFn: () => departmentsApi.list(),
+  });
+
+  const departmentOptions =
+    departmentsQuery.data?.items?.map((d) => ({ value: d.departmentId!, label: d.name! })) ?? [];
+  const departmentNameById = new Map(
+    departmentsQuery.data?.items?.map((d) => [d.departmentId, d.name]) ?? [],
+  );
 
   const relationshipsQuery = useQuery({
     queryKey: ["vendor", "relationships"],
@@ -112,20 +132,43 @@ export function WorkflowInstancesBoardPage() {
     control,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<InstanceFormValues>({ resolver: zodResolver(instanceSchema) });
 
+  const description = watch("description");
+
+  const suggestMutation = useMutation({
+    mutationFn: () => aiRoutingApi.create({ description: description ?? "", propertyId: null }),
+    onSuccess: (result) => {
+      setSuggestion(result);
+      if (result.suggestedDepartmentId) {
+        setValue("requestingDepartmentId", result.suggestedDepartmentId);
+      }
+    },
+  });
+
   const createMutation = useMutation({
-    mutationFn: (values: InstanceFormValues) =>
-      workflowInstancesApi.create({
+    mutationFn: async (values: InstanceFormValues) => {
+      const instance = await workflowInstancesApi.create({
         workflowTemplateId: values.workflowTemplateId,
         propertyId: null,
-        requestingDepartmentId: null,
+        requestingDepartmentId: values.requestingDepartmentId ?? null,
         costAmount: values.costAmount ?? null,
-      }),
+      });
+      if (suggestion?.routingSuggestionId && instance.workflowInstanceId) {
+        await aiRoutingApi.link(suggestion.routingSuggestionId, {
+          workflowInstanceId: instance.workflowInstanceId,
+          finalDepartmentId: values.requestingDepartmentId ?? null,
+        });
+      }
+      return instance;
+    },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["workflow", "instances"] });
       reset();
+      setSuggestion(null);
       closeModal();
     },
   });
@@ -300,11 +343,31 @@ export function WorkflowInstancesBoardPage() {
         <Text c="gray.7">No workflow instances yet. Create one from an active template.</Text>
       )}
 
-      <Modal opened={modalOpened} onClose={closeModal} title="New workflow instance">
+      <Modal
+        opened={modalOpened}
+        onClose={() => {
+          setSuggestion(null);
+          closeModal();
+        }}
+        title="New workflow instance"
+      >
         {createMutation.isError && (
           <Alert color="red" title="Could not create instance" styles={dangerAlertStyles} mb="md">
             {createMutation.error instanceof TrellisApiError
               ? createMutation.error.message
+              : "Something went wrong."}
+          </Alert>
+        )}
+
+        {suggestMutation.isError && (
+          <Alert
+            color="red"
+            title="Could not get an AI suggestion"
+            styles={dangerAlertStyles}
+            mb="md"
+          >
+            {suggestMutation.error instanceof TrellisApiError
+              ? suggestMutation.error.message
               : "Something went wrong."}
           </Alert>
         )}
@@ -321,6 +384,52 @@ export function WorkflowInstancesBoardPage() {
                   value={field.value}
                   onChange={(value) => field.onChange(value ?? "")}
                   error={errors.workflowTemplateId?.message}
+                />
+              )}
+            />
+            <Controller
+              control={control}
+              name="description"
+              render={({ field }) => (
+                <Textarea
+                  label="Request description"
+                  placeholder="Describe the issue — used to suggest a department"
+                  value={field.value ?? ""}
+                  onChange={field.onChange}
+                />
+              )}
+            />
+            <Button
+              type="button"
+              variant="light"
+              size="xs"
+              w="fit-content"
+              loading={suggestMutation.isPending}
+              disabled={!description}
+              onClick={() => suggestMutation.mutate()}
+            >
+              Get AI suggestion
+            </Button>
+            {suggestion && (
+              <RoutingSuggestionHint
+                departmentName={
+                  suggestion.suggestedDepartmentId
+                    ? departmentNameById.get(suggestion.suggestedDepartmentId)
+                    : null
+                }
+                vendorCategory={suggestion.suggestedVendorCategory}
+                confidence={suggestion.confidence}
+              />
+            )}
+            <Controller
+              control={control}
+              name="requestingDepartmentId"
+              render={({ field }) => (
+                <Select
+                  label="Requesting department"
+                  data={departmentOptions}
+                  value={field.value}
+                  onChange={(value) => field.onChange(value ?? undefined)}
                 />
               )}
             />

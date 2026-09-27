@@ -1,6 +1,8 @@
 import { Navigate, Route, Routes } from "react-router-dom";
 import { RequireRole } from "./auth/RequireRole";
 import { AdminShell } from "./features/admin/AdminShell";
+import { ExtractionJobDetailPage } from "./features/admin/ai/ExtractionJobDetailPage";
+import { ExtractionReviewQueuePage } from "./features/admin/ai/ExtractionReviewQueuePage";
 import { DocumentsLibraryPage } from "./features/admin/document/DocumentsLibraryPage";
 import { InspectionDetailPage } from "./features/admin/inspection/InspectionDetailPage";
 import { InspectionsListPage } from "./features/admin/inspection/InspectionsListPage";
@@ -42,6 +44,8 @@ export function App() {
           <Route path="vendors" element={<VendorsListPage />} />
           <Route path="inspections" element={<InspectionsListPage />} />
           <Route path="inspections/:id" element={<InspectionDetailPage />} />
+          <Route path="extraction-jobs" element={<ExtractionReviewQueuePage />} />
+          <Route path="extraction-jobs/:id" element={<ExtractionJobDetailPage />} />
         </Route>
       </Route>
 

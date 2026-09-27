@@ -73,6 +73,12 @@ export function AdminShell() {
           >
             Inspections
           </NavLink>
+          <NavLink
+            to="/admin/extraction-jobs"
+            style={({ isActive }) => ({ fontWeight: isActive ? 700 : 400 })}
+          >
+            Extraction review
+          </NavLink>
         </Group>
         <Group>
           <Text c="gray.7" size="sm">
