@@ -168,6 +168,14 @@ namespace Trellis.Api.Modules.PropertyAsset.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(100)")
                         .HasColumnName("label");
 
+                    b.Property<string>("OccupancyStatus")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasDefaultValue("VACANT")
+                        .HasColumnName("occupancy_status");
+
                     b.Property<Guid>("PropertyId")
                         .HasColumnType("uuid")
                         .HasColumnName("property_id");

@@ -21,5 +21,8 @@ public sealed class AppUserRepository(AuthDbContext dbContext) : IAppUserReposit
                     || (u.Role == UserRole.DepartmentStaff && u.DepartmentIds != null && u.DepartmentIds.Contains(departmentId))))
             .ToListAsync();
 
+    public async Task<IReadOnlyList<AppUser>> GetByRolesAsync(Guid tenantId, IReadOnlyCollection<UserRole> roles) =>
+        await dbContext.Users.Where(u => u.TenantId == tenantId && roles.Contains(u.Role)).ToListAsync();
+
     public Task SaveChangesAsync() => dbContext.SaveChangesAsync();
 }

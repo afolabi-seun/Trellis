@@ -7,6 +7,7 @@ using Trellis.Api.Modules.Auth.Infrastructure.Data;
 using Trellis.Api.Modules.Billing.Infrastructure.Data;
 using Trellis.Api.Modules.Document.Infrastructure.Data;
 using Trellis.Api.Modules.Inspection.Infrastructure.Data;
+using Trellis.Api.Modules.Leasing.Infrastructure.Data;
 using Trellis.Api.Modules.Notification.Infrastructure.Data;
 using Trellis.Api.Modules.PropertyAsset.Infrastructure.Data;
 using Trellis.Api.Modules.Reporting.Infrastructure.Data;
@@ -94,6 +95,7 @@ public sealed class PostgresIsolationFixture : IAsyncLifetime
         // migration deliberately doesn't create audit_record (Core's InitialCoreAuditRecord,
         // migrated above, already did), only owner_report/report_share_link.
         await MigrateAsync(() => new ReportingDbContext(BuildOptions<ReportingDbContext>()));
+        await MigrateAsync(() => new LeasingDbContext(BuildOptions<LeasingDbContext>()));
     }
 
     public async Task DisposeAsync() => await _container.DisposeAsync();
@@ -201,6 +203,16 @@ public sealed class PostgresIsolationFixture : IAsyncLifetime
             .AddInterceptors(new TenantScopeConnectionInterceptor())
             .Options;
         return new ReportingDbContext(options);
+    }
+
+    /// <summary>Same shape as <see cref="CreateAppAuthContext"/>, for Leasing's own isolation tests.</summary>
+    public LeasingDbContext CreateAppLeasingContext()
+    {
+        var options = new DbContextOptionsBuilder<LeasingDbContext>()
+            .UseNpgsql(AppConnectionString)
+            .AddInterceptors(new TenantScopeConnectionInterceptor())
+            .Options;
+        return new LeasingDbContext(options);
     }
 
     private DbContextOptions<TContext> BuildOptions<TContext>() where TContext : DbContext =>

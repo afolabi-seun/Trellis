@@ -24,6 +24,12 @@ public sealed class UnitAssetConfiguration : IEntityTypeConfiguration<UnitAsset>
             .HasConversion(s => s.ToString().ToUpperInvariant(), s => (UnitAssetStatus)Enum.Parse(typeof(UnitAssetStatus), s, true))
             .HasMaxLength(20);
 
+        builder.Property(u => u.OccupancyStatus)
+            .HasColumnName("occupancy_status")
+            .HasConversion(s => s.ToString().ToUpperInvariant(), s => (UnitAssetOccupancyStatus)Enum.Parse(typeof(UnitAssetOccupancyStatus), s, true))
+            .HasMaxLength(20)
+            .HasDefaultValue(UnitAssetOccupancyStatus.Vacant);
+
         builder.Property(u => u.SizeSqft).HasColumnName("size_sqft").HasColumnType("numeric");
         builder.Property(u => u.AcquisitionValue).HasColumnName("acquisition_value").HasColumnType("numeric(14,2)");
         builder.Property(u => u.CreatedAt).HasColumnName("created_at");

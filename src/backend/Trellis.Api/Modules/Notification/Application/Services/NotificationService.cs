@@ -11,7 +11,7 @@ public sealed partial class NotificationService(
 {
     public async Task SendAsync(
         Guid? tenantId, string templateKey, string recipientAddress, object templateData,
-        RelatedEntityRef? relatedEntity = null)
+        RelatedEntityRef? relatedEntity = null, NotificationRecipientType? recipientType = null)
     {
         var template = await templateRepository.ResolveAsync(tenantId, templateKey);
         if (template is null)
@@ -21,10 +21,11 @@ public sealed partial class NotificationService(
             return;
         }
 
-        var recipientType = tenantId is null ? NotificationRecipientType.External : NotificationRecipientType.AppUser;
+        var resolvedRecipientType = recipientType
+            ?? (tenantId is null ? NotificationRecipientType.External : NotificationRecipientType.AppUser);
 
         var delivery = NotificationDelivery.Create(
-            tenantId, recipientType, recipientAddress, templateKey, template.Channel,
+            tenantId, resolvedRecipientType, recipientAddress, templateKey, template.Channel,
             relatedEntity?.EntityType, relatedEntity?.EntityId);
 
         await deliveryRepository.AddAsync(delivery);

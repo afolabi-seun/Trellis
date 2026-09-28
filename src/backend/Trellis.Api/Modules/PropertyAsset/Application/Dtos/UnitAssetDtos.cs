@@ -5,5 +5,5 @@ public sealed record UnitAssetCreateRequest(string Label, decimal? SizeSqft, dec
 public sealed record UnitAssetUpdateRequest(string Label, decimal? SizeSqft, decimal? AcquisitionValue, string RowVersion);
 
 public sealed record UnitAssetResponse(
-    Guid UnitAssetId, Guid PropertyId, string Label, string Status,
+    Guid UnitAssetId, Guid PropertyId, string Label, string Status, string OccupancyStatus,
     decimal? SizeSqft, decimal? AcquisitionValue, string RowVersion, DateTimeOffset CreatedAt);

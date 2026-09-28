@@ -10,6 +10,18 @@ public enum UnitAssetStatus
 }
 
 /// <summary>
+/// A separate dimension from <see cref="UnitAssetStatus"/> (Active/Archived governs whether a
+/// unit is in the property's active inventory at all; this governs whether someone lives there) —
+/// conflating both into one enum would make "Active" and "Occupied" mutually exclusive when they
+/// aren't. Added Phase 9 (Leasing, BDR-LSE-006).
+/// </summary>
+public enum UnitAssetOccupancyStatus
+{
+    Vacant,
+    Occupied,
+}
+
+/// <summary>
 /// data_model.md's `trellis_property.unit_asset` — deliberately one table covering both rental
 /// units ("Unit 4B") and physical assets ("Rooftop HVAC"), per BDR-AST-001's single
 /// Tenant → Owner → Property → Unit/Asset hierarchy level. <see cref="TenantId"/> is denormalised
@@ -26,6 +38,7 @@ public sealed class UnitAsset : ITenantOwned
     public Guid PropertyId { get; private set; }
     public string Label { get; private set; } = null!;
     public UnitAssetStatus Status { get; private set; }
+    public UnitAssetOccupancyStatus OccupancyStatus { get; private set; } = UnitAssetOccupancyStatus.Vacant;
     public decimal? SizeSqft { get; private set; }
     public decimal? AcquisitionValue { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
@@ -78,6 +91,30 @@ public sealed class UnitAsset : ITenantOwned
         }
 
         Status = UnitAssetStatus.Archived;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>BDR-LSE-006 — fired by Leasing's e-signature completion flow via IUnitAssetService.MarkOccupiedAsync.</summary>
+    public void MarkOccupied()
+    {
+        if (OccupancyStatus != UnitAssetOccupancyStatus.Vacant)
+        {
+            throw new InvalidStatusTransitionException("UnitAsset", OccupancyStatus.ToString(), UnitAssetOccupancyStatus.Occupied.ToString());
+        }
+
+        OccupancyStatus = UnitAssetOccupancyStatus.Occupied;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>Symmetric to MarkOccupied — not exercised by Phase 9's own flow, but cheap to add now for a future lease-termination phase.</summary>
+    public void MarkVacant()
+    {
+        if (OccupancyStatus != UnitAssetOccupancyStatus.Occupied)
+        {
+            throw new InvalidStatusTransitionException("UnitAsset", OccupancyStatus.ToString(), UnitAssetOccupancyStatus.Vacant.ToString());
+        }
+
+        OccupancyStatus = UnitAssetOccupancyStatus.Vacant;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 }

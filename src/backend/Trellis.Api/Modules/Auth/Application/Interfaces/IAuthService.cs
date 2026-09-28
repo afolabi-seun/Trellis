@@ -59,4 +59,7 @@ public interface IAuthService
 
     /// <summary>Document's expiry-alert background service resolves a document's uploader through this — the one legitimate cross-module read it needs from Auth, same reasoning as <see cref="GetUsersByDepartmentAsync"/>.</summary>
     Task<AppUserSummary?> GetUserByIdAsync(Guid userId);
+
+    /// <summary>Leasing's staff-notify (BDR-LSE-004) — unlike <see cref="GetUsersByDepartmentAsync"/>, a rental application isn't department-routed, so this returns every user of the tenant in ANY of the given roles (e.g. "TENANT_ADMIN", "DEPARTMENT_STAFF").</summary>
+    Task<IReadOnlyList<AppUserSummary>> GetUsersByRolesAsync(Guid tenantId, IEnumerable<string> roles);
 }

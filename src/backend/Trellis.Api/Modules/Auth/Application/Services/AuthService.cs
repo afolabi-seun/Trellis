@@ -298,6 +298,13 @@ public sealed class AuthService(
         return users.Select(u => new AppUserSummary(u.UserId, u.Username, u.TenantId)).ToList();
     }
 
+    public async Task<IReadOnlyList<AppUserSummary>> GetUsersByRolesAsync(Guid tenantId, IEnumerable<string> roles)
+    {
+        var parsedRoles = roles.Select(EnumStringConverter.ParseUpperSnakeCase<UserRole>).ToList();
+        var users = await userRepository.GetByRolesAsync(tenantId, parsedRoles);
+        return users.Select(u => new AppUserSummary(u.UserId, u.Username, u.TenantId)).ToList();
+    }
+
     public async Task<AppUserSummary?> GetUserByIdAsync(Guid userId)
     {
         var user = await userRepository.GetByIdAsync(userId);

@@ -14,6 +14,9 @@ public interface IAppUserRepository
     /// <summary>Every TENANT_ADMIN plus every DEPARTMENT_STAFF whose DepartmentIds contains <paramref name="departmentId"/> — Workflow's own notify-the-newly-active-step's-department fan-out (BDR-WF-003).</summary>
     Task<IReadOnlyList<AppUser>> GetByDepartmentAsync(Guid tenantId, Guid departmentId);
 
+    /// <summary>Every user of the tenant holding any of the given roles — Leasing's staff-notify fan-out (BDR-LSE-004), where an application isn't routed to a department.</summary>
+    Task<IReadOnlyList<AppUser>> GetByRolesAsync(Guid tenantId, IReadOnlyCollection<UserRole> roles);
+
     Task SaveChangesAsync();
 }
 

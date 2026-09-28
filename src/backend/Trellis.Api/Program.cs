@@ -11,6 +11,7 @@ using Trellis.Api.Modules.Auth;
 using Trellis.Api.Modules.Billing;
 using Trellis.Api.Modules.Document;
 using Trellis.Api.Modules.Inspection;
+using Trellis.Api.Modules.Leasing;
 using Trellis.Api.Modules.Notification;
 using Trellis.Api.Modules.PropertyAsset;
 using Trellis.Api.Modules.Reporting;
@@ -41,8 +42,10 @@ builder.Services.AddTrellisSwaggerGen();
 builder.Services.AddTrellisCore(builder.Configuration);
 
 // Tenant → Notification → Auth → PropertyAsset → Vendor → Document → Workflow → Inspection → Ai →
-// Billing → Reporting, per data_model.md's migration dependency order and roadmap.md's Phase 1 →
-// Phase 8 sequencing. Vendor registers before Document/Workflow/Inspection since all three now
+// Billing → Reporting → Leasing, per data_model.md's migration dependency order and roadmap.md's
+// Phase 1 → Phase 9 sequencing. Leasing registers last and depends on Billing's entitlement service,
+// Document, PropertyAsset, Notification, Auth, Tenant and Reporting's IAuditService through their
+// own Application interfaces — same lazy-resolution safety as every module above. Vendor registers before Document/Workflow/Inspection since all three now
 // depend on its published IVendorAssignmentReader (Workflow's vendor-safe projection, Document's
 // evidence upload, Inspection's own vendor-portal reads).
 //
@@ -74,6 +77,7 @@ builder.Services.AddInspectionModule(builder.Configuration);
 builder.Services.AddAiModule(builder.Configuration);
 builder.Services.AddBillingModule(builder.Configuration);
 builder.Services.AddReportingModule(builder.Configuration);
+builder.Services.AddLeasingModule(builder.Configuration);
 
 var app = builder.Build();
 

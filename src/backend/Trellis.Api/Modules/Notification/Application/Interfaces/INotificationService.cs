@@ -1,4 +1,5 @@
 using Trellis.Api.Modules.Notification.Application.Dtos;
+using Trellis.Api.Modules.Notification.Domain.Entities;
 
 namespace Trellis.Api.Modules.Notification.Application.Interfaces;
 
@@ -11,7 +12,13 @@ namespace Trellis.Api.Modules.Notification.Application.Interfaces;
 /// </summary>
 public interface INotificationService
 {
+    /// <summary>
+    /// <paramref name="recipientType"/> defaults to the original derivation (External when there's
+    /// no tenant, AppUser otherwise). Leasing (Phase 9) passes ProspectiveTenant explicitly —
+    /// that enum value existed in the schema since Phase 1 but no code path ever produced it, so
+    /// every applicant-facing email would otherwise have been silently mis-tagged AppUser.
+    /// </summary>
     Task SendAsync(
         Guid? tenantId, string templateKey, string recipientAddress, object templateData,
-        RelatedEntityRef? relatedEntity = null);
+        RelatedEntityRef? relatedEntity = null, NotificationRecipientType? recipientType = null);
 }

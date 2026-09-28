@@ -177,4 +177,23 @@ public static class ErrorCodeRegistry
         /// <summary>TRL-E-RPT-9101 — DeliverByEmailAsync called for an Owner with no email on file.</summary>
         public const string OwnerHasNoEmail = "TRL-E-RPT-9101";
     }
+
+    /// <summary>api_standards.md's registry table: Leasing | TRL-E-LSE | 11000–11999 — the doc reserves the block but enumerates no individual codes.</summary>
+    public static class Leasing
+    {
+        /// <summary>TRL-E-LSE-11000 — a VacancyListing/Application/ApplicationLinkToken transition its current status doesn't allow.</summary>
+        public const string InvalidStatusTransition = "TRL-E-LSE-11000";
+
+        /// <summary>TRL-E-LSE-11001 — CreateAsync: the target UnitAsset already has a LISTED/UNDER_APPLICATION listing (friendly pre-check ahead of the partial unique index).</summary>
+        public const string UnitAssetAlreadyListed = "TRL-E-LSE-11001";
+
+        /// <summary>TRL-E-LSE-11002 — SubmitAsync: the resolved token's listing is LEASED or WITHDRAWN, no longer accepting applications.</summary>
+        public const string ListingNotAcceptingApplications = "TRL-E-LSE-11002";
+
+        /// <summary>TRL-E-LSE-11003 — SendForSignatureAsync called on an application that isn't APPROVED, or already sent.</summary>
+        public const string ApplicationNotReadyForSignature = "TRL-E-LSE-11003";
+
+        /// <summary>TRL-E-LSE-11004 — UploadPhotoAsync: the uploaded file's actual bytes aren't JPG/PNG/HEIC, or the listing is already at MaxPhotosPerListing.</summary>
+        public const string PhotoRejected = "TRL-E-LSE-11004";
+    }
 }

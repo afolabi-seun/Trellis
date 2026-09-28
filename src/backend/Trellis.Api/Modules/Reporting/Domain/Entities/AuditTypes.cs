@@ -92,4 +92,16 @@ public static class AuditTypes
         public const string ReportShareLinkCreated = "REPORT_SHARE_LINK_CREATED";
         public const string ReportShareLinkRevoked = "REPORT_SHARE_LINK_REVOKED";
     }
+
+    /// <summary>BDR-LSE-007 — an application's lifecycle. Fires alongside, not instead of, the dedicated trellis_leasing.application_event table (Ai's OverrideLogEntry dual-write precedent).</summary>
+    public static class Leasing
+    {
+        public const string VacancyListingCreated = "VACANCY_LISTING_CREATED";
+        public const string VacancyListingWithdrawn = "VACANCY_LISTING_WITHDRAWN";
+        public const string ApplicationSubmitted = "APPLICATION_SUBMITTED";
+        public const string ApplicationApproved = "APPLICATION_APPROVED";
+        public const string ApplicationDeclined = "APPLICATION_DECLINED";
+        public const string LeaseSentForSignature = "LEASE_SENT_FOR_SIGNATURE";
+        public const string LeaseExecuted = "LEASE_EXECUTED";
+    }
 }
