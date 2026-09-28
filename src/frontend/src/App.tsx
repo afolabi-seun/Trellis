@@ -3,6 +3,7 @@ import { RequireRole } from "./auth/RequireRole";
 import { AdminShell } from "./features/admin/AdminShell";
 import { ExtractionJobDetailPage } from "./features/admin/ai/ExtractionJobDetailPage";
 import { ExtractionReviewQueuePage } from "./features/admin/ai/ExtractionReviewQueuePage";
+import { BillingSettingsPage } from "./features/admin/billing/BillingSettingsPage";
 import { DocumentsLibraryPage } from "./features/admin/document/DocumentsLibraryPage";
 import { InspectionDetailPage } from "./features/admin/inspection/InspectionDetailPage";
 import { InspectionsListPage } from "./features/admin/inspection/InspectionsListPage";
@@ -17,6 +18,7 @@ import { ForgotPasswordPage } from "./features/auth/ForgotPasswordPage";
 import { LoginPage } from "./features/auth/LoginPage";
 import { MfaVerifyPage } from "./features/auth/MfaVerifyPage";
 import { ResetPasswordPage } from "./features/auth/ResetPasswordPage";
+import { PlatformBillingPage } from "./features/platform/PlatformBillingPage";
 import { TenantsListPage } from "./features/platform/TenantsListPage";
 import { VendorAssignmentDetailPage } from "./features/vendor/VendorAssignmentDetailPage";
 import { VendorAssignmentsListPage } from "./features/vendor/VendorAssignmentsListPage";
@@ -46,6 +48,9 @@ export function App() {
           <Route path="inspections/:id" element={<InspectionDetailPage />} />
           <Route path="extraction-jobs" element={<ExtractionReviewQueuePage />} />
           <Route path="extraction-jobs/:id" element={<ExtractionJobDetailPage />} />
+          <Route element={<RequireRole allowedRoles={["TENANT_ADMIN"]} />}>
+            <Route path="billing" element={<BillingSettingsPage />} />
+          </Route>
         </Route>
       </Route>
 
@@ -58,7 +63,9 @@ export function App() {
       </Route>
 
       <Route element={<RequireRole allowedRoles={["SUPER_ADMIN"]} />}>
-        <Route path="/platform" element={<TenantsListPage />} />
+        <Route path="/platform" element={<Navigate to="/platform/tenants" replace />} />
+        <Route path="/platform/tenants" element={<TenantsListPage />} />
+        <Route path="/platform/billing" element={<PlatformBillingPage />} />
       </Route>
 
       <Route path="/" element={<Navigate to="/admin" replace />} />

@@ -28,7 +28,7 @@ async function login(page: import("@playwright/test").Page) {
   await page.getByLabel("Username").fill(SUPER_ADMIN_USERNAME);
   await page.getByLabel("Password").fill(SEED_PASSWORD);
   await page.getByRole("button", { name: "Sign in" }).click();
-  await expect(page).toHaveURL(/\/platform$/);
+  await expect(page).toHaveURL(/\/platform\/tenants$/);
 }
 
 test("BDR-TEN-001/004: a Super Admin can provision a tenant and see it in the list", async ({

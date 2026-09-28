@@ -89,7 +89,17 @@ export function TenantsListPage() {
   return (
     <Stack gap="lg" p="lg">
       <Group justify="space-between">
-        <Title order={2}>Tenants</Title>
+        <Group gap="lg">
+          <Title order={2}>Tenants</Title>
+          <Text
+            component="button"
+            onClick={() => navigate("/platform/billing")}
+            c="blue.9"
+            size="sm"
+          >
+            Billing →
+          </Text>
+        </Group>
         <Group>
           <Text c="gray.7" size="sm">
             {claims?.email}

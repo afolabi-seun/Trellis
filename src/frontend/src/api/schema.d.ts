@@ -717,6 +717,276 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/billing/subscription": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SubscriptionSummaryResponseApiResponse"];
+                        "application/json": components["schemas"]["SubscriptionSummaryResponseApiResponse"];
+                        "text/json": components["schemas"]["SubscriptionSummaryResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["InvoiceResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["InvoiceResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["InvoiceResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/invoices/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["InvoiceResponseApiResponse"];
+                        "application/json": components["schemas"]["InvoiceResponseApiResponse"];
+                        "text/json": components["schemas"]["InvoiceResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/payment-method": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PaymentMethodResponseApiResponse"];
+                        "application/json": components["schemas"]["PaymentMethodResponseApiResponse"];
+                        "text/json": components["schemas"]["PaymentMethodResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/payment-method/initialize": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["InitializeCardCaptureResponseApiResponse"];
+                        "application/json": components["schemas"]["InitializeCardCaptureResponseApiResponse"];
+                        "text/json": components["schemas"]["InitializeCardCaptureResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/payment-method/confirm": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ConfirmCardCaptureRequest"];
+                    "text/json": components["schemas"]["ConfirmCardCaptureRequest"];
+                    "application/*+json": components["schemas"]["ConfirmCardCaptureRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PaymentMethodResponseApiResponse"];
+                        "application/json": components["schemas"]["PaymentMethodResponseApiResponse"];
+                        "text/json": components["schemas"]["PaymentMethodResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/billing/module-entitlements": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ModuleEntitlementResponseIReadOnlyListApiResponse"];
+                        "application/json": components["schemas"]["ModuleEntitlementResponseIReadOnlyListApiResponse"];
+                        "text/json": components["schemas"]["ModuleEntitlementResponseIReadOnlyListApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/departments": {
         parameters: {
             query?: never;
@@ -2075,6 +2345,242 @@ export interface paths {
                 };
             };
         };
+        trace?: never;
+    };
+    "/webhooks/paystack": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/platform/billing/summary": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PlatformRevenueSummaryResponseApiResponse"];
+                        "application/json": components["schemas"]["PlatformRevenueSummaryResponseApiResponse"];
+                        "text/json": components["schemas"]["PlatformRevenueSummaryResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/platform/billing/subscriptions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["SubscriptionResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["SubscriptionResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["SubscriptionResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/platform/billing/invoices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    tenantId?: string;
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["InvoiceResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["InvoiceResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["InvoiceResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/platform/billing/module-entitlements/{tenantId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    tenantId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ModuleEntitlementResponseIReadOnlyListApiResponse"];
+                        "application/json": components["schemas"]["ModuleEntitlementResponseIReadOnlyListApiResponse"];
+                        "text/json": components["schemas"]["ModuleEntitlementResponseIReadOnlyListApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/platform/billing/module-entitlements/{tenantId}/{moduleKey}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    tenantId: string;
+                    moduleKey: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ModuleEntitlementSetRequest"];
+                    "text/json": components["schemas"]["ModuleEntitlementSetRequest"];
+                    "application/*+json": components["schemas"]["ModuleEntitlementSetRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ModuleEntitlementResponseApiResponse"];
+                        "application/json": components["schemas"]["ModuleEntitlementResponseApiResponse"];
+                        "text/json": components["schemas"]["ModuleEntitlementResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/properties": {
@@ -3521,6 +4027,9 @@ export interface components {
             error?: components["schemas"]["ApiError"];
             meta: components["schemas"]["ApiMeta"];
         };
+        ConfirmCardCaptureRequest: {
+            reference?: string | null;
+        };
         DepartmentCreateRequest: {
             name?: string | null;
         };
@@ -3663,6 +4172,17 @@ export interface components {
             error?: components["schemas"]["ApiError"];
             meta: components["schemas"]["ApiMeta"];
         };
+        InitializeCardCaptureResponse: {
+            authorizationUrl?: string | null;
+            accessCode?: string | null;
+            reference?: string | null;
+        };
+        InitializeCardCaptureResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["InitializeCardCaptureResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
         InspectionCompleteStaffRequest: {
             /** Format: double */
             latitude?: number | null;
@@ -3771,6 +4291,59 @@ export interface components {
             error?: components["schemas"]["ApiError"];
             meta: components["schemas"]["ApiMeta"];
         };
+        InvoiceLineItemResponse: {
+            description?: string | null;
+            /** Format: double */
+            quantity?: number;
+            /** Format: double */
+            unitAmount?: number;
+            /** Format: double */
+            amount?: number;
+        };
+        InvoiceResponse: {
+            /** Format: uuid */
+            invoiceId?: string;
+            /** Format: uuid */
+            tenantId?: string;
+            /** Format: date */
+            billingPeriodStart?: string;
+            /** Format: date */
+            billingPeriodEnd?: string;
+            currency?: string | null;
+            /** Format: double */
+            subtotalAmount?: number;
+            /** Format: double */
+            taxAmount?: number;
+            /** Format: double */
+            totalAmount?: number;
+            status?: string | null;
+            /** Format: date-time */
+            dueAt?: string | null;
+            /** Format: date-time */
+            paidAt?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+            lineItems?: components["schemas"]["InvoiceLineItemResponse"][] | null;
+        };
+        InvoiceResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["InvoiceResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        InvoiceResponsePagedResponse: {
+            items?: components["schemas"]["InvoiceResponse"][] | null;
+            nextCursor?: string | null;
+            hasMore?: boolean;
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        InvoiceResponsePagedResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["InvoiceResponsePagedResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
         LoginRequest: {
             username?: string | null;
             password?: string | null;
@@ -3814,6 +4387,35 @@ export interface components {
             partialToken?: string | null;
             totpCode?: string | null;
             recoveryCode?: string | null;
+        };
+        ModuleEntitlementResponse: {
+            /** Format: uuid */
+            entitlementId?: string;
+            moduleKey?: string | null;
+            status?: string | null;
+            /** Format: double */
+            monthlyPrice?: number;
+            /** Format: date-time */
+            enabledAt?: string;
+            /** Format: date-time */
+            disabledAt?: string | null;
+        };
+        ModuleEntitlementResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["ModuleEntitlementResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        ModuleEntitlementResponseIReadOnlyListApiResponse: {
+            readonly status?: string | null;
+            readonly data?: components["schemas"]["ModuleEntitlementResponse"][] | null;
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        ModuleEntitlementSetRequest: {
+            status?: string | null;
+            /** Format: double */
+            monthlyPrice?: number;
         };
         ObjectApiResponse: {
             readonly status?: string | null;
@@ -3894,6 +4496,42 @@ export interface components {
         PasswordResetRequest: {
             token?: string | null;
             newPassword?: string | null;
+        };
+        PaymentMethodResponse: {
+            /** Format: uuid */
+            paymentMethodId?: string;
+            provider?: string | null;
+            cardLast4?: string | null;
+            cardBrand?: string | null;
+            isDefault?: boolean;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        PaymentMethodResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["PaymentMethodResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        PlatformRevenueSummaryResponse: {
+            /** Format: double */
+            monthlyRecurringRevenue?: number;
+            /** Format: int32 */
+            trialingCount?: number;
+            /** Format: int32 */
+            activeCount?: number;
+            /** Format: int32 */
+            pastDueCount?: number;
+            /** Format: int32 */
+            suspendedCount?: number;
+            /** Format: int32 */
+            canceledCount?: number;
+        };
+        PlatformRevenueSummaryResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["PlatformRevenueSummaryResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
         };
         PropertyCreateRequest: {
             /** Format: uuid */
@@ -4021,6 +4659,44 @@ export interface components {
         RoutingSuggestionResponsePagedResponseApiResponse: {
             readonly status?: string | null;
             data?: components["schemas"]["RoutingSuggestionResponsePagedResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        SubscriptionResponse: {
+            /** Format: uuid */
+            subscriptionId?: string;
+            /** Format: uuid */
+            tenantId?: string;
+            status?: string | null;
+            currency?: string | null;
+            /** Format: int32 */
+            billingCycleAnchorDay?: number;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        SubscriptionResponsePagedResponse: {
+            items?: components["schemas"]["SubscriptionResponse"][] | null;
+            nextCursor?: string | null;
+            hasMore?: boolean;
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        SubscriptionResponsePagedResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["SubscriptionResponsePagedResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        SubscriptionSummaryResponse: {
+            subscription?: components["schemas"]["SubscriptionResponse"];
+            /** Format: int32 */
+            latestActiveUnitCount?: number | null;
+            /** Format: double */
+            projectedInvoiceTotal?: number | null;
+        };
+        SubscriptionSummaryResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["SubscriptionSummaryResponse"];
             error?: components["schemas"]["ApiError"];
             meta: components["schemas"]["ApiMeta"];
         };

@@ -10,12 +10,15 @@ type ApiError = components["schemas"]["ApiError"];
 export class TrellisApiError extends Error {
   readonly code: string;
   readonly details: ApiError["details"];
+  /** The HTTP status this error's envelope arrived with — lets a global retry policy tell "never going to succeed" (4xx) apart from "might, on a retry" (network blip, 5xx). */
+  readonly status: number;
 
-  constructor(error: ApiError) {
+  constructor(error: ApiError, status: number) {
     super(error.message ?? "Request failed.");
     this.name = "TrellisApiError";
     this.code = error.code ?? "TRL-E-PLT-0000";
     this.details = error.details;
+    this.status = status;
   }
 }
 
@@ -42,7 +45,7 @@ export function subscribeToAccessToken(listener: () => void): () => void {
 }
 
 interface RequestOptions {
-  method?: "GET" | "POST" | "PATCH" | "DELETE";
+  method?: "GET" | "POST" | "PATCH" | "PUT" | "DELETE";
   /** A FormData body (document upload) is sent as-is, with no Content-Type header — the browser sets the multipart boundary itself; anything else is JSON-encoded. */
   body?: unknown | FormData;
   query?: Record<string, string | number | undefined>;
@@ -142,7 +145,10 @@ async function unwrap<TData>(response: Response): Promise<TData> {
 
   const body = (await response.json()) as { status: string; data?: TData; error?: ApiError };
   if (body.status !== "success") {
-    throw new TrellisApiError(body.error ?? { code: "TRL-E-PLT-0000", message: "Request failed." });
+    throw new TrellisApiError(
+      body.error ?? { code: "TRL-E-PLT-0000", message: "Request failed." },
+      response.status,
+    );
   }
 
   return body.data as TData;

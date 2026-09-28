@@ -126,6 +126,26 @@ export function InspectionsListPage() {
     },
   });
 
+  // billing_design.md's frontend_architecture.md carve-out — the one place a module-entitlement
+  // 403 is treated differently from every other error: an upsell state, not a bare error message,
+  // since the tenant's own commercial status (not a bug or a permissions mistake) is why nothing
+  // loads here.
+  const isModuleNotEntitled =
+    inspectionsQuery.error instanceof TrellisApiError &&
+    inspectionsQuery.error.code === "TRL-E-BIL-10000";
+
+  if (isModuleNotEntitled) {
+    return (
+      <Stack gap="lg" p="lg">
+        <Title order={2}>Inspections</Title>
+        <Alert color="blue" title="Inspections isn't enabled for your plan">
+          Ask your Trellis account manager to enable the Inspections module to start scheduling and
+          tracking property inspections.
+        </Alert>
+      </Stack>
+    );
+  }
+
   return (
     <Stack gap="lg" p="lg">
       <Group justify="space-between">

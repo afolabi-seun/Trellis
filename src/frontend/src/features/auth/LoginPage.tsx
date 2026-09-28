@@ -27,7 +27,7 @@ const schema = z.object({
 type FormValues = z.infer<typeof schema>;
 
 const roleHome: Record<string, string> = {
-  SUPER_ADMIN: "/platform",
+  SUPER_ADMIN: "/platform/tenants",
   TENANT_ADMIN: "/admin",
   DEPARTMENT_STAFF: "/admin",
   VENDOR_USER: "/vendor",

@@ -13,7 +13,7 @@ const totpSchema = z.object({ code: z.string().length(6, "Enter the 6-digit code
 const recoverySchema = z.object({ code: z.string().min(1, "Enter a recovery code.") });
 
 const roleHome: Record<string, string> = {
-  SUPER_ADMIN: "/platform",
+  SUPER_ADMIN: "/platform/tenants",
   TENANT_ADMIN: "/admin",
   DEPARTMENT_STAFF: "/admin",
   VENDOR_USER: "/vendor",

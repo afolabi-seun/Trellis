@@ -3,7 +3,7 @@ import { useAuth } from "./AuthContext";
 import type { TrellisTokenClaims } from "./tokenClaims";
 
 const roleHome: Record<TrellisTokenClaims["role"], string> = {
-  SUPER_ADMIN: "/platform",
+  SUPER_ADMIN: "/platform/tenants",
   TENANT_ADMIN: "/admin",
   DEPARTMENT_STAFF: "/admin",
   VENDOR_USER: "/vendor",

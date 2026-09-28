@@ -363,3 +363,90 @@ export async function countOverrideLogEntriesForTenant(
     await client.end();
   }
 }
+
+/** billing.spec.ts's own fixture — a full billing cycle can't be driven through the UI alone (the daily UsageSnapshotBackgroundService poll isn't something a test can trigger on demand), so the invoice/subscription state it asserts against is seeded directly, mirroring seedWorkflowInstance's own precedent. */
+export async function seedSubscription(
+  subscriptionId: string,
+  tenantId: string,
+  status: string,
+): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(
+      `insert into trellis_billing.subscription (subscription_id, tenant_id, status, currency, billing_cycle_anchor_day, created_at)
+       values ($1, $2, $3, 'USD', 1, now())`,
+      [subscriptionId, tenantId, status],
+    );
+  } finally {
+    await client.end();
+  }
+}
+
+export async function seedInvoiceWithLineItem(
+  invoiceId: string,
+  tenantId: string,
+  subscriptionId: string,
+  totalAmount: number,
+): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(
+      `insert into trellis_billing.invoice
+         (invoice_id, tenant_id, subscription_id, billing_period_start, billing_period_end, currency,
+          subtotal_amount, tax_amount, total_amount, status, due_at, paid_at, created_at)
+       values ($1, $2, $3, current_date, current_date + interval '30 days', 'USD', $4, 0, $4, 'PAID', now(), now(), now())`,
+      [invoiceId, tenantId, subscriptionId, totalAmount],
+    );
+    await client.query(
+      `insert into trellis_billing.invoice_line_item (line_item_id, tenant_id, invoice_id, description, quantity, unit_amount, amount)
+       values (gen_random_uuid(), $1, $2, $3, 1, $4, $4)`,
+      [tenantId, invoiceId, `${totalAmount} active units × 1.00`, totalAmount],
+    );
+  } finally {
+    await client.end();
+  }
+}
+
+export async function seedModuleEntitlement(
+  tenantId: string,
+  moduleKey: string,
+  status: string,
+): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(
+      `insert into trellis_billing.module_entitlement (entitlement_id, tenant_id, module_key, status, monthly_price, enabled_at)
+       values (gen_random_uuid(), $1, $2, $3, 0, now())
+       on conflict (tenant_id, module_key) do update set status = excluded.status`,
+      [tenantId, moduleKey, status],
+    );
+  } finally {
+    await client.end();
+  }
+}
+
+export async function deleteBillingDataForTenant(tenantId: string): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(`delete from trellis_billing.payment_transaction where tenant_id = $1`, [
+      tenantId,
+    ]);
+    await client.query(`delete from trellis_billing.invoice_line_item where tenant_id = $1`, [
+      tenantId,
+    ]);
+    await client.query(`delete from trellis_billing.invoice where tenant_id = $1`, [tenantId]);
+    await client.query(`delete from trellis_billing.module_entitlement where tenant_id = $1`, [
+      tenantId,
+    ]);
+    await client.query(`delete from trellis_billing.payment_method where tenant_id = $1`, [
+      tenantId,
+    ]);
+    await client.query(`delete from trellis_billing.subscription where tenant_id = $1`, [tenantId]);
+  } finally {
+    await client.end();
+  }
+}
