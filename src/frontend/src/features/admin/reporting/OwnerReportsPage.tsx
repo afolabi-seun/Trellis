@@ -56,7 +56,10 @@ export function OwnerReportsPage() {
     token: string;
   } | null>(null);
 
-  const ownersQuery = useQuery({ queryKey: ["propertyasset", "owners"], queryFn: () => ownersApi.list() });
+  const ownersQuery = useQuery({
+    queryKey: ["propertyasset", "owners"],
+    queryFn: () => ownersApi.list(),
+  });
   const reportsQuery = useQuery({
     queryKey: ["reporting", "owner-reports"],
     queryFn: () => ownerReportsApi.list(),
@@ -86,12 +89,18 @@ export function OwnerReportsPage() {
 
   const downloadPdfMutation = useMutation({
     mutationFn: async (ownerReportId: string) =>
-      downloadBlob(await ownerReportsApi.downloadPdf(ownerReportId), `owner-report-${ownerReportId}.pdf`),
+      downloadBlob(
+        await ownerReportsApi.downloadPdf(ownerReportId),
+        `owner-report-${ownerReportId}.pdf`,
+      ),
   });
 
   const downloadCsvMutation = useMutation({
     mutationFn: async (ownerReportId: string) =>
-      downloadBlob(await ownerReportsApi.downloadCsv(ownerReportId), `owner-report-${ownerReportId}.csv`),
+      downloadBlob(
+        await ownerReportsApi.downloadCsv(ownerReportId),
+        `owner-report-${ownerReportId}.csv`,
+      ),
   });
 
   const deliverMutation = useMutation({
@@ -215,7 +224,9 @@ export function OwnerReportsPage() {
                   {report.periodStart} – {report.periodEnd}
                 </Table.Td>
                 <Table.Td>
-                  <Badge color={statusColor[report.status ?? ""] ?? "gray.8"}>{report.status}</Badge>
+                  <Badge color={statusColor[report.status ?? ""] ?? "gray.8"}>
+                    {report.status}
+                  </Badge>
                 </Table.Td>
                 <Table.Td>
                   {report.createdAt ? new Date(report.createdAt).toLocaleDateString() : "—"}
@@ -252,7 +263,8 @@ export function OwnerReportsPage() {
                       disabled={!isReady || !ownerHasEmail}
                       title={ownerHasEmail ? undefined : "This owner has no email on file"}
                       loading={
-                        deliverMutation.isPending && deliverMutation.variables === report.ownerReportId
+                        deliverMutation.isPending &&
+                        deliverMutation.variables === report.ownerReportId
                       }
                       onClick={() => deliverMutation.mutate(report.ownerReportId!)}
                     >

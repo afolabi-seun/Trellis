@@ -1,7 +1,7 @@
 import { Button, Group, Stack, Text } from "@mantine/core";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { authApi } from "../../api/auth";
-import { useAuth } from "../../auth/AuthContext";
+import { useAuth } from "../../auth/useAuth";
 
 /** BDR-VEN-004 — one login, cross-tenant: no tenant switcher here, since a Vendor's own JWT carries vendor_id, never tenant_id. */
 export function VendorShell() {

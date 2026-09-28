@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { authApi } from "../../api/auth";
 import { platformBillingApi } from "../../api/billing";
 import { TrellisApiError } from "../../api/client";
-import { useAuth } from "../../auth/AuthContext";
+import { useAuth } from "../../auth/useAuth";
 import { dangerAlertStyles } from "../../theme/dangerStyles";
 import { formatCurrency } from "../../utils/formatCurrency";
 

@@ -1,5 +1,5 @@
 import { Navigate, Outlet, useLocation } from "react-router-dom";
-import { useAuth } from "./AuthContext";
+import { useAuth } from "./useAuth";
 import type { TrellisTokenClaims } from "./tokenClaims";
 
 const roleHome: Record<TrellisTokenClaims["role"], string> = {

@@ -19,7 +19,7 @@ import { useNavigate } from "react-router-dom";
 import { tenantsApi } from "../../api/tenants";
 import { authApi } from "../../api/auth";
 import { TrellisApiError } from "../../api/client";
-import { useAuth } from "../../auth/AuthContext";
+import { useAuth } from "../../auth/useAuth";
 import { dangerAlertStyles, dangerButtonStyles } from "../../theme/dangerStyles";
 
 const provisionSchema = z.object({

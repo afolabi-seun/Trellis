@@ -22,8 +22,7 @@ async function downloadBlob(path: string): Promise<Blob> {
 
 /** BDR-RPT-001 — a tenant-wide operational summary, no dollar figures. Reporting is Core tier, never gated by module entitlement. */
 export const reportingApi = {
-  getDashboardSummary: () =>
-    apiFetch<DashboardSummaryResponse>("/api/v1/reporting/dashboard"),
+  getDashboardSummary: () => apiFetch<DashboardSummaryResponse>("/api/v1/reporting/dashboard"),
 
   downloadDashboardCsv: () => downloadBlob("/api/v1/reporting/dashboard/export.csv"),
 };

@@ -1,7 +1,7 @@
 import { Button, Group, Stack, Text } from "@mantine/core";
 import { NavLink, Outlet, useNavigate } from "react-router-dom";
 import { authApi } from "../../api/auth";
-import { useAuth } from "../../auth/AuthContext";
+import { useAuth } from "../../auth/useAuth";
 
 /** Minimal Tenant Admin shell — nav between PropertyAsset's screens, matching frontend_architecture.md's Repository & Deployment tree (one persona-module subfolder per reachable backend module). */
 export function AdminShell() {
