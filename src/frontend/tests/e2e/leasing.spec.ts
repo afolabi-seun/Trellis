@@ -9,6 +9,7 @@ import {
   deleteRentLedgerDataForTenant,
   deletePropertyAssetDataForTenant,
   deleteTenantByName,
+  getDocumentsForUnit,
   getEnvelopeIdForTenant,
   getRentSchedulesForUnit,
   getUnitOccupancyStatus,
@@ -222,6 +223,10 @@ test("BDR-LSE-004/005: staff review the application, approve it, and a completed
   expect(webhook.status()).toBe(200);
 
   expect(await getUnitOccupancyStatus(UNIT_ID)).toBe("OCCUPIED");
+
+  // BDR-LSE-006: the executed lease is the next VERSION of the draft staff sent — one document, two versions.
+  const documents = await getDocumentsForUnit(UNIT_ID);
+  expect(documents).toEqual([{ documentType: "LEASE", versionCount: 2, currentVersionNumber: 2 }]);
 
   // BDR-RENT-001: the previous tenancy's schedule is ended and a new one starts from the listing's terms.
   const schedules = await getRentSchedulesForUnit(UNIT_ID);

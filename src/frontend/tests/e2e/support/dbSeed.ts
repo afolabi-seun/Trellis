@@ -699,3 +699,34 @@ export async function deleteRentLedgerDataForTenant(tenantId: string): Promise<v
     await client.end();
   }
 }
+
+export interface UnitDocumentRow {
+  documentType: string;
+  versionCount: number;
+  currentVersionNumber: number;
+}
+
+/** The documents on a unit with how many versions each has and which one is current — BDR-LSE-006's "versioned Document". */
+export async function getDocumentsForUnit(unitAssetId: string): Promise<UnitDocumentRow[]> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    const result = await client.query(
+      `select d.document_type, count(v.*)::int as version_count,
+              (select v2.version_number from trellis_document.document_version v2 where v2.document_version_id = d.current_version_id) as current_version
+       from trellis_document.document d
+       left join trellis_document.document_version v on v.document_id = d.document_id
+       where d.unit_asset_id = $1
+       group by d.document_id, d.document_type, d.current_version_id
+       order by d.created_at`,
+      [unitAssetId],
+    );
+    return result.rows.map((r) => ({
+      documentType: r.document_type as string,
+      versionCount: r.version_count as number,
+      currentVersionNumber: r.current_version as number,
+    }));
+  } finally {
+    await client.end();
+  }
+}

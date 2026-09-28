@@ -40,9 +40,13 @@ const outcomeColor: Record<string, string> = {
 
 function errorMessage(error: unknown): string {
   if (error instanceof TrellisApiError) {
-    return error.code === "TRL-E-LSE-11003"
-      ? "Approve the application first, and only send it for signature once."
-      : error.message;
+    if (error.code === "TRL-E-LSE-11003") {
+      return "Approve the application first, and only send it for signature once.";
+    }
+    if (error.code === "TRL-E-LSE-11005") {
+      return "Choose a LEASE document filed against this listing's unit — the signed lease is added to it as a new version.";
+    }
+    return error.message;
   }
   return "Something went wrong.";
 }
