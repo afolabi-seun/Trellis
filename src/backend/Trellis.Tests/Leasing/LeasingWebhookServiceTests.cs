@@ -35,13 +35,16 @@ public sealed class LeasingWebhookServiceTests : IDisposable
     private LeasingWebhookService CreateSut() => new(
         _applicationRepository, _listingRepository, _eventRepository, _eSignatureProvider, _documentService, _unitAssetService, _rentScheduleService, _auditService);
 
-    private (LeasingApplication Application, VacancyListing Listing) ArrangeSentApplication()
+    private readonly Guid _draftId = Guid.NewGuid();
+    private readonly Guid _signedVersionId = Guid.NewGuid();
+
+    private (LeasingApplication Application, VacancyListing Listing) ArrangeSentApplication(bool withDraft = true)
     {
         var listing = VacancyListing.Create(_tenantId, _unitId, 1500m, "USD", new DateOnly(2026, 11, 1), null, Guid.NewGuid());
         var application = LeasingApplication.Create(
             _tenantId, listing.VacancyListingId, "a@example.com", "Ada", "1", new DateOnly(1990, 1, 1), "addr", null, null, true);
         application.Approve();
-        application.MarkSentForSignature("env-1", _staffId);
+        application.MarkSentForSignature("env-1", _staffId, withDraft ? _draftId : null);
 
         _applicationRepository.GetByEnvelopeIdAcrossTenantsAsync("env-1").Returns(application);
         _listingRepository.GetByIdAsync(listing.VacancyListingId).Returns(listing);
@@ -49,6 +52,9 @@ public sealed class LeasingWebhookServiceTests : IDisposable
         _documentService.CreateAsync(Arg.Any<DocumentUploadRequest>(), Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<long>(), Arg.Any<Guid>())
             .Returns(ServiceResult<DocumentResponse>.Success(
                 new DocumentResponse(Guid.NewGuid(), null, _unitId, null, null, "LEASE", null, "ACTIVE", null, "AAAAAAAAAAA=", DateTimeOffset.UtcNow)));
+        _documentService.AddVersionAsync(_draftId, Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<long>(), Arg.Any<Guid>())
+            .Returns(ServiceResult<DocumentVersionResponse>.Success(
+                new DocumentVersionResponse(_signedVersionId, 2, "lease.pdf", "application/pdf", 4, "CLEAN", DateTimeOffset.UtcNow)));
         _unitAssetService.MarkOccupiedAsync(_unitId).Returns(ServiceResult<UnitAssetResponse>.Success(
             new UnitAssetResponse(_unitId, Guid.NewGuid(), "4B", "ACTIVE", "OCCUPIED", null, null, "AAAAAAAAAAA=", DateTimeOffset.UtcNow)));
         _rentScheduleService.EnsureScheduleForLeaseAsync(
@@ -65,13 +71,14 @@ public sealed class LeasingWebhookServiceTests : IDisposable
 
         await sut.ProcessSignatureCompletedAsync("env-1", "{}");
 
-        await _documentService.Received(1).CreateAsync(
-            Arg.Is<DocumentUploadRequest>(r => r.DocumentType == "LEASE" && r.UnitAssetId == _unitId),
-            Arg.Any<Stream>(), Arg.Any<string>(), "application/pdf", Arg.Any<long>(), _staffId);
+        // BDR-LSE-006: the executed lease is the next VERSION of the draft staff sent — one document, not two.
+        await _documentService.Received(1).AddVersionAsync(
+            _draftId, Arg.Any<Stream>(), Arg.Any<string>(), "application/pdf", Arg.Any<long>(), _staffId);
+        await _documentService.DidNotReceiveWithAnyArgs().CreateAsync(default!, default!, default!, default!, default, default);
         await _unitAssetService.Received(1).MarkOccupiedAsync(_unitId);
         listing.Status.Should().Be(VacancyListingStatus.Leased);
         application.Status.Should().Be(ApplicationStatus.Leased);
-        await _applicationRepository.Received(1).SaveChangesAsync();
+        application.SignedLeaseVersionId.Should().Be(_signedVersionId);
     }
 
     [Fact]
@@ -82,8 +89,8 @@ public sealed class LeasingWebhookServiceTests : IDisposable
 
         await sut.ProcessSignatureCompletedAsync("env-1", "{}");
 
-        await _documentService.Received(1).CreateAsync(
-            Arg.Any<DocumentUploadRequest>(), Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<long>(), _staffId);
+        await _documentService.Received(1).AddVersionAsync(
+            Arg.Any<Guid>(), Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<long>(), _staffId);
     }
 
     [Fact]
@@ -110,7 +117,7 @@ public sealed class LeasingWebhookServiceTests : IDisposable
 
         await sut.ProcessSignatureCompletedAsync("env-1", "{}");
 
-        await _documentService.DidNotReceiveWithAnyArgs().CreateAsync(default!, default!, default!, default!, default, default);
+        await _documentService.DidNotReceiveWithAnyArgs().AddVersionAsync(default, default!, default!, default!, default, default);
         await _unitAssetService.DidNotReceiveWithAnyArgs().MarkOccupiedAsync(default);
     }
 
@@ -129,8 +136,8 @@ public sealed class LeasingWebhookServiceTests : IDisposable
     public async Task ProcessSignatureCompletedAsync_WhenFilingTheDocumentFails_Throws_SoTheProviderRetries_AndNothingHalfCompletes()
     {
         var (application, listing) = ArrangeSentApplication();
-        _documentService.CreateAsync(Arg.Any<DocumentUploadRequest>(), Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<long>(), Arg.Any<Guid>())
-            .Returns(ServiceResult<DocumentResponse>.BusinessRuleViolation("TRL-E-DOC-4001"));
+        _documentService.AddVersionAsync(Arg.Any<Guid>(), Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<long>(), Arg.Any<Guid>())
+            .Returns(ServiceResult<DocumentVersionResponse>.BusinessRuleViolation("TRL-E-DOC-4001"));
         var sut = CreateSut();
 
         var act = () => sut.ProcessSignatureCompletedAsync("env-1", "{}");
@@ -179,7 +186,8 @@ public sealed class LeasingWebhookServiceTests : IDisposable
 
         await sut.ProcessSignatureCompletedAsync("env-1", "{}");
 
-        order.Should().Equal("rent", "save");
+        // The signed lease's own progress save comes first; the rent schedule lands before the final save.
+        order.Should().Equal("save", "rent", "save");
     }
 
     [Fact]
@@ -196,7 +204,9 @@ public sealed class LeasingWebhookServiceTests : IDisposable
         await act.Should().ThrowAsync<InvalidOperationException>();
         application.Status.Should().Be(ApplicationStatus.Approved);
         listing.Status.Should().Be(VacancyListingStatus.Listed);
-        await _applicationRepository.DidNotReceive().SaveChangesAsync();
+        // Only the signed lease's progress save happened — the lease is not closed out.
+        await _applicationRepository.Received(1).SaveChangesAsync();
+        application.SignedLeaseVersionId.Should().Be(_signedVersionId);
     }
 
     [Fact]
@@ -211,6 +221,45 @@ public sealed class LeasingWebhookServiceTests : IDisposable
 
         await sut.ProcessSignatureCompletedAsync("env-1", "{}");
 
+        application.Status.Should().Be(ApplicationStatus.Leased);
+    }
+
+    [Fact]
+    public async Task ProcessSignatureCompletedAsync_ARetryAfterALaterFailure_DoesNotFileTheLeaseASecondTime()
+    {
+        // First delivery: the lease is filed, then the rent schedule fails and the provider is told to retry.
+        var (application, _) = ArrangeSentApplication();
+        var rentAttempts = 0;
+        _rentScheduleService.EnsureScheduleForLeaseAsync(
+                Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<DateOnly>(), Arg.Any<Guid?>())
+            .Returns(_ => ++rentAttempts == 1
+                ? ServiceResult<bool>.BusinessRuleViolation("TRL-E-RENT-12001")
+                : ServiceResult<bool>.Success(true));
+        var sut = CreateSut();
+
+        var first = () => sut.ProcessSignatureCompletedAsync("env-1", "{}");
+        await first.Should().ThrowAsync<InvalidOperationException>();
+        await sut.ProcessSignatureCompletedAsync("env-1", "{}");
+
+        application.Status.Should().Be(ApplicationStatus.Leased);
+        await _documentService.Received(1).AddVersionAsync(
+            Arg.Any<Guid>(), Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<long>(), Arg.Any<Guid>());
+        await _eSignatureProvider.Received(1).DownloadSignedDocumentAsync("env-1");
+    }
+
+    [Fact]
+    public async Task ProcessSignatureCompletedAsync_ForAnApplicationSentBeforeTheDraftWasTracked_FallsBackToFilingANewDocument()
+    {
+        var (application, _) = ArrangeSentApplication(withDraft: false);
+        var sut = CreateSut();
+
+        await sut.ProcessSignatureCompletedAsync("env-1", "{}");
+
+        await _documentService.Received(1).CreateAsync(
+            Arg.Is<DocumentUploadRequest>(r => r.DocumentType == "LEASE" && r.UnitAssetId == _unitId),
+            Arg.Any<Stream>(), Arg.Any<string>(), "application/pdf", Arg.Any<long>(), _staffId);
+        await _documentService.DidNotReceiveWithAnyArgs().AddVersionAsync(default, default!, default!, default!, default, default);
+        application.SignedLeaseVersionId.Should().NotBeNull();
         application.Status.Should().Be(ApplicationStatus.Leased);
     }
 }

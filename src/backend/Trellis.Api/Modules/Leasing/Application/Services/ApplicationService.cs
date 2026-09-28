@@ -212,9 +212,17 @@ public sealed class ApplicationService(
             return ServiceResult<ApplicationResponse>.BusinessRuleViolation(ErrorCodeRegistry.Leasing.ApplicationNotReadyForSignature);
         }
 
-        if ((await documentService.GetByIdAsync(draftDocumentId)).Outcome != ServiceResultOutcome.Success)
+        var draft = await documentService.GetByIdAsync(draftDocumentId);
+        if (draft.Outcome != ServiceResultOutcome.Success)
         {
             return ServiceResult<ApplicationResponse>.NotFound();
+        }
+
+        // The executed lease will be filed as this document's next version, so it must really be this unit's lease draft.
+        var listing = await listingRepository.GetByIdAsync(application.VacancyListingId);
+        if (listing is null || draft.Data!.DocumentType != "LEASE" || draft.Data.UnitAssetId != listing.UnitAssetId)
+        {
+            return ServiceResult<ApplicationResponse>.BusinessRuleViolation(ErrorCodeRegistry.Leasing.DraftDocumentInvalid);
         }
 
         var staff = await authService.GetUserByIdAsync(staffUserId);
@@ -230,7 +238,7 @@ public sealed class ApplicationService(
         };
 
         var envelopeId = await eSignatureProvider.SendForSignatureAsync(draftDocumentId, signers);
-        application.MarkSentForSignature(envelopeId, staffUserId);
+        application.MarkSentForSignature(envelopeId, staffUserId, draftDocumentId);
 
         await AddEventAsync(application, ApplicationEventTypes.SentForSignature, ApplicationEventActorType.HumanUser, staffUserId,
             $"{{\"draftDocumentId\":\"{draftDocumentId}\",\"envelopeId\":\"{envelopeId}\"}}");

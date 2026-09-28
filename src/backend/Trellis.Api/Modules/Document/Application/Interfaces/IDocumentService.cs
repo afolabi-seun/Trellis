@@ -12,6 +12,16 @@ public interface IDocumentService
     Task<ServiceResult<DocumentResponse>> CreateAsync(
         DocumentUploadRequest request, Stream fileContent, string fileName, string declaredContentType, long fileSizeBytes, Guid uploadedBy);
 
+    /// <summary>
+    /// Adds a new version to an existing, ACTIVE document — a re-upload is a new immutable version, never an
+    /// edit. Same type validation, malware scan, and audit as the first upload; the document's
+    /// CurrentVersionId only moves to the new version once its scan comes back CLEAN, so a document is never
+    /// left pointing at a version that is PENDING or INFECTED. Leasing files the executed lease as v2 of the
+    /// draft this way (BDR-LSE-006: "files the lease as a versioned document"). Returns the NEW version.
+    /// </summary>
+    Task<ServiceResult<DocumentVersionResponse>> AddVersionAsync(
+        Guid documentId, Stream fileContent, string fileName, string declaredContentType, long fileSizeBytes, Guid uploadedBy);
+
     Task<ServiceResult<DocumentResponse>> GetByIdAsync(Guid documentId);
 
     Task<ServiceResult<PagedResponse<DocumentResponse>>> ListAsync(string? cursor, int limit);

@@ -188,7 +188,8 @@ public sealed class OwnerReportService(
         var documentsResult = await documentService.ListByOwnerAsync(ownerId, null, 1000);
         if (documentsResult.Outcome != ServiceResultOutcome.Success)
         {
-            return (0, 0);
+            // Never a silent (0, 0): an Owner handed a report claiming "0 compliant, 0 expiring" because the lookup failed would read it as a clean bill of health. Throwing lets GenerateAsync mark the report Failed, so it is retried rather than delivered wrong.
+            throw new InvalidOperationException($"Document compliance lookup failed for owner {ownerId}: {documentsResult.Outcome}.");
         }
 
         var lookahead = asOfDate.AddDays(ExpiryLookaheadDays);

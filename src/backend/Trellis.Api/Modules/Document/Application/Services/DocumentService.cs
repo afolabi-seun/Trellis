@@ -141,6 +141,52 @@ public sealed class DocumentService(
         return ServiceResult<DocumentResponse>.Success(await ToResponseAsync(document));
     }
 
+    public async Task<ServiceResult<DocumentVersionResponse>> AddVersionAsync(
+        Guid documentId, Stream fileContent, string fileName, string declaredContentType, long fileSizeBytes, Guid uploadedBy)
+    {
+        var document = await repository.GetByIdAsync(documentId);
+        if (document is null)
+        {
+            return ServiceResult<DocumentVersionResponse>.NotFound();
+        }
+
+        if (document.Status != DocumentStatus.Active)
+        {
+            return ServiceResult<DocumentVersionResponse>.BusinessRuleViolation(ErrorCodeRegistry.Document.InvalidStatusTransition);
+        }
+
+        if (!await FileTypeValidator.IsAllowedDocumentTypeAsync(fileContent))
+        {
+            return ServiceResult<DocumentVersionResponse>.BusinessRuleViolation(ErrorCodeRegistry.Document.FileTypeNotAllowed);
+        }
+
+        var nextNumber = await versionRepository.CountForDocumentAsync(documentId) + 1;
+        var storageKey = await fileStorage.SaveAsync(fileContent, fileName);
+        var version = DocumentVersion.Create(
+            document.TenantId, documentId, nextNumber, fileName, declaredContentType, fileSizeBytes, storageKey, uploadedBy);
+
+        await versionRepository.AddAsync(version);
+        await versionRepository.SaveChangesAsync();
+
+        await auditService.RecordAsync(
+            document.TenantId, uploadedBy, AuditActorType.HumanUser, AuditTypes.Document.DocumentUploaded,
+            $"{{\"documentId\":\"{documentId}\",\"versionNumber\":{nextNumber}}}");
+
+        await ScanAsync(version);
+
+        if (version.ScanStatus == DocumentScanStatus.Clean)
+        {
+            document.SetCurrentVersion(version.DocumentVersionId);
+            await repository.SaveChangesAsync();
+        }
+
+        await versionRepository.SaveChangesAsync();
+
+        return ServiceResult<DocumentVersionResponse>.Success(new DocumentVersionResponse(
+            version.DocumentVersionId, version.VersionNumber, version.FileName, version.ContentType,
+            version.FileSizeBytes, version.ScanStatus.ToUpperSnakeCase(), version.CreatedAt));
+    }
+
     public async Task<ServiceResult<DocumentResponse>> GetByIdAsync(Guid documentId)
     {
         var document = await repository.GetByIdAsync(documentId);

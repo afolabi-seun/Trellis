@@ -235,4 +235,18 @@ public sealed class OwnerReportServiceTests : IDisposable
 
         _exportService.Received(1).GenerateOwnerReportCsv(Arg.Is<OwnerReportContent>(c => c.Rent == null));
     }
+
+    [Fact]
+    public async Task GenerateAsync_WhenTheDocumentComplianceLookupFails_MarksTheReportFailed_NeverReportingAFalseCleanZero()
+    {
+        var ownerId = ArrangeGenerationForOwner(out _);
+        _documentService.ListByOwnerAsync(ownerId, null, 1000).Returns(ServiceResult<PagedResponse<DocumentResponse>>.NotFound());
+        var sut = CreateSut();
+
+        var act = () => sut.GenerateAsync(ownerId, OwnerReportPeriodType.Monthly, new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31), Guid.NewGuid());
+
+        await act.Should().ThrowAsync<InvalidOperationException>();
+        _exportService.DidNotReceiveWithAnyArgs().GenerateOwnerReportPdf(default!);
+        await _auditService.DidNotReceiveWithAnyArgs().RecordAsync(default, default, default, default!, default);
+    }
 }

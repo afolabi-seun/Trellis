@@ -70,6 +70,10 @@ namespace Trellis.Api.Modules.Leasing.Infrastructure.Data.Migrations
                         .HasColumnType("boolean")
                         .HasColumnName("consent_to_screening");
 
+                    b.Property<Guid?>("DraftDocumentId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("draft_document_id");
+
                     b.Property<string>("EnvelopeId")
                         .HasMaxLength(255)
                         .HasColumnType("character varying(255)")
@@ -78,6 +82,10 @@ namespace Trellis.Api.Modules.Leasing.Infrastructure.Data.Migrations
                     b.Property<Guid?>("SentForSignatureBy")
                         .HasColumnType("uuid")
                         .HasColumnName("sent_for_signature_by");
+
+                    b.Property<Guid?>("SignedLeaseVersionId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("signed_lease_version_id");
 
                     b.Property<string>("Status")
                         .IsRequired()

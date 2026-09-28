@@ -77,7 +77,7 @@ trellis_billing.module_entitlement — one row per (tenant, module) pair
 |--------|------|-------------|-------------|
 | entitlement_id | UUID | PK | |
 | tenant_id | UUID | NOT NULL | |
-| module_key | VARCHAR(30) | NOT NULL | Matches a key in `project_architecture.md`'s Module Catalogue (e.g. `Leasing`, `Vendor`, `Ai`) |
+| module_key | VARCHAR(30) | NOT NULL | The module's upper-snake-case key, as used by `[RequiresModuleEntitlement(...)]` — shipped keys: `INSPECTION`, `AI` (both default-free), `LEASING`, `RENT_COLLECTION` (add-ons with no default entitlement) |
 | status | VARCHAR(20) | NOT NULL DEFAULT 'ACTIVE' | `ACTIVE`\|`DISABLED` |
 | monthly_price | NUMERIC(10,2) | NOT NULL DEFAULT 0 | Flat add-on fee while `ACTIVE`; `0` for a module bundled into the tenant's tier at no extra charge |
 | enabled_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | |
@@ -127,7 +127,7 @@ public interface IBillingService
 // Core/Attributes/RequiresModuleEntitlementAttribute.cs — same pattern as the RBAC role
 // attributes in api_standards.md, resolved via IBillingService as a plain in-process call
 [HttpGet]
-[RequiresModuleEntitlement("Leasing")]
+[RequiresModuleEntitlement("LEASING")]
 public async Task<IActionResult> GetVacancyListings() => ...
 ```
 

@@ -195,6 +195,9 @@ public static class ErrorCodeRegistry
 
         /// <summary>TRL-E-LSE-11004 — UploadPhotoAsync: the uploaded file's actual bytes aren't JPG/PNG/HEIC, or the listing is already at MaxPhotosPerListing.</summary>
         public const string PhotoRejected = "TRL-E-LSE-11004";
+
+        /// <summary>TRL-E-LSE-11005 — SendForSignatureAsync: the chosen draft isn't a LEASE document on this application's unit (the executed lease is filed as its next version, so it must be one).</summary>
+        public const string DraftDocumentInvalid = "TRL-E-LSE-11005";
     }
 
     /// <summary>api_standards.md's registry table: Rent Collection | TRL-E-RENT | 12000–12999 — the doc reserves the block but enumerates no individual codes.</summary>

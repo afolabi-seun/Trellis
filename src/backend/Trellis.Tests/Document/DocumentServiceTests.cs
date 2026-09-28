@@ -126,4 +126,99 @@ public sealed class DocumentServiceTests
 
         result.Outcome.Should().Be(ServiceResultOutcome.Success);
     }
+
+    // ---- AddVersionAsync ----
+
+    private static readonly byte[] PdfBytes = [0x25, 0x50, 0x44, 0x46];
+
+    private DocumentRecord ArrangeActiveDocument()
+    {
+        var tenantId = TenantContext.Current!.TenantId;
+        var document = DocumentRecord.Create(tenantId, null, Guid.NewGuid(), null, null, DocumentType.Lease, null);
+        var v1 = DocumentVersion.Create(tenantId, document.DocumentId, 1, "draft.pdf", "application/pdf", 4, "k1", Guid.NewGuid());
+        document.SetCurrentVersion(v1.DocumentVersionId);
+        _repository.GetByIdAsync(document.DocumentId).Returns(document);
+        _versionRepository.CountForDocumentAsync(document.DocumentId).Returns(1);
+        _fileStorage.SaveAsync(Arg.Any<Stream>(), Arg.Any<string>()).Returns("k2");
+        _fileStorage.OpenReadAsync("k2").Returns(new MemoryStream(PdfBytes));
+        return document;
+    }
+
+    [Fact]
+    public async Task AddVersionAsync_ForAnUnknownDocument_ReturnsNotFound()
+    {
+        _repository.GetByIdAsync(Arg.Any<Guid>()).Returns((DocumentRecord?)null);
+        using var content = new MemoryStream(PdfBytes);
+        var sut = CreateSut();
+
+        var result = await sut.AddVersionAsync(Guid.NewGuid(), content, "signed.pdf", "application/pdf", content.Length, Guid.NewGuid());
+
+        result.Outcome.Should().Be(ServiceResultOutcome.NotFound);
+    }
+
+    [Fact]
+    public async Task AddVersionAsync_ForAnArchivedDocument_IsRejected()
+    {
+        var document = ArrangeActiveDocument();
+        document.Archive();
+        using var content = new MemoryStream(PdfBytes);
+        var sut = CreateSut();
+
+        var result = await sut.AddVersionAsync(document.DocumentId, content, "signed.pdf", "application/pdf", content.Length, Guid.NewGuid());
+
+        result.ErrorCode.Should().Be("TRL-E-DOC-4000");
+        await _fileStorage.DidNotReceive().SaveAsync(Arg.Any<Stream>(), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task AddVersionAsync_WhenTheFileTypeIsNotAllowed_IsRejected_AndNothingIsStored()
+    {
+        var document = ArrangeActiveDocument();
+        using var content = new MemoryStream([0x4D, 0x5A, 0x90, 0x00]);
+        var sut = CreateSut();
+
+        var result = await sut.AddVersionAsync(document.DocumentId, content, "signed.pdf", "application/pdf", content.Length, Guid.NewGuid());
+
+        result.ErrorCode.Should().Be("TRL-E-DOC-4001");
+        await _fileStorage.DidNotReceive().SaveAsync(Arg.Any<Stream>(), Arg.Any<string>());
+        await _versionRepository.DidNotReceiveWithAnyArgs().AddAsync(default!);
+    }
+
+    [Fact]
+    public async Task AddVersionAsync_CreatesTheNextVersionNumber_AndRepointsTheDocumentOnceItsScanIsClean()
+    {
+        var document = ArrangeActiveDocument();
+        var previousVersion = document.CurrentVersionId;
+        _fileScanner.ScanAsync(Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>()).Returns(new ScanResult(ScanOutcome.Clean, null));
+        DocumentVersion? added = null;
+        await _versionRepository.AddAsync(Arg.Do<DocumentVersion>(v => added = v));
+        using var content = new MemoryStream(PdfBytes);
+        var sut = CreateSut();
+
+        var result = await sut.AddVersionAsync(document.DocumentId, content, "signed.pdf", "application/pdf", content.Length, Guid.NewGuid());
+
+        result.Outcome.Should().Be(ServiceResultOutcome.Success);
+        result.Data!.VersionNumber.Should().Be(2);
+        result.Data.ScanStatus.Should().Be("CLEAN");
+        added!.DocumentId.Should().Be(document.DocumentId);
+        document.CurrentVersionId.Should().Be(added.DocumentVersionId);
+        (document.CurrentVersionId == previousVersion).Should().BeFalse();
+        await _auditService.Received(1).RecordAsync(
+            document.TenantId, Arg.Any<Guid>(), AuditActorType.HumanUser, AuditTypes.Document.DocumentUploaded, Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task AddVersionAsync_WhenTheScanFindsSomething_KeepsTheDocumentOnItsPreviousVersion()
+    {
+        var document = ArrangeActiveDocument();
+        var previousVersion = document.CurrentVersionId;
+        _fileScanner.ScanAsync(Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>()).Returns(new ScanResult(ScanOutcome.Infected, null));
+        using var content = new MemoryStream(PdfBytes);
+        var sut = CreateSut();
+
+        var result = await sut.AddVersionAsync(document.DocumentId, content, "signed.pdf", "application/pdf", content.Length, Guid.NewGuid());
+
+        result.Data!.ScanStatus.Should().Be("INFECTED");
+        (document.CurrentVersionId == previousVersion).Should().BeTrue();
+    }
 }

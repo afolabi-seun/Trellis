@@ -43,6 +43,12 @@ public sealed class Application : ITenantOwned
     /// <summary>The staff member who triggered send-for-signature — the auto-filed signed-lease Document's own UploadedBy needs a real human actor, never an invented "system user" id.</summary>
     public Guid? SentForSignatureBy { get; private set; }
 
+    /// <summary>The unsigned lease Document staff picked when sending for signature. The executed lease is filed as the next VERSION of this document (BDR-LSE-006: "a versioned document"), so a draft and its signed copy stay one document. Null only for applications sent before this was tracked — the webhook then falls back to filing a new document.</summary>
+    public Guid? DraftDocumentId { get; private set; }
+
+    /// <summary>Set the moment the executed lease is filed, and saved before the rest of the completion runs — so a webhook retry after a later failure never files it a second time.</summary>
+    public Guid? SignedLeaseVersionId { get; private set; }
+
     public ApplicationStatus Status { get; private set; }
     public DateTimeOffset SubmittedAt { get; private set; }
 
@@ -100,7 +106,7 @@ public sealed class Application : ITenantOwned
     }
 
     /// <summary>Approved only. No ApplicationStatus value changes — the spec's own enum has none for "sent for signature," only the two new fields are set.</summary>
-    public void MarkSentForSignature(string envelopeId, Guid staffUserId)
+    public void MarkSentForSignature(string envelopeId, Guid staffUserId, Guid? draftDocumentId = null)
     {
         if (Status != ApplicationStatus.Approved)
         {
@@ -109,7 +115,10 @@ public sealed class Application : ITenantOwned
 
         EnvelopeId = envelopeId;
         SentForSignatureBy = staffUserId;
+        DraftDocumentId = draftDocumentId;
     }
+
+    public void RecordSignedLeaseFiled(Guid signedLeaseVersionId) => SignedLeaseVersionId = signedLeaseVersionId;
 
     /// <summary>BDR-LSE-006's completion side effect on the Application record itself — the spec never states this explicitly, but the enum has the value and it's the only sensible terminal state once a lease is executed against this specific application.</summary>
     public void MarkLeased()

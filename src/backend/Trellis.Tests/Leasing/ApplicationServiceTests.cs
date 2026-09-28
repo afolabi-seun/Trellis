@@ -203,14 +203,56 @@ public sealed class ApplicationServiceTests : IDisposable
         return application;
     }
 
+    /// <summary>The listing the application is against — its unit is the only unit a lease draft may belong to.</summary>
+    private Guid ArrangeListingUnit()
+    {
+        var unitId = Guid.NewGuid();
+        _listingRepository.GetByIdAsync(_listingId).Returns(
+            VacancyListing.Create(_tenantId, unitId, 1500m, "USD", new DateOnly(2026, 11, 1), null, Guid.NewGuid()));
+        return unitId;
+    }
+
+    private void ArrangeDraft(Guid draftId, string documentType, Guid? unitAssetId) =>
+        _documentService.GetByIdAsync(draftId).Returns(ServiceResult<DocumentResponse>.Success(
+            new DocumentResponse(draftId, null, unitAssetId, null, null, documentType, null, "ACTIVE", null, "AAAAAAAAAAA=", DateTimeOffset.UtcNow)));
+
+    [Fact]
+    public async Task SendForSignatureAsync_WhenTheDraftIsNotALeaseDocument_IsRejected()
+    {
+        var application = ArrangeApprovedApplication();
+        var unitId = ArrangeListingUnit();
+        var draftId = Guid.NewGuid();
+        ArrangeDraft(draftId, "INVOICE", unitId);
+        var sut = CreateSut();
+
+        var result = await sut.SendForSignatureAsync(application.ApplicationId, draftId, Guid.NewGuid());
+
+        result.ErrorCode.Should().Be("TRL-E-LSE-11005");
+        await _eSignatureProvider.DidNotReceiveWithAnyArgs().SendForSignatureAsync(default, default!);
+    }
+
+    [Fact]
+    public async Task SendForSignatureAsync_WhenTheDraftBelongsToAnotherUnit_IsRejected()
+    {
+        var application = ArrangeApprovedApplication();
+        ArrangeListingUnit();
+        var draftId = Guid.NewGuid();
+        ArrangeDraft(draftId, "LEASE", Guid.NewGuid());
+        var sut = CreateSut();
+
+        var result = await sut.SendForSignatureAsync(application.ApplicationId, draftId, Guid.NewGuid());
+
+        result.ErrorCode.Should().Be("TRL-E-LSE-11005");
+    }
+
     [Fact]
     public async Task SendForSignatureAsync_RecordsTheEnvelopeAndTheStaffActor_AndSendsBothSigners()
     {
         var application = ArrangeApprovedApplication();
+        var unitId = ArrangeListingUnit();
         var staffId = Guid.NewGuid();
         var draftId = Guid.NewGuid();
-        _documentService.GetByIdAsync(draftId).Returns(ServiceResult<DocumentResponse>.Success(
-            new DocumentResponse(draftId, null, Guid.NewGuid(), null, null, "LEASE", null, "ACTIVE", null, "AAAAAAAAAAA=", DateTimeOffset.UtcNow)));
+        ArrangeDraft(draftId, "LEASE", unitId);
         _authService.GetUserByIdAsync(staffId).Returns(new AppUserSummary(staffId, "staff@example.com", _tenantId));
         _eSignatureProvider.SendForSignatureAsync(draftId, Arg.Any<IEnumerable<Signer>>()).Returns("env-123");
         var sut = CreateSut();
@@ -220,6 +262,7 @@ public sealed class ApplicationServiceTests : IDisposable
         result.Outcome.Should().Be(ServiceResultOutcome.Success);
         application.EnvelopeId.Should().Be("env-123");
         application.SentForSignatureBy.Should().Be(staffId);
+        application.DraftDocumentId.Should().Be(draftId);
         await _eSignatureProvider.Received(1).SendForSignatureAsync(draftId, Arg.Is<IEnumerable<Signer>>(s =>
             s.Any(x => x.Role == "TENANT" && x.Email == "applicant@example.com")
             && s.Any(x => x.Role == "LANDLORD_REP" && x.Email == "staff@example.com")));

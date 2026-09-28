@@ -147,15 +147,21 @@ Format: `TRL-E-{module}-{number}`.
 | PropertyAsset | `TRL-E-AST` | 3000–3999 |
 | Document | `TRL-E-DOC` | 4000–4999 |
 | Workflow | `TRL-E-WF` | 5000–5999 |
-| Inspection | `TRL-E-INS` | 6000–6999 |
+| Inspection | `TRL-E-INS` | 8000–8999 |
 | Vendor | `TRL-E-VEN` | 7000–7999 |
-| Ai | `TRL-E-AI` | 8000–8999 |
-| Reporting | `TRL-E-RPT` | 9000–9999 |
+| Ai | `TRL-E-AI` | 9000–9099 |
+| Reporting | `TRL-E-RPT` | 9100–9999 |
 | Billing | `TRL-E-BIL` | 10000–10999 |
 | Leasing | `TRL-E-LSE` | 11000–11999 |
 | Rent Collection | `TRL-E-RENT` | 12000–12999 |
 | Notification | `TRL-E-NOTIF` | 13000–13999 |
 | Support | `TRL-E-SUP` | 14000–14999 (reserved — Triggered, Not Scheduled) |
+
+**Ranges as shipped.** Inspection, Ai, and Reporting were originally allocated 6000–6999, 8000–8999,
+and 9000–9999 respectively, but shipped as `TRL-E-INS-8xxx`, `TRL-E-AI-9000+`, and `TRL-E-RPT-9100+`
+(the 6000 block was never used). Error codes are client-visible and already shipped, so the table
+above was corrected to match the code rather than renumbering the code; `6000–6999` stays unallocated.
+`ErrorCodeRegistry.cs` is the source of truth for individual codes.
 
 Note the Tenant module took the `2000` range in the table above (aligned to its position in
 the module list) even though it's marked reserved — codes aren't allocated until a module

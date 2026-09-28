@@ -109,6 +109,30 @@ public sealed class ApplicationTests
     }
 
     [Fact]
+    public void MarkSentForSignature_RecordsTheDraftDocument_SoTheExecutedLeaseCanBeFiledAsItsNextVersion()
+    {
+        var application = CreateSubmitted();
+        application.Approve();
+        var draftId = Guid.NewGuid();
+
+        application.MarkSentForSignature("env-1", Guid.NewGuid(), draftId);
+
+        application.DraftDocumentId.Should().Be(draftId);
+        application.SignedLeaseVersionId.Should().BeNull();
+    }
+
+    [Fact]
+    public void RecordSignedLeaseFiled_StoresTheVersionId()
+    {
+        var application = CreateSubmitted();
+        var versionId = Guid.NewGuid();
+
+        application.RecordSignedLeaseFiled(versionId);
+
+        application.SignedLeaseVersionId.Should().Be(versionId);
+    }
+
+    [Fact]
     public void MarkSentForSignature_BeforeApproval_Throws()
     {
         var application = CreateSubmitted();

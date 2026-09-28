@@ -26,6 +26,8 @@ public sealed class ApplicationConfiguration : IEntityTypeConfiguration<LeasingA
         builder.Property(a => a.ConsentToScreening).HasColumnName("consent_to_screening");
         builder.Property(a => a.EnvelopeId).HasColumnName("envelope_id").HasMaxLength(255);
         builder.Property(a => a.SentForSignatureBy).HasColumnName("sent_for_signature_by");
+        builder.Property(a => a.DraftDocumentId).HasColumnName("draft_document_id");
+        builder.Property(a => a.SignedLeaseVersionId).HasColumnName("signed_lease_version_id");
 
         builder.Property(a => a.Status)
             .HasColumnName("status")

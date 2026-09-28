@@ -50,17 +50,47 @@ public sealed class LeasingWebhookService(
         var listing = await listingRepository.GetByIdAsync(application.VacancyListingId)
             ?? throw new InvalidOperationException($"Vacancy listing {application.VacancyListingId} not found for application {application.ApplicationId}.");
 
-        var signedBytes = await eSignatureProvider.DownloadSignedDocumentAsync(envelopeId);
         var uploadedBy = application.SentForSignatureBy
             ?? throw new InvalidOperationException($"Application {application.ApplicationId} has no SentForSignatureBy.");
 
-        // A real staff actor (whoever triggered send-for-signature), never an invented system user.
-        var documentResult = await documentService.CreateAsync(
-            new DocumentUploadRequest("LEASE", null, null, listing.UnitAssetId, null, null),
-            new MemoryStream(signedBytes), $"lease-{application.ApplicationId}.pdf", "application/pdf", signedBytes.Length, uploadedBy);
-        if (documentResult.Outcome != ServiceResultOutcome.Success)
+        if (application.SignedLeaseVersionId is null)
         {
-            throw new InvalidOperationException($"Filing the signed lease failed: {documentResult.Outcome} {documentResult.ErrorCode}.");
+            var signedBytes = await eSignatureProvider.DownloadSignedDocumentAsync(envelopeId);
+            var fileName = $"lease-{application.ApplicationId}.pdf";
+
+            // A real staff actor (whoever triggered send-for-signature), never an invented system user.
+            // The executed lease becomes the next VERSION of the draft staff sent (BDR-LSE-006), keeping
+            // draft and signed copy as one document. Applications sent before the draft was tracked fall
+            // back to filing a new document.
+            Guid signedLeaseVersionId;
+            if (application.DraftDocumentId is { } draftDocumentId)
+            {
+                var version = await documentService.AddVersionAsync(
+                    draftDocumentId, new MemoryStream(signedBytes), fileName, "application/pdf", signedBytes.Length, uploadedBy);
+                if (version.Outcome != ServiceResultOutcome.Success)
+                {
+                    throw new InvalidOperationException($"Filing the signed lease failed: {version.Outcome} {version.ErrorCode}.");
+                }
+
+                signedLeaseVersionId = version.Data!.DocumentVersionId;
+            }
+            else
+            {
+                var documentResult = await documentService.CreateAsync(
+                    new DocumentUploadRequest("LEASE", null, null, listing.UnitAssetId, null, null),
+                    new MemoryStream(signedBytes), fileName, "application/pdf", signedBytes.Length, uploadedBy);
+                if (documentResult.Outcome != ServiceResultOutcome.Success)
+                {
+                    throw new InvalidOperationException($"Filing the signed lease failed: {documentResult.Outcome} {documentResult.ErrorCode}.");
+                }
+
+                signedLeaseVersionId = documentResult.Data!.CurrentVersion?.DocumentVersionId ?? documentResult.Data.DocumentId;
+            }
+
+            // Saved on its own, before the remaining steps: if a later step fails and the provider retries,
+            // the lease must not be filed a second time.
+            application.RecordSignedLeaseFiled(signedLeaseVersionId);
+            await applicationRepository.SaveChangesAsync();
         }
 
         var occupied = await unitAssetService.MarkOccupiedAsync(listing.UnitAssetId);
@@ -86,7 +116,7 @@ public sealed class LeasingWebhookService(
 
         await eventRepository.AddAsync(ApplicationEvent.Create(
             application.TenantId, application.ApplicationId, ApplicationEventTypes.SignatureCompleted,
-            ApplicationEventActorType.System, null, $"{{\"envelopeId\":\"{envelopeId}\",\"documentId\":\"{documentResult.Data!.DocumentId}\"}}"));
+            ApplicationEventActorType.System, null, $"{{\"envelopeId\":\"{envelopeId}\",\"draftDocumentId\":\"{application.DraftDocumentId}\",\"signedLeaseVersionId\":\"{application.SignedLeaseVersionId}\"}}"));
         await eventRepository.AddAsync(ApplicationEvent.Create(
             application.TenantId, application.ApplicationId, ApplicationEventTypes.Leased,
             ApplicationEventActorType.System, null, null));
