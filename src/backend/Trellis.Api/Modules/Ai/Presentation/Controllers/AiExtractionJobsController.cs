@@ -6,6 +6,7 @@ using Trellis.Api.Core.Results;
 using Trellis.Api.Modules.Ai.Application.Dtos;
 using Trellis.Api.Modules.Ai.Application.Interfaces;
 using Trellis.Api.Modules.Ai.Presentation.Filters;
+using Trellis.Api.Modules.Billing.Presentation.Filters;
 
 namespace Trellis.Api.Modules.Ai.Presentation.Controllers;
 
@@ -15,6 +16,7 @@ namespace Trellis.Api.Modules.Ai.Presentation.Controllers;
 [ApiExplorerSettings(GroupName = "ai")]
 [Authorize(Roles = "TENANT_ADMIN,DEPARTMENT_STAFF")]
 [RequiresProfessionalTier]
+[RequiresModuleEntitlement("AI")]
 public sealed class AiExtractionJobsController(IExtractionService extractionService) : ControllerBase
 {
     [HttpGet]

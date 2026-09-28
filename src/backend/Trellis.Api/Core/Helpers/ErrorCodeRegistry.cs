@@ -146,4 +146,20 @@ public static class ErrorCodeRegistry
         /// <summary>TRL-E-AI-9002 — LinkAsync called on a routing suggestion already linked to a WorkflowInstance.</summary>
         public const string RoutingSuggestionAlreadyLinked = "TRL-E-AI-9002";
     }
+
+    /// <summary>api_standards.md's registry table: Billing | TRL-E-BIL | 10000–10999 — a 5-digit range, unlike every earlier module's 4-digit codes.</summary>
+    public static class Billing
+    {
+        /// <summary>TRL-E-BIL-10000 — RequiresModuleEntitlementAttribute: the caller's tenant doesn't have this module ACTIVE.</summary>
+        public const string ModuleNotEntitled = "TRL-E-BIL-10000";
+
+        /// <summary>TRL-E-BIL-10001 — a Subscription/Invoice/ModuleEntitlement transition the entity's current status doesn't allow.</summary>
+        public const string InvalidStatusTransition = "TRL-E-BIL-10001";
+
+        /// <summary>TRL-E-BIL-10002 — an automatic charge was attempted but the tenant has no default payment method on file.</summary>
+        public const string NoDefaultPaymentMethod = "TRL-E-BIL-10002";
+
+        /// <summary>TRL-E-BIL-10003 — IPaymentGateway.ChargeAsync returned a decline/error result.</summary>
+        public const string ChargeFailed = "TRL-E-BIL-10003";
+    }
 }

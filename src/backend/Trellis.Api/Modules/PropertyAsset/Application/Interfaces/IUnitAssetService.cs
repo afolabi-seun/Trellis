@@ -15,4 +15,7 @@ public interface IUnitAssetService
     Task<ServiceResult<UnitAssetResponse>> UpdateAsync(Guid unitAssetId, UnitAssetUpdateRequest request);
 
     Task<ServiceResult<UnitAssetResponse>> ArchiveAsync(Guid unitAssetId);
+
+    /// <summary>billing_design.md's usage metering — Billing's own UsageSnapshotBackgroundService depends on this, the same plain-constructor-dependency cross-module pattern DocumentService already uses for IWorkflowInstanceService/IExtractionService.</summary>
+    Task<int> CountActiveForTenantAsync(Guid tenantId);
 }

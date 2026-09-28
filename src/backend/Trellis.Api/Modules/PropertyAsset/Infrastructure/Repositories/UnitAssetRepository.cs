@@ -32,6 +32,9 @@ public sealed class UnitAssetRepository(PropertyDbContext dbContext) : TenantAwa
         return (page.Take(limit).ToList(), hasMore, totalCount);
     }
 
+    public Task<int> CountActiveForTenantAsync(Guid tenantId) =>
+        dbContext.UnitAssets.CountAsync(u => u.TenantId == tenantId && u.Status == UnitAssetStatus.Active);
+
     public string GetRowVersion(UnitAsset unitAsset) => RowVersionHelper.Get(dbContext, unitAsset);
 
     public void SetExpectedRowVersion(UnitAsset unitAsset, string rowVersion) => RowVersionHelper.SetExpected(dbContext, unitAsset, rowVersion);

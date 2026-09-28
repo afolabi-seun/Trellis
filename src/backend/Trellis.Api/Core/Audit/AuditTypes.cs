@@ -14,6 +14,11 @@ public static class AuditTypes
         public const string TenantOffboardingInitiated = "TENANT_OFFBOARDING_INITIATED";
         public const string TenantExportReady = "TENANT_EXPORT_READY";
         public const string TenantOffboarded = "TENANT_OFFBOARDED";
+
+        /// <summary>billing_design.md's dunning state machine calls ITenantService.SuspendAsync — this is Tenant's own generic record of the transition; Billing separately records its own more specific TenantSuspendedNonpayment for its own audit trail.</summary>
+        public const string TenantSuspended = "TENANT_SUSPENDED";
+
+        public const string TenantReactivated = "TENANT_REACTIVATED";
     }
 
     public static class Auth
@@ -63,5 +68,19 @@ public static class AuditTypes
         public const string RoutingSuggestionCreated = "AI_ROUTING_SUGGESTION_CREATED";
         public const string RoutingSuggestionLinked = "AI_ROUTING_SUGGESTION_LINKED";
         public const string SuggestionOverridden = "AI_SUGGESTION_OVERRIDDEN";
+    }
+
+    /// <summary>billing_design.md's dunning state machine names SubscriptionPastDue and TenantSuspendedNonpayment explicitly.</summary>
+    public static class Billing
+    {
+        public const string SubscriptionCreated = "SUBSCRIPTION_CREATED";
+        public const string SubscriptionPastDue = "SUBSCRIPTION_PAST_DUE";
+        public const string SubscriptionReactivated = "SUBSCRIPTION_REACTIVATED";
+        public const string TenantSuspendedNonpayment = "TENANT_SUSPENDED_NONPAYMENT";
+        public const string InvoiceGenerated = "INVOICE_GENERATED";
+        public const string InvoicePaid = "INVOICE_PAID";
+        public const string PaymentMethodAdded = "PAYMENT_METHOD_ADDED";
+        public const string ModuleEntitlementChanged = "MODULE_ENTITLEMENT_CHANGED";
+        public const string WebhookEventProcessed = "WEBHOOK_EVENT_PROCESSED";
     }
 }

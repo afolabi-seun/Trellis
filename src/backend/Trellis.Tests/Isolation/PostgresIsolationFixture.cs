@@ -4,6 +4,7 @@ using Testcontainers.PostgreSql;
 using Trellis.Api.Core.Data;
 using Trellis.Api.Modules.Ai.Infrastructure.Data;
 using Trellis.Api.Modules.Auth.Infrastructure.Data;
+using Trellis.Api.Modules.Billing.Infrastructure.Data;
 using Trellis.Api.Modules.Document.Infrastructure.Data;
 using Trellis.Api.Modules.Inspection.Infrastructure.Data;
 using Trellis.Api.Modules.Notification.Infrastructure.Data;
@@ -87,6 +88,7 @@ public sealed class PostgresIsolationFixture : IAsyncLifetime
         await MigrateAsync(() => new WorkflowDbContext(BuildOptions<WorkflowDbContext>()));
         await MigrateAsync(() => new InspectionDbContext(BuildOptions<InspectionDbContext>()));
         await MigrateAsync(() => new AiDbContext(BuildOptions<AiDbContext>()));
+        await MigrateAsync(() => new BillingDbContext(BuildOptions<BillingDbContext>()));
     }
 
     public async Task DisposeAsync() => await _container.DisposeAsync();
@@ -174,6 +176,16 @@ public sealed class PostgresIsolationFixture : IAsyncLifetime
             .AddInterceptors(new TenantScopeConnectionInterceptor())
             .Options;
         return new AiDbContext(options);
+    }
+
+    /// <summary>Same shape as <see cref="CreateAppAuthContext"/>, for Billing's own isolation tests.</summary>
+    public BillingDbContext CreateAppBillingContext()
+    {
+        var options = new DbContextOptionsBuilder<BillingDbContext>()
+            .UseNpgsql(AppConnectionString)
+            .AddInterceptors(new TenantScopeConnectionInterceptor())
+            .Options;
+        return new BillingDbContext(options);
     }
 
     private DbContextOptions<TContext> BuildOptions<TContext>() where TContext : DbContext =>

@@ -36,6 +36,11 @@
     <PackageReference Include="FluentAssertions" Version="6.12.1" />
     <PackageReference Include="NSubstitute" Version="5.1.0" />
     <PackageReference Include="Testcontainers.PostgreSql" Version="3.10.0" />
+    <!-- Phase 7's new API/Contract layer (testing_strategy.md's pyramid names it; this is the
+         first test file to actually use it) — WebApplicationFactory<Program> for the webhook
+         signature and module-entitlement 403/200 tests, which need a real HTTP pipeline/filter/
+         auth stack, not just a mocked Service call. -->
+    <PackageReference Include="Microsoft.AspNetCore.Mvc.Testing" Version="8.0.10" />
   </ItemGroup>
 
   <ItemGroup>

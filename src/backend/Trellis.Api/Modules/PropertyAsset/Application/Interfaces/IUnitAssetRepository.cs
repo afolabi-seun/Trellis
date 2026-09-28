@@ -12,6 +12,9 @@ public interface IUnitAssetRepository
     Task<(IReadOnlyList<UnitAsset> Items, bool HasMore, int TotalCount)> ListByPropertyAsync(
         Guid propertyId, (DateTimeOffset CreatedAt, Guid Id)? cursor, int limit);
 
+    /// <summary>billing_design.md's usage metering (BDR-BIL-001) — an explicit tenantId param, not Scoped()/TenantContext.Current, since the only caller (UsageSnapshotBackgroundService) runs under SystemContext with no ambient tenant during its cross-tenant batch poll.</summary>
+    Task<int> CountActiveForTenantAsync(Guid tenantId);
+
     string GetRowVersion(UnitAsset unitAsset);
 
     void SetExpectedRowVersion(UnitAsset unitAsset, string rowVersion);

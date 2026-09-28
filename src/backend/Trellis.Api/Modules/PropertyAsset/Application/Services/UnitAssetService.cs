@@ -108,6 +108,8 @@ public sealed class UnitAssetService(IUnitAssetRepository repository, IPropertyR
         return ServiceResult<UnitAssetResponse>.Success(ToResponse(unitAsset));
     }
 
+    public Task<int> CountActiveForTenantAsync(Guid tenantId) => repository.CountActiveForTenantAsync(tenantId);
+
     private UnitAssetResponse ToResponse(UnitAsset unitAsset) => new(
         unitAsset.UnitAssetId,
         unitAsset.PropertyId,

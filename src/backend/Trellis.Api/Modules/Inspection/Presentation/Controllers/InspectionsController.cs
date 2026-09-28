@@ -3,16 +3,25 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Trellis.Api.Core.Dtos;
 using Trellis.Api.Core.Results;
+using Trellis.Api.Modules.Billing.Presentation.Filters;
 using Trellis.Api.Modules.Inspection.Application.Dtos;
 using Trellis.Api.Modules.Inspection.Application.Interfaces;
 
 namespace Trellis.Api.Modules.Inspection.Presentation.Controllers;
 
-/// <summary>Staff-side: schedule/read/manage an inspection. None of these routes are idempotency-protected — every one is a single, online, synchronous staff action, unlike the vendor's offline-sync completion.</summary>
+/// <summary>
+/// Staff-side: schedule/read/manage an inspection. None of these routes are idempotency-protected
+/// — every one is a single, online, synchronous staff action, unlike the vendor's offline-sync
+/// completion. BDR-BIL-009's first real retrofit demonstration — gated here, not on
+/// InspectionVendorPortalController: a Vendor has no tenant billing relationship (billing_design.md's
+/// own "no Vendor visibility clause" reasoning), and gating a Vendor mid-assignment on the
+/// tenant's commercial state would break in-flight work.
+/// </summary>
 [ApiController]
 [Route("api/v1/inspections")]
 [ApiExplorerSettings(GroupName = "inspection")]
 [Authorize(Roles = "TENANT_ADMIN,DEPARTMENT_STAFF")]
+[RequiresModuleEntitlement("INSPECTION")]
 public sealed class InspectionsController(IInspectionService inspectionService) : ControllerBase
 {
     [HttpGet]

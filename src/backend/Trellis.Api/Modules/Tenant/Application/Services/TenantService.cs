@@ -99,6 +99,56 @@ public sealed class TenantService(
         return ServiceResult<TenantResponse>.Success(ToResponse(tenant));
     }
 
+    public async Task<ServiceResult<TenantResponse>> SuspendAsync(Guid tenantId, string reason)
+    {
+        var tenant = await repository.GetByIdAsync(tenantId);
+        if (tenant is null)
+        {
+            return ServiceResult<TenantResponse>.NotFound();
+        }
+
+        try
+        {
+            tenant.Suspend();
+        }
+        catch (Domain.Exceptions.InvalidTenantStatusTransitionException)
+        {
+            return ServiceResult<TenantResponse>.BusinessRuleViolation(ErrorCodeRegistry.Tenant.InvalidStatusTransition);
+        }
+
+        await repository.SaveChangesAsync();
+
+        // Same revocation path OffboardTenantAsync already uses — a suspended tenant's users
+        // shouldn't retain live access on a valid refresh token while unable to act.
+        await sessionService.RevokeAllForTenantAsync(tenantId);
+
+        await auditService.RecordAsync(
+            tenantId, tenantId, AuditActorType.System, AuditTypes.Tenant.TenantSuspended, $"{{\"reason\":\"{reason}\"}}");
+
+        return ServiceResult<TenantResponse>.Success(ToResponse(tenant));
+    }
+
+    public async Task<ServiceResult<TenantResponse>> ReactivateAsync(Guid tenantId)
+    {
+        var tenant = await repository.GetByIdAsync(tenantId);
+        if (tenant is null)
+        {
+            return ServiceResult<TenantResponse>.NotFound();
+        }
+
+        // Idempotent by design — DunningService.ReactivateOnSuccessAsync calls this on every
+        // successful charge, not just ones that follow an actual suspension.
+        if (tenant.Status == Domain.Entities.TenantStatus.Suspended)
+        {
+            tenant.Activate();
+            await repository.SaveChangesAsync();
+            await auditService.RecordAsync(
+                tenantId, tenantId, AuditActorType.System, AuditTypes.Tenant.TenantReactivated);
+        }
+
+        return ServiceResult<TenantResponse>.Success(ToResponse(tenant));
+    }
+
     private static TenantResponse ToResponse(TenantEntity tenant) => new(
         tenant.TenantId,
         tenant.TenantName,
