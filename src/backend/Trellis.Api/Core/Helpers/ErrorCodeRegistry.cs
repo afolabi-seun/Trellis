@@ -40,6 +40,18 @@ public static class ErrorCodeRegistry
 
         /// <summary>TRL-E-TEN-2001 — an offboard/status-transition request the tenant's current status doesn't allow.</summary>
         public const string InvalidStatusTransition = "TRL-E-TEN-2001";
+
+        /// <summary>TRL-E-TEN-2002 — custom domains are an ENTERPRISE-tier capability and the caller's tenant isn't on that tier.</summary>
+        public const string CustomDomainRequiresEnterprise = "TRL-E-TEN-2002";
+
+        /// <summary>TRL-E-TEN-2003 — the requested slug is already used by another tenant (or is a reserved word).</summary>
+        public const string SlugUnavailable = "TRL-E-TEN-2003";
+
+        /// <summary>TRL-E-TEN-2004 — the domain isn't a valid, registrable-looking hostname, or is the platform's own host/subdomain.</summary>
+        public const string InvalidDomain = "TRL-E-TEN-2004";
+
+        /// <summary>TRL-E-TEN-2005 — VerifyAsync: the DNS TXT record wasn't found (yet), or the domain is already verified by another tenant.</summary>
+        public const string DomainVerificationFailed = "TRL-E-TEN-2005";
     }
 
     public static class Auth

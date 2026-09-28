@@ -50,6 +50,7 @@ handbook's own "don't build ahead of need" principle applied to documentation, n
 |--------|------|-------------|-------------|
 | tenant_id | UUID | PK DEFAULT gen_random_uuid() | Primary tenant identifier — the PM company |
 | tenant_name | VARCHAR(200) | NOT NULL | Registered business name |
+| slug | VARCHAR(63) | NOT NULL UNIQUE | Public, human-friendly identifier used in public URLs instead of the raw tenant id (`/vacancies/acme-pm`). Lowercase letters/digits/hyphens, 3–63 chars, no leading/trailing hyphen, never a reserved word (admin, api, login, vacancies, …). Derived from `tenant_name` (with a numeric suffix on collision) when not supplied at provisioning; changeable only by a SUPER_ADMIN, audited, because a rename breaks every public link already shared. |
 | country_code | CHAR(2) | NOT NULL | ISO 3166-1 alpha-2 (data residency, BDR-SEC-004) |
 | status | VARCHAR(20) | NOT NULL DEFAULT 'ONBOARDING' | ONBOARDING\|ACTIVE\|SUSPENDED\|OFFBOARDING\|OFFBOARDED |
 | subscription_tier | VARCHAR(20) | NOT NULL DEFAULT 'STARTER' | STARTER\|PROFESSIONAL\|ENTERPRISE |
@@ -60,6 +61,28 @@ handbook's own "don't build ahead of need" principle applied to documentation, n
 Supports BDR-TEN-001, BDR-TEN-004, BDR-TEN-005. `OFFBOARDING` is the new interim value (BDR-TEN-006,
 real as of BRD v0.4) between an active tenant and the terminal `OFFBOARDED` — see
 `multi_tenant_design.md` for the full offboarding flow this status drives.
+
+### trellis_tenant.tenant_domain
+
+A tenant's own domain for its public pages — **ENTERPRISE tier only** (the trigger `README.md` names for
+custom domains). Tenant-owned, so standard `tenant_isolation` RLS; the anonymous host resolver reads it
+cross-tenant under `SystemContext` (the same narrow pattern as the Leasing link-token lookup). DELETE is
+granted to the app role — removing a domain is a genuine delete, not a status flip.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| tenant_domain_id | UUID | PK | |
+| tenant_id | UUID | NOT NULL | |
+| domain | VARCHAR(253) | NOT NULL | Lowercased, punycode. Never an IP, a single label, or the platform's own host / a subdomain of it |
+| status | VARCHAR(30) | NOT NULL | PENDING_VERIFICATION\|VERIFIED\|DISABLED |
+| verification_token | VARCHAR(64) | NOT NULL | Random; the tenant proves DNS control by publishing TXT `_trellis-verify.{domain}` = `trellis-verify={token}` |
+| verified_at | TIMESTAMPTZ | NULLABLE | |
+| created_at | TIMESTAMPTZ | NOT NULL | |
+
+`UNIQUE (domain) WHERE status = 'VERIFIED'` (partial index): anyone may *register* a name, but only one tenant
+may hold it verified — the first to prove DNS control wins. A VERIFIED domain (a) resolves an anonymous host to
+its tenant, (b) is echoed by CORS (dynamic policy, 60 s cache invalidated on verify/remove), and (c) is the base
+URL of application links emailed to prospects.
 
 ### trellis_auth.app_user
 

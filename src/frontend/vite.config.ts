@@ -34,6 +34,11 @@ export default defineConfig({
       },
     }),
   ],
+  // `vite preview` (what Playwright serves) rejects unknown Host headers by default. The e2e suite proves
+  // custom-domain rendering by mapping a `.test` hostname to 127.0.0.1, so those hosts must be allowed.
+  // host pins the server to IPv4 loopback: the *.test hostnames are mapped to 127.0.0.1, and a server
+  // bound to "localhost" can end up IPv6-only (::1) on some machines, refusing those connections.
+  preview: { host: "127.0.0.1", allowedHosts: [".test", "localhost", "127.0.0.1"] },
   test: {
     environment: "jsdom",
     setupFiles: ["./tests/unit/setup.ts"],

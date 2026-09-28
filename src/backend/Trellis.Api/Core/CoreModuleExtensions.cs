@@ -1,6 +1,8 @@
 using FluentValidation;
+using Microsoft.AspNetCore.Cors.Infrastructure;
 using Microsoft.EntityFrameworkCore;
 using Trellis.Api.Core.Configuration;
+using Trellis.Api.Core.Cors;
 using Trellis.Api.Core.Data;
 using Trellis.Api.Core.Files;
 using Trellis.Api.Core.Helpers;
@@ -30,8 +32,13 @@ public static class CoreModuleExtensions
         // deployment concern (which frontend origin is allowed to call this API), not a module's.
         var allowedOrigins = (config["AllowedOrigins"] ?? "http://localhost:5173")
             .Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+        // AddCors still registers the CORS services and the named policy, but the policy actually used
+        // is built per request by TrellisCorsPolicyProvider: the same static origins plus every
+        // VERIFIED tenant custom domain (Tenant module, via ICustomDomainOriginProvider).
         services.AddCors(options => options.AddPolicy(CorsPolicyName, policy =>
             policy.WithOrigins(allowedOrigins).AllowAnyHeader().AllowAnyMethod().AllowCredentials()));
+        services.AddSingleton<ICorsPolicyProvider>(new TrellisCorsPolicyProvider(allowedOrigins));
+        services.AddMemoryCache();
 
         services.AddSingleton<TenantScopeConnectionInterceptor>();
 

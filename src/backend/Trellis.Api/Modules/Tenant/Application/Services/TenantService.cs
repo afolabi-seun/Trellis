@@ -1,3 +1,4 @@
+using Microsoft.EntityFrameworkCore;
 using Trellis.Api.Core.Dtos;
 using Trellis.Api.Core.Helpers;
 using Trellis.Api.Core.Results;
@@ -6,6 +7,8 @@ using Trellis.Api.Modules.Reporting.Application.Interfaces;
 using Trellis.Api.Modules.Reporting.Domain.Entities;
 using Trellis.Api.Modules.Tenant.Application.Dtos;
 using Trellis.Api.Modules.Tenant.Application.Interfaces;
+using Trellis.Api.Modules.Tenant.Domain.Entities;
+using Trellis.Api.Modules.Tenant.Domain.ValueObjects;
 using Trellis.Api.Modules.Tenant.Infrastructure.Data;
 using TenantEntity = Trellis.Api.Modules.Tenant.Domain.Entities.Tenant;
 
@@ -26,11 +29,36 @@ public sealed class TenantService(
         // never touches an Infrastructure concrete class," matching exactly what the given spec
         // code does, for transaction orchestration only; every query still goes through the
         // repository.
+        string slug;
+        if (!string.IsNullOrEmpty(request.Slug))
+        {
+            if (await repository.SlugExistsAsync(request.Slug))
+            {
+                return ServiceResult<TenantResponse>.Conflict(ErrorCodeRegistry.Tenant.SlugUnavailable, "That slug is already in use.");
+            }
+
+            slug = request.Slug;
+        }
+        else
+        {
+            slug = await UniqueSlugForAsync(request.TenantName);
+        }
+
         await using var transaction = await dbContext.Database.BeginTransactionAsync();
 
-        var tenant = TenantEntity.Create(request.TenantName, request.CountryCode);
+        var tenant = TenantEntity.Create(request.TenantName, request.CountryCode, slug);
         await repository.AddAsync(tenant);
-        await repository.SaveChangesAsync();
+
+        try
+        {
+            await repository.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            // Lost a race against the unique slug index (the pre-check above isn't atomic).
+            await transaction.RollbackAsync();
+            return ServiceResult<TenantResponse>.Conflict(ErrorCodeRegistry.Tenant.SlugUnavailable, "That slug is already in use.");
+        }
 
         var adminResult = await authService.CreateTenantAdminAsync(tenant.TenantId, request.AdminEmail);
         if (adminResult.Outcome != ServiceResultOutcome.Success)
@@ -44,6 +72,48 @@ public sealed class TenantService(
             tenant.TenantId, adminResult.Data!.UserId, AuditActorType.HumanUser, AuditTypes.Tenant.TenantProvisioned);
 
         await transaction.CommitAsync();
+        return ServiceResult<TenantResponse>.Success(ToResponse(tenant));
+    }
+
+    public async Task<ServiceResult<TenantPublicInfo>> ResolveSlugAsync(string slug)
+    {
+        var tenant = SlugPolicy.IsValid(slug) ? await repository.GetBySlugAsync(slug) : null;
+
+        // Onboarding counts: nothing in the platform moves a tenant to Active yet, and a tenant that can log in can publish listings.
+        return tenant is { Status: TenantStatus.Onboarding or TenantStatus.Active }
+            ? ServiceResult<TenantPublicInfo>.Success(new TenantPublicInfo(tenant.TenantId, tenant.TenantName, tenant.Slug))
+            : ServiceResult<TenantPublicInfo>.NotFound();
+    }
+
+    public async Task<ServiceResult<TenantResponse>> ChangeSlugAsync(Guid tenantId, string slug, Guid actorUserId)
+    {
+        var tenant = await repository.GetByIdAsync(tenantId);
+        if (tenant is null)
+        {
+            return ServiceResult<TenantResponse>.NotFound();
+        }
+
+        if (!SlugPolicy.IsValid(slug) || (slug != tenant.Slug && await repository.SlugExistsAsync(slug)))
+        {
+            return ServiceResult<TenantResponse>.Conflict(ErrorCodeRegistry.Tenant.SlugUnavailable, "That slug is already in use or not allowed.");
+        }
+
+        var previous = tenant.Slug;
+        tenant.ChangeSlug(slug);
+
+        try
+        {
+            await repository.SaveChangesAsync();
+        }
+        catch (DbUpdateException)
+        {
+            return ServiceResult<TenantResponse>.Conflict(ErrorCodeRegistry.Tenant.SlugUnavailable, "That slug is already in use.");
+        }
+
+        await auditService.RecordAsync(
+            tenantId, actorUserId, AuditActorType.HumanUser, AuditTypes.Tenant.TenantSlugChanged,
+            $"{{\"from\":\"{previous}\",\"to\":\"{slug}\"}}");
+
         return ServiceResult<TenantResponse>.Success(ToResponse(tenant));
     }
 
@@ -150,11 +220,25 @@ public sealed class TenantService(
         return ServiceResult<TenantResponse>.Success(ToResponse(tenant));
     }
 
+    private async Task<string> UniqueSlugForAsync(string tenantName)
+    {
+        var baseSlug = SlugPolicy.FromName(tenantName);
+        for (var attempt = 1; ; attempt++)
+        {
+            var candidate = SlugPolicy.WithSuffix(baseSlug, attempt);
+            if (!await repository.SlugExistsAsync(candidate))
+            {
+                return candidate;
+            }
+        }
+    }
+
     private static TenantResponse ToResponse(TenantEntity tenant) => new(
         tenant.TenantId,
         tenant.TenantName,
         tenant.CountryCode,
         tenant.Status.ToString().ToUpperInvariant(),
         tenant.SubscriptionTier.ToString().ToUpperInvariant(),
-        tenant.CreatedAt);
+        tenant.CreatedAt,
+        tenant.Slug);
 }

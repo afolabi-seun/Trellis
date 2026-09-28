@@ -1,7 +1,10 @@
 namespace Trellis.Api.Modules.Tenant.Application.Dtos;
 
 /// <summary>api_standards.md's `POST /platform/tenants` request body.</summary>
-public sealed record TenantProvisionRequest(string TenantName, string CountryCode, string AdminEmail);
+/// <summary>Slug is optional — when omitted it is derived from the tenant name (see SlugPolicy).</summary>
+public sealed record TenantProvisionRequest(string TenantName, string CountryCode, string AdminEmail, string? Slug = null);
+
+public sealed record TenantSlugUpdateRequest(string Slug);
 
 // No RowVersion field: coding_standards.md's UseXminAsConcurrencyToken()/RowVersion pattern
 // applies to entities with an Update/Patch endpoint, and Tenant has neither in Phase 1 — only
@@ -15,4 +18,18 @@ public sealed record TenantResponse(
     string CountryCode,
     string Status,
     string SubscriptionTier,
-    DateTimeOffset CreatedAt);
+    DateTimeOffset CreatedAt,
+    string Slug = "");
+
+/// <summary>Internal resolution result — carries the TenantId, so it must never be returned from an anonymous endpoint (see <see cref="PublicTenantResponse"/>).</summary>
+public sealed record TenantPublicInfo(Guid TenantId, string Name, string Slug);
+
+/// <summary>What an anonymous visitor may learn about a tenant: its display name and slug. Never its id.</summary>
+public sealed record PublicTenantResponse(string Name, string Slug);
+
+public sealed record TenantDomainCreateRequest(string Domain);
+
+/// <summary>The verification record is only populated while PENDING_VERIFICATION — once verified, the token has done its job.</summary>
+public sealed record TenantDomainResponse(
+    Guid TenantDomainId, string Domain, string Status, string? VerificationRecordName, string? VerificationRecordValue,
+    DateTimeOffset? VerifiedAt, DateTimeOffset CreatedAt);

@@ -217,6 +217,16 @@ public sealed class PostgresIsolationFixture : IAsyncLifetime
         return new LeasingDbContext(options);
     }
 
+    /// <summary>Same shape as <see cref="CreateAppAuthContext"/>, for the Tenant module's own tests.</summary>
+    public Trellis.Api.Modules.Tenant.Infrastructure.Data.TenantDbContext CreateAppTenantContext()
+    {
+        var options = new DbContextOptionsBuilder<Trellis.Api.Modules.Tenant.Infrastructure.Data.TenantDbContext>()
+            .UseNpgsql(AppConnectionString)
+            .AddInterceptors(new TenantScopeConnectionInterceptor())
+            .Options;
+        return new Trellis.Api.Modules.Tenant.Infrastructure.Data.TenantDbContext(options);
+    }
+
     /// <summary>Same shape as <see cref="CreateAppAuthContext"/>, for Rent Collection's own isolation tests.</summary>
     public RentLedgerDbContext CreateAppRentLedgerContext()
     {

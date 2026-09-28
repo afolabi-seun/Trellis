@@ -24,6 +24,7 @@ import {
   seedTenantAdmin,
   seedUnitAsset,
   SEED_PASSWORD,
+  tenantSlugFor,
 } from "./support/dbSeed";
 
 // Phase 9's exit criterion: a prospective tenant applies via a secure link with no platform
@@ -142,7 +143,7 @@ test("BDR-LSE-001: staff create a listing for a vacant unit and upload a photo",
 test("BDR-LSE-002: a listing can be browsed with no login, and an applicant can request a link", async ({
   page,
 }) => {
-  await page.goto(`/vacancies/${TENANT_ID}`);
+  await page.goto(`/vacancies/${tenantSlugFor(TENANT_ID)}`);
   await expect(page.getByRole("heading", { name: "Available units" })).toBeVisible();
   await expect(page.getByRole("link", { name: UNIT_LABEL })).toBeVisible();
   await expectNoAxeViolations(page);
@@ -246,7 +247,7 @@ test("BDR-LSE-004/005: staff review the application, approve it, and a completed
   await page.reload();
   await expect(page.getByText("LEASED", { exact: true }).first()).toBeVisible();
 
-  await page.goto(`/vacancies/${TENANT_ID}`);
+  await page.goto(`/vacancies/${tenantSlugFor(TENANT_ID)}`);
   await expect(page.getByRole("link", { name: UNIT_LABEL })).toHaveCount(0);
 });
 

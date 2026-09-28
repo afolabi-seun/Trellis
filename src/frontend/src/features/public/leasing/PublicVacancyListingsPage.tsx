@@ -1,25 +1,33 @@
 import { Alert, Anchor, Card, Container, Group, Stack, Text, Title } from "@mantine/core";
 import { useQuery } from "@tanstack/react-query";
-import { Link, useParams } from "react-router-dom";
+import { Link } from "react-router-dom";
 import { publicLeasingApi } from "../../../api/leasing";
 import { dangerAlertStyles } from "../../../theme/dangerStyles";
 import { formatCurrency } from "../../../utils/formatCurrency";
+import { useTenantSlug } from "../useTenantSlug";
 
 /** BDR-LSE-002 — the anonymous browse page. No login, no account. */
 export function PublicVacancyListingsPage() {
-  const { tenantId } = useParams<{ tenantId: string }>();
+  const tenant = useTenantSlug();
   const listingsQuery = useQuery({
-    queryKey: ["public-leasing", "listings", tenantId],
-    queryFn: () => publicLeasingApi.browse(tenantId!),
-    enabled: Boolean(tenantId),
+    queryKey: ["public-leasing", "listings", tenant.slug],
+    queryFn: () => publicLeasingApi.browse(tenant.slug!),
+    enabled: Boolean(tenant.slug),
   });
 
   return (
     <Container size="md" py="xl">
       <Stack gap="lg" component="main">
         <Title order={1}>Available units</Title>
+        {tenant.tenantName && <Text c="gray.8">{tenant.tenantName}</Text>}
 
-        {listingsQuery.isError && (
+        {tenant.isNotFound && (
+          <Alert color="red" title="Listings unavailable" styles={dangerAlertStyles}>
+            These listings are unavailable right now.
+          </Alert>
+        )}
+
+        {listingsQuery.isError && !tenant.isNotFound && (
           <Alert color="red" title="Could not load listings" styles={dangerAlertStyles}>
             These listings are unavailable right now.
           </Alert>
@@ -31,7 +39,7 @@ export function PublicVacancyListingsPage() {
               <Stack gap={4}>
                 <Anchor
                   component={Link}
-                  to={`/vacancies/${tenantId}/${listing.vacancyListingId}`}
+                  to={tenant.listingPath(listing.vacancyListingId!)}
                   fw={600}
                 >
                   {listing.unitLabel}

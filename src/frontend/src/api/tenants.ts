@@ -15,6 +15,13 @@ export const tenantsApi = {
 
   getById: (tenantId: string) => apiFetch<TenantResponse>(`/platform/tenants/${tenantId}`),
 
+  /** Renaming breaks every public link already shared with the old slug. */
+  changeSlug: (tenantId: string, slug: string) =>
+    apiFetch<TenantResponse>(`/platform/tenants/${tenantId}/slug`, {
+      method: "PATCH",
+      body: { slug },
+    }),
+
   offboard: (tenantId: string) =>
     apiFetch<TenantResponse>(`/platform/tenants/${tenantId}/offboard`, { method: "POST" }),
 };

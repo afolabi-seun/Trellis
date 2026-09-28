@@ -311,6 +311,18 @@ comes.
 
 ---
 
+## Public Identity: Slugs and Custom Domains
+
+The authenticated API never identifies a tenant from the URL — the JWT does. The **anonymous** public pages
+(vacancy listings, application links) have no JWT, so a tenant is identified by a public **slug**
+(`trellis_tenant.tenant.slug`), and an ENTERPRISE tenant may additionally serve them from its own verified
+custom domain (`trellis_tenant.tenant_domain`, see `data_model.md`). Resolution happens *in front of* the
+existing tenantId-shaped services: the public controller resolves slug → tenant once and calls the same service
+methods, which still set `TenantContext` deliberately in their own bodies. Every failure — unknown slug,
+suspended/offboarded tenant, unverified domain — is the same plain 404 (no existence disclosure), and no public
+response carries the tenant id. DNS and TLS for a custom domain are an edge/ops concern (CNAME to the frontend,
+certificate at the edge); the platform only verifies DNS ownership and echoes the origin in CORS.
+
 ## Tenant Offboarding (BDR-TEN-006, real as of BRD v0.4)
 
 Provisioning was fully specified; its inverse — what happens when a PM company's contract with

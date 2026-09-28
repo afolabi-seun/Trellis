@@ -10,6 +10,8 @@ using Trellis.Api.Core.Results;
 using Trellis.Api.Modules.Leasing.Application.Dtos;
 using Trellis.Api.Modules.Leasing.Application.Interfaces;
 using Trellis.Api.Modules.Leasing.Domain.ValueObjects;
+using Trellis.Api.Modules.Tenant.Application.Dtos;
+using Trellis.Api.Modules.Tenant.Application.Interfaces;
 using Xunit;
 
 namespace Trellis.Tests.ApiContract;
@@ -23,17 +25,29 @@ public sealed class PublicLeasingControllersTests : IClassFixture<CustomWebAppli
 {
     private readonly CustomWebApplicationFactory _factory;
 
+    private static readonly Guid AcmeTenantId = Guid.NewGuid();
+
     public PublicLeasingControllersTests(CustomWebApplicationFactory factory) => _factory = factory;
 
     private HttpClient CreateClient(
-        out IAsyncDisposable handle, IApplicationLinkService? linkService = null, IApplicationService? applicationService = null, IVacancyListingService? listingService = null)
+        out IAsyncDisposable handle, IApplicationLinkService? linkService = null, IApplicationService? applicationService = null,
+        IVacancyListingService? listingService = null, ITenantService? tenantService = null)
     {
+        // Public URLs identify a tenant by slug (never its GUID). By default only "acme" resolves.
+        var tenants = tenantService ?? Substitute.For<ITenantService>();
+        if (tenantService is null)
+        {
+            tenants.ResolveSlugAsync("acme").Returns(ServiceResult<TenantPublicInfo>.Success(new TenantPublicInfo(AcmeTenantId, "Acme PM", "acme")));
+            tenants.ResolveSlugAsync(Arg.Is<string>(x => x != "acme")).Returns(ServiceResult<TenantPublicInfo>.NotFound());
+        }
+
         var scopedFactory = _factory.WithWebHostBuilder(builder =>
             builder.ConfigureTestServices(services =>
             {
                 services.AddScoped(_ => linkService ?? Substitute.For<IApplicationLinkService>());
                 services.AddScoped(_ => applicationService ?? Substitute.For<IApplicationService>());
                 services.AddScoped(_ => listingService ?? Substitute.For<IVacancyListingService>());
+                services.AddScoped(_ => tenants);
             }));
         handle = scopedFactory;
         return scopedFactory.CreateClient();
@@ -108,7 +122,7 @@ public sealed class PublicLeasingControllersTests : IClassFixture<CustomWebAppli
         await using var _ = handle;
 
         var response = await client.PostAsJsonAsync(
-            $"/api/v1/public/tenants/{Guid.NewGuid()}/vacancy-listings/{Guid.NewGuid()}/application-link",
+            $"/api/v1/public/tenants/acme/vacancy-listings/{Guid.NewGuid()}/application-link",
             new ApplicationLinkIssueRequest("applicant@example.com"));
         var body = await response.Content.ReadAsStringAsync();
 
@@ -125,7 +139,7 @@ public sealed class PublicLeasingControllersTests : IClassFixture<CustomWebAppli
         await using var _ = handle;
 
         var response = await client.PostAsJsonAsync(
-            $"/api/v1/public/tenants/{Guid.NewGuid()}/vacancy-listings/{Guid.NewGuid()}/application-link",
+            $"/api/v1/public/tenants/acme/vacancy-listings/{Guid.NewGuid()}/application-link",
             new ApplicationLinkIssueRequest("applicant@example.com"));
 
         response.StatusCode.Should().Be(HttpStatusCode.NotFound);
@@ -138,7 +152,7 @@ public sealed class PublicLeasingControllersTests : IClassFixture<CustomWebAppli
         await using var _ = handle;
 
         var response = await client.PostAsJsonAsync(
-            $"/api/v1/public/tenants/{Guid.NewGuid()}/vacancy-listings/{Guid.NewGuid()}/application-link",
+            $"/api/v1/public/tenants/acme/vacancy-listings/{Guid.NewGuid()}/application-link",
             new ApplicationLinkIssueRequest("not-an-email"));
 
         response.StatusCode.Should().Be(HttpStatusCode.BadRequest);
@@ -153,8 +167,81 @@ public sealed class PublicLeasingControllersTests : IClassFixture<CustomWebAppli
         var client = CreateClient(out var handle, listingService: listingService);
         await using var _ = handle;
 
-        var response = await client.GetAsync($"/api/v1/public/tenants/{Guid.NewGuid()}/vacancy-listings");
+        var response = await client.GetAsync($"/api/v1/public/tenants/acme/vacancy-listings");
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task BrowsePublicListings_ResolvesTheSlugToTheTenant_BeforeCallingTheService()
+    {
+        var listingService = Substitute.For<IVacancyListingService>();
+        listingService.BrowsePublicAsync(AcmeTenantId, Arg.Any<string?>(), Arg.Any<int>()).Returns(
+            ServiceResult<PagedResponse<PublicVacancyListingResponse>>.Success(new PagedResponse<PublicVacancyListingResponse>([], null, false, 0)));
+        var client = CreateClient(out var handle, listingService: listingService);
+        await using var _ = handle;
+
+        await client.GetAsync("/api/v1/public/tenants/acme/vacancy-listings");
+
+        await listingService.Received(1).BrowsePublicAsync(AcmeTenantId, Arg.Any<string?>(), Arg.Any<int>());
+    }
+
+    [Theory]
+    [InlineData("/api/v1/public/tenants/nope/vacancy-listings")]
+    [InlineData("/api/v1/public/tenants/nope/vacancy-listings/00000000-0000-0000-0000-000000000001")]
+    [InlineData("/api/v1/public/tenants/nope/vacancy-listings/00000000-0000-0000-0000-000000000001/photos/00000000-0000-0000-0000-000000000002")]
+    public async Task PublicListings_ForAnUnknownSlug_Return404_AndNeverReachTheListingService(string path)
+    {
+        var listingService = Substitute.For<IVacancyListingService>();
+        var client = CreateClient(out var handle, listingService: listingService);
+        await using var _ = handle;
+
+        var response = await client.GetAsync(path);
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        await listingService.DidNotReceiveWithAnyArgs().BrowsePublicAsync(default, default, default);
+        await listingService.DidNotReceiveWithAnyArgs().GetPublicByIdAsync(default, default);
+    }
+
+    [Fact]
+    public async Task IssueApplicationLink_ForAnUnknownSlug_Returns404_AndSendsNothing()
+    {
+        var linkService = Substitute.For<IApplicationLinkService>();
+        var client = CreateClient(out var handle, linkService);
+        await using var _ = handle;
+
+        var response = await client.PostAsJsonAsync(
+            "/api/v1/public/tenants/nope/vacancy-listings/00000000-0000-0000-0000-000000000001/application-link",
+            new ApplicationLinkIssueRequest("applicant@example.com"));
+
+        response.StatusCode.Should().Be(HttpStatusCode.NotFound);
+        await linkService.DidNotReceiveWithAnyArgs().IssueApplicationLinkAsync(default, default, default!);
+    }
+
+    [Fact]
+    public async Task PublicTenantProfile_ReturnsTheNameAndSlug_ButNeverTheTenantId()
+    {
+        var tenants = Substitute.For<ITenantService>();
+        tenants.ResolveSlugAsync("acme").Returns(ServiceResult<TenantPublicInfo>.Success(new TenantPublicInfo(AcmeTenantId, "Acme PM", "acme")));
+        var client = CreateClient(out var handle, tenantService: tenants);
+        await using var _ = handle;
+
+        var response = await client.GetAsync("/api/v1/public/tenants/acme");
+        var body = await response.Content.ReadAsStringAsync();
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        body.Should().Contain("Acme PM").And.Contain("acme");
+        body.Should().NotContain(AcmeTenantId.ToString(), "an anonymous response must never disclose the tenant's internal id (BDR-SEC-004)");
+    }
+
+    [Fact]
+    public async Task PublicTenantProfile_ForAnUnknownOrInactiveSlug_Returns404()
+    {
+        var tenants = Substitute.For<ITenantService>();
+        tenants.ResolveSlugAsync(Arg.Any<string>()).Returns(ServiceResult<TenantPublicInfo>.NotFound());
+        var client = CreateClient(out var handle, tenantService: tenants);
+        await using var _ = handle;
+
+        (await client.GetAsync("/api/v1/public/tenants/ghost")).StatusCode.Should().Be(HttpStatusCode.NotFound);
     }
 }

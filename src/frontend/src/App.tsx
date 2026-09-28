@@ -7,6 +7,8 @@ import { BillingSettingsPage } from "./features/admin/billing/BillingSettingsPag
 import { DocumentsLibraryPage } from "./features/admin/document/DocumentsLibraryPage";
 import { InspectionDetailPage } from "./features/admin/inspection/InspectionDetailPage";
 import { InspectionsListPage } from "./features/admin/inspection/InspectionsListPage";
+import { SettingsPage } from "./features/admin/settings/SettingsPage";
+import { RootRoute } from "./features/public/RootRoute";
 import { ApplicationsReviewPage } from "./features/admin/leasing/ApplicationsReviewPage";
 import { VacancyListingDetailPage } from "./features/admin/leasing/VacancyListingDetailPage";
 import { VacancyListingsPage } from "./features/admin/leasing/VacancyListingsPage";
@@ -44,8 +46,12 @@ export function App() {
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
 
-      <Route path="/vacancies/:tenantId" element={<PublicVacancyListingsPage />} />
-      <Route path="/vacancies/:tenantId/:listingId" element={<PublicVacancyListingDetailPage />} />
+      <Route path="/vacancies/:tenantSlug" element={<PublicVacancyListingsPage />} />
+      <Route
+        path="/vacancies/:tenantSlug/:listingId"
+        element={<PublicVacancyListingDetailPage />}
+      />
+      <Route path="/listings/:listingId" element={<PublicVacancyListingDetailPage />} />
       <Route path="/apply/:token" element={<ApplyPage />} />
 
       <Route element={<RequireRole allowedRoles={["TENANT_ADMIN", "DEPARTMENT_STAFF"]} />}>
@@ -73,6 +79,7 @@ export function App() {
           <Route element={<RequireRole allowedRoles={["TENANT_ADMIN"]} />}>
             <Route path="billing" element={<BillingSettingsPage />} />
             <Route path="owner-reports" element={<OwnerReportsPage />} />
+            <Route path="settings" element={<SettingsPage />} />
           </Route>
         </Route>
       </Route>
@@ -91,7 +98,7 @@ export function App() {
         <Route path="/platform/billing" element={<PlatformBillingPage />} />
       </Route>
 
-      <Route path="/" element={<Navigate to="/admin" replace />} />
+      <Route path="/" element={<RootRoute />} />
     </Routes>
   );
 }

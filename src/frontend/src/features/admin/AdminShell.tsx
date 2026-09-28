@@ -125,6 +125,14 @@ export function AdminShell() {
               Owner reports
             </NavLink>
           )}
+          {claims?.role === "TENANT_ADMIN" && (
+            <NavLink
+              to="/admin/settings"
+              style={({ isActive }) => ({ fontWeight: isActive ? 700 : 400 })}
+            >
+              Settings
+            </NavLink>
+          )}
         </Group>
         <Group>
           <Text c="gray.7" size="sm">

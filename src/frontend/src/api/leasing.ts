@@ -89,28 +89,28 @@ export const applicationsApi = {
 
 /** BDR-LSE-002 — the anonymous surface. Never sends an Authorization header and never triggers the 401-refresh retry. */
 export const publicLeasingApi = {
-  browse: (tenantId: string, cursor?: string, limit = 25) =>
+  browse: (tenantSlug: string, cursor?: string, limit = 25) =>
     apiFetch<PublicVacancyListingResponsePagedResponse>(
-      `/api/v1/public/tenants/${tenantId}/vacancy-listings`,
+      `/api/v1/public/tenants/${tenantSlug}/vacancy-listings`,
       { anonymous: true, query: { cursor, limit } },
     ),
 
-  getListing: (tenantId: string, listingId: string) =>
+  getListing: (tenantSlug: string, listingId: string) =>
     apiFetch<PublicVacancyListingDetailResponse>(
-      `/api/v1/public/tenants/${tenantId}/vacancy-listings/${listingId}`,
+      `/api/v1/public/tenants/${tenantSlug}/vacancy-listings/${listingId}`,
       { anonymous: true },
     ),
 
-  photoUrl: (tenantId: string, listingId: string, photoId: string) =>
+  photoUrl: (tenantSlug: string, listingId: string, photoId: string) =>
     new URL(
-      `/api/v1/public/tenants/${tenantId}/vacancy-listings/${listingId}/photos/${photoId}`,
+      `/api/v1/public/tenants/${tenantSlug}/vacancy-listings/${listingId}/photos/${photoId}`,
       API_BASE_URL,
     ).toString(),
 
   /** The response is deliberately a bare success — the link itself goes only to the applicant's own inbox (BDR-LSE-008). */
-  requestApplicationLink: (tenantId: string, listingId: string, applicantEmail: string) =>
+  requestApplicationLink: (tenantSlug: string, listingId: string, applicantEmail: string) =>
     apiFetch<boolean>(
-      `/api/v1/public/tenants/${tenantId}/vacancy-listings/${listingId}/application-link`,
+      `/api/v1/public/tenants/${tenantSlug}/vacancy-listings/${listingId}/application-link`,
       { anonymous: true, method: "POST", body: { applicantEmail } },
     ),
 
@@ -124,5 +124,19 @@ export const publicLeasingApi = {
       anonymous: true,
       method: "POST",
       body: request,
+    }),
+};
+
+type PublicTenantResponse = components["schemas"]["PublicTenantResponse"];
+
+/** Who is this page for? A tenant's display name, by slug or — on a tenant's own domain — by host. Never returns an id. */
+export const publicTenantApi = {
+  getProfile: (tenantSlug: string) =>
+    apiFetch<PublicTenantResponse>(`/api/v1/public/tenants/${tenantSlug}`, { anonymous: true }),
+
+  resolveHost: (host: string) =>
+    apiFetch<PublicTenantResponse>("/api/v1/public/domain-resolution", {
+      anonymous: true,
+      query: { host },
     }),
 };

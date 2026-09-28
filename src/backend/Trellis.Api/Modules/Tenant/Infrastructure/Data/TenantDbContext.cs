@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using Trellis.Api.Modules.Tenant.Domain.Entities;
 using TenantEntity = Trellis.Api.Modules.Tenant.Domain.Entities.Tenant;
 
 namespace Trellis.Api.Modules.Tenant.Infrastructure.Data;
@@ -6,6 +7,7 @@ namespace Trellis.Api.Modules.Tenant.Infrastructure.Data;
 public sealed class TenantDbContext(DbContextOptions<TenantDbContext> options) : DbContext(options)
 {
     public DbSet<TenantEntity> Tenants => Set<TenantEntity>();
+    public DbSet<TenantDomain> TenantDomains => Set<TenantDomain>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) =>
         // Scoped by namespace — data_model.md's EF Core Conventions section (Phase 1 correction):

@@ -19,6 +19,13 @@ public static class AuditTypes
         public const string TenantSuspended = "TENANT_SUSPENDED";
 
         public const string TenantReactivated = "TENANT_REACTIVATED";
+
+        /// <summary>Renaming breaks every public link shared with the old slug, so it is always recorded (SUPER_ADMIN only).</summary>
+        public const string TenantSlugChanged = "TENANT_SLUG_CHANGED";
+
+        public const string TenantDomainAdded = "TENANT_DOMAIN_ADDED";
+        public const string TenantDomainVerified = "TENANT_DOMAIN_VERIFIED";
+        public const string TenantDomainRemoved = "TENANT_DOMAIN_REMOVED";
     }
 
     public static class Auth

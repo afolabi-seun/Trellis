@@ -1,4 +1,5 @@
 using Trellis.Api.Modules.Tenant.Domain.Exceptions;
+using Trellis.Api.Modules.Tenant.Domain.ValueObjects;
 
 namespace Trellis.Api.Modules.Tenant.Domain.Entities;
 
@@ -32,6 +33,9 @@ public class Tenant
 {
     public Guid TenantId { get; private set; }
     public string TenantName { get; private set; } = null!;
+
+    /// <summary>The public, human-friendly identifier used in public URLs instead of the raw tenant GUID. Unique; see SlugPolicy.</summary>
+    public string Slug { get; private set; } = null!;
     public string CountryCode { get; private set; } = null!;
     public TenantStatus Status { get; private set; }
     public SubscriptionTier SubscriptionTier { get; private set; }
@@ -41,7 +45,7 @@ public class Tenant
 
     private Tenant() { }
 
-    public static Tenant Create(string tenantName, string countryCode)
+    public static Tenant Create(string tenantName, string countryCode, string slug)
     {
         if (string.IsNullOrWhiteSpace(tenantName))
         {
@@ -53,17 +57,35 @@ public class Tenant
             throw new ArgumentException("Country code must be an ISO 3166-1 alpha-2 code.", nameof(countryCode));
         }
 
+        if (!SlugPolicy.IsValid(slug))
+        {
+            throw new ArgumentException("Slug must be 3-63 lowercase letters, digits or hyphens and not a reserved word.", nameof(slug));
+        }
+
         var now = DateTimeOffset.UtcNow;
         return new Tenant
         {
             TenantId = Guid.NewGuid(),
             TenantName = tenantName,
+            Slug = slug,
             CountryCode = countryCode.ToUpperInvariant(),
             Status = TenantStatus.Onboarding,
             SubscriptionTier = SubscriptionTier.Starter,
             CreatedAt = now,
             UpdatedAt = now,
         };
+    }
+
+    /// <summary>Renaming breaks every public link already shared with the old slug — a SUPER_ADMIN action, audited by the caller.</summary>
+    public void ChangeSlug(string slug)
+    {
+        if (!SlugPolicy.IsValid(slug))
+        {
+            throw new ArgumentException("Slug must be 3-63 lowercase letters, digits or hyphens and not a reserved word.", nameof(slug));
+        }
+
+        Slug = slug;
+        UpdatedAt = DateTimeOffset.UtcNow;
     }
 
     public void Activate() => TransitionTo(TenantStatus.Active, TenantStatus.Onboarding, TenantStatus.Suspended);

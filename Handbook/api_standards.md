@@ -13,7 +13,7 @@ predictable API surface, not nine module-flavoured ones.
 |----------|--------------|
 | Specification Format | OpenAPI 3.1, generated from the ASP.NET Core controllers via Swashbuckle; hosted at `/api-docs`, grouped per module (see below) |
 | Versioning | URL path prefix: `/api/v1/`. Breaking changes require a new version; additive changes stay on the current one. With one deployable, a version bump ships everything at once — no cross-service version skew to coordinate. |
-| Base URL | `https://api.trellis-platform.com/api/v1/` — tenant is resolved from the JWT, never from a subdomain (BDR-SEC-004: no tenant-identifying data in URLs) |
+| Base URL | `https://api.trellis-platform.com/api/v1/` — tenant is resolved from the JWT, never from a subdomain (BDR-SEC-004: no tenant-identifying data in URLs). This governs the *authenticated* API. The anonymous public surface (`/api/v1/public/…`) identifies a tenant by its **slug** (or, on a tenant's own verified custom domain, by host) — never its GUID, and no public response contains the tenant id |
 | Content Type | `Content-Type: application/json` required on all write requests. `Accept: application/json` assumed. |
 | Idempotency | `POST` endpoints that create a resource accept `X-Idempotency-Key`. Same key within 24 hours returns the cached response. Backed by a `trellis_core.idempotency_key` table (see below) — no Redis dependency for Phase 1. |
 | Pagination | Cursor-based: `?cursor={opaque_token}&limit={n}` (default 25, max 100). Response includes `next_cursor` and `has_more`. |

@@ -43,6 +43,12 @@ namespace Trellis.Api.Modules.Tenant.Infrastructure.Data.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("created_at");
 
+                    b.Property<string>("Slug")
+                        .IsRequired()
+                        .HasMaxLength(63)
+                        .HasColumnType("character varying(63)")
+                        .HasColumnName("slug");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)
@@ -73,7 +79,56 @@ namespace Trellis.Api.Modules.Tenant.Infrastructure.Data.Migrations
 
                     b.HasKey("TenantId");
 
+                    b.HasIndex("Slug")
+                        .IsUnique();
+
                     b.ToTable("tenant", "trellis_tenant");
+                });
+
+            modelBuilder.Entity("Trellis.Api.Modules.Tenant.Domain.Entities.TenantDomain", b =>
+                {
+                    b.Property<Guid>("TenantDomainId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_domain_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("Domain")
+                        .IsRequired()
+                        .HasMaxLength(253)
+                        .HasColumnType("character varying(253)")
+                        .HasColumnName("domain");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(30)
+                        .HasColumnType("character varying(30)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<string>("VerificationToken")
+                        .IsRequired()
+                        .HasMaxLength(64)
+                        .HasColumnType("character varying(64)")
+                        .HasColumnName("verification_token");
+
+                    b.Property<DateTimeOffset?>("VerifiedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("verified_at");
+
+                    b.HasKey("TenantDomainId");
+
+                    b.HasIndex("Domain");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("tenant_domain", "trellis_tenant");
                 });
 #pragma warning restore 612, 618
         }

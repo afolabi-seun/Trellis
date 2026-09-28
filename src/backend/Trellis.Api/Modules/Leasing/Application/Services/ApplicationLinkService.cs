@@ -1,5 +1,4 @@
 using Microsoft.Extensions.Options;
-using Trellis.Api.Core.Configuration;
 using Trellis.Api.Core.Middleware;
 using Trellis.Api.Core.Results;
 using Trellis.Api.Modules.Billing.Application.Interfaces;
@@ -12,6 +11,7 @@ using Trellis.Api.Modules.Notification.Application.Dtos;
 using Trellis.Api.Modules.Notification.Application.Interfaces;
 using Trellis.Api.Modules.Notification.Domain.Entities;
 using Trellis.Api.Modules.PropertyAsset.Application.Interfaces;
+using Trellis.Api.Modules.Tenant.Application.Interfaces;
 
 namespace Trellis.Api.Modules.Leasing.Application.Services;
 
@@ -27,7 +27,7 @@ public sealed class ApplicationLinkService(
     IUnitAssetService unitAssetService,
     INotificationService notificationService,
     IOptions<LeasingOptions> leasingOptions,
-    IOptions<AppOptions> appOptions) : IApplicationLinkService
+    ITenantDomainService tenantDomainService) : IApplicationLinkService
 {
     private const string LeasingModuleKey = "LEASING";
 
@@ -67,7 +67,8 @@ public sealed class ApplicationLinkService(
             {
                 ExpiryDays = expiryDays,
                 UnitLabel = unit.Outcome == ServiceResultOutcome.Success ? unit.Data!.Label : string.Empty,
-                ApplicationLinkUrl = $"{appOptions.Value.BaseUrl.TrimEnd('/')}/apply/{rawToken}",
+                // The tenant's own verified domain when it has one, else the platform frontend — so the applicant lands on the brand they browsed.
+                ApplicationLinkUrl = $"{await tenantDomainService.GetLinkBaseUrlAsync(tenantId)}/apply/{rawToken}",
             },
             new RelatedEntityRef("VacancyListing", vacancyListingId),
             NotificationRecipientType.ProspectiveTenant);

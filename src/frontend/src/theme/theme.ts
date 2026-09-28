@@ -28,7 +28,11 @@ const sage: MantineColorsTuple = [
   "#639875",
   "#528062",
   "#456c53",
-  "#5b8a72",
+  // Mantine uses shade+1 (9) as the primary button's HOVER colour. This entry used to be #5b8a72 —
+  // lighter than shade 8, so white text on a hovered primary button measured 3.94:1, under WCAG AA's
+  // 4.5:1 (found by tenant-domain.spec.ts's axe scan with the mouse still over a button). #385746
+  // is darker than shade 8 and measures ~8:1.
+  "#385746",
 ];
 
 // BDR-NFR-007 (WCAG 2.1 AA) — an ACTIVE-status Badge needs white-text-on-filled contrast, and

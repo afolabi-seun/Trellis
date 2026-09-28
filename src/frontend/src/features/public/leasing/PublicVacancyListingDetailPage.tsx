@@ -18,18 +18,21 @@ import { z } from "zod";
 import { publicLeasingApi } from "../../../api/leasing";
 import { dangerAlertStyles, infoAlertStyles } from "../../../theme/dangerStyles";
 import { formatCurrency } from "../../../utils/formatCurrency";
+import { useTenantSlug } from "../useTenantSlug";
 
 const emailSchema = z.object({ email: z.string().email("Enter a valid email address.") });
 type EmailForm = z.infer<typeof emailSchema>;
 
 /** BDR-LSE-002/008 — photos plus "Apply". The application link goes only to the applicant's own inbox, so the applicant proves control of the email just by using it. */
 export function PublicVacancyListingDetailPage() {
-  const { tenantId, listingId } = useParams<{ tenantId: string; listingId: string }>();
+  const { listingId } = useParams<{ listingId: string }>();
+  const tenant = useTenantSlug();
+  const tenantSlug = tenant.slug;
 
   const listingQuery = useQuery({
-    queryKey: ["public-leasing", "listing", tenantId, listingId],
-    queryFn: () => publicLeasingApi.getListing(tenantId!, listingId!),
-    enabled: Boolean(tenantId && listingId),
+    queryKey: ["public-leasing", "listing", tenantSlug, listingId],
+    queryFn: () => publicLeasingApi.getListing(tenantSlug!, listingId!),
+    enabled: Boolean(tenantSlug && listingId),
   });
 
   const {
@@ -40,7 +43,7 @@ export function PublicVacancyListingDetailPage() {
 
   const linkMutation = useMutation({
     mutationFn: ({ email }: EmailForm) =>
-      publicLeasingApi.requestApplicationLink(tenantId!, listingId!, email),
+      publicLeasingApi.requestApplicationLink(tenantSlug!, listingId!, email),
   });
 
   const listing = listingQuery.data;
@@ -48,7 +51,7 @@ export function PublicVacancyListingDetailPage() {
   return (
     <Container size="md" py="xl">
       <Stack gap="lg" component="main">
-        <Anchor component={Link} to={`/vacancies/${tenantId}`}>
+        <Anchor component={Link} to={tenant.listingsPath}>
           Back to all units
         </Anchor>
 
@@ -73,7 +76,7 @@ export function PublicVacancyListingDetailPage() {
               {listing.photoIds?.map((photoId, index) => (
                 <Image
                   key={photoId}
-                  src={publicLeasingApi.photoUrl(tenantId!, listingId!, photoId)}
+                  src={publicLeasingApi.photoUrl(tenantSlug!, listingId!, photoId)}
                   alt={`${listing.unitLabel} photo ${index + 1}`}
                   w={200}
                   radius="md"

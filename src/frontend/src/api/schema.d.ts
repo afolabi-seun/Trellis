@@ -3100,7 +3100,85 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/public/tenants/{tenantId}/vacancy-listings": {
+    "/api/v1/public/tenants/{tenantSlug}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    tenantSlug: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PublicTenantResponseApiResponse"];
+                        "application/json": components["schemas"]["PublicTenantResponseApiResponse"];
+                        "text/json": components["schemas"]["PublicTenantResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/domain-resolution": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    host?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PublicTenantResponseApiResponse"];
+                        "application/json": components["schemas"]["PublicTenantResponseApiResponse"];
+                        "text/json": components["schemas"]["PublicTenantResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/tenants/{tenantSlug}/vacancy-listings": {
         parameters: {
             query?: never;
             header?: never;
@@ -3115,7 +3193,7 @@ export interface paths {
                 };
                 header?: never;
                 path: {
-                    tenantId: string;
+                    tenantSlug: string;
                 };
                 cookie?: never;
             };
@@ -3142,7 +3220,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/public/tenants/{tenantId}/vacancy-listings/{id}": {
+    "/api/v1/public/tenants/{tenantSlug}/vacancy-listings/{id}": {
         parameters: {
             query?: never;
             header?: never;
@@ -3154,7 +3232,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
-                    tenantId: string;
+                    tenantSlug: string;
                     id: string;
                 };
                 cookie?: never;
@@ -3182,7 +3260,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/public/tenants/{tenantId}/vacancy-listings/{id}/photos/{photoId}": {
+    "/api/v1/public/tenants/{tenantSlug}/vacancy-listings/{id}/photos/{photoId}": {
         parameters: {
             query?: never;
             header?: never;
@@ -3194,7 +3272,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
-                    tenantId: string;
+                    tenantSlug: string;
                     id: string;
                     photoId: string;
                 };
@@ -3219,7 +3297,7 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
-    "/api/v1/public/tenants/{tenantId}/vacancy-listings/{id}/application-link": {
+    "/api/v1/public/tenants/{tenantSlug}/vacancy-listings/{id}/application-link": {
         parameters: {
             query?: never;
             header?: never;
@@ -3233,7 +3311,7 @@ export interface paths {
                 query?: never;
                 header?: never;
                 path: {
-                    tenantId: string;
+                    tenantSlug: string;
                     id: string;
                 };
                 cookie?: never;
@@ -3989,6 +4067,148 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/settings/domains": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TenantDomainResponseIReadOnlyListApiResponse"];
+                        "application/json": components["schemas"]["TenantDomainResponseIReadOnlyListApiResponse"];
+                        "text/json": components["schemas"]["TenantDomainResponseIReadOnlyListApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["TenantDomainCreateRequest"];
+                    "text/json": components["schemas"]["TenantDomainCreateRequest"];
+                    "application/*+json": components["schemas"]["TenantDomainCreateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TenantDomainResponseApiResponse"];
+                        "application/json": components["schemas"]["TenantDomainResponseApiResponse"];
+                        "text/json": components["schemas"]["TenantDomainResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/domains/{id}/verify": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TenantDomainResponseApiResponse"];
+                        "application/json": components["schemas"]["TenantDomainResponseApiResponse"];
+                        "text/json": components["schemas"]["TenantDomainResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/domains/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["BooleanApiResponse"];
+                        "application/json": components["schemas"]["BooleanApiResponse"];
+                        "text/json": components["schemas"]["BooleanApiResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/platform/tenants": {
         parameters: {
             query?: never;
@@ -4093,6 +4313,51 @@ export interface paths {
         options?: never;
         head?: never;
         patch?: never;
+        trace?: never;
+    };
+    "/platform/tenants/{id}/slug": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["TenantSlugUpdateRequest"];
+                    "text/json": components["schemas"]["TenantSlugUpdateRequest"];
+                    "application/*+json": components["schemas"]["TenantSlugUpdateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TenantResponseApiResponse"];
+                        "application/json": components["schemas"]["TenantResponseApiResponse"];
+                        "text/json": components["schemas"]["TenantResponseApiResponse"];
+                    };
+                };
+            };
+        };
         trace?: never;
     };
     "/platform/tenants/{id}/offboard": {
@@ -6275,6 +6540,16 @@ export interface components {
             currentValuation?: number | null;
             rowVersion?: string | null;
         };
+        PublicTenantResponse: {
+            name?: string | null;
+            slug?: string | null;
+        };
+        PublicTenantResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["PublicTenantResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
         PublicVacancyListingDetailResponse: {
             /** Format: uuid */
             vacancyListingId?: string;
@@ -6557,10 +6832,38 @@ export interface components {
             error?: components["schemas"]["ApiError"];
             meta: components["schemas"]["ApiMeta"];
         };
+        TenantDomainCreateRequest: {
+            domain?: string | null;
+        };
+        TenantDomainResponse: {
+            /** Format: uuid */
+            tenantDomainId?: string;
+            domain?: string | null;
+            status?: string | null;
+            verificationRecordName?: string | null;
+            verificationRecordValue?: string | null;
+            /** Format: date-time */
+            verifiedAt?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        TenantDomainResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["TenantDomainResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        TenantDomainResponseIReadOnlyListApiResponse: {
+            readonly status?: string | null;
+            readonly data?: components["schemas"]["TenantDomainResponse"][] | null;
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
         TenantProvisionRequest: {
             tenantName?: string | null;
             countryCode?: string | null;
             adminEmail?: string | null;
+            slug?: string | null;
         };
         TenantResponse: {
             /** Format: uuid */
@@ -6571,6 +6874,7 @@ export interface components {
             subscriptionTier?: string | null;
             /** Format: date-time */
             createdAt?: string;
+            slug?: string | null;
         };
         TenantResponseApiResponse: {
             readonly status?: string | null;
@@ -6590,6 +6894,9 @@ export interface components {
             data?: components["schemas"]["TenantResponsePagedResponse"];
             error?: components["schemas"]["ApiError"];
             meta: components["schemas"]["ApiMeta"];
+        };
+        TenantSlugUpdateRequest: {
+            slug?: string | null;
         };
         TenantVendorRelationshipResponse: {
             /** Format: uuid */

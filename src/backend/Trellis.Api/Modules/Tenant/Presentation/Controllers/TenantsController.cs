@@ -1,3 +1,4 @@
+using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Trellis.Api.Core.Dtos;
@@ -32,6 +33,12 @@ public sealed class TenantsController(ITenantService tenantService) : Controller
     [ProducesResponseType(typeof(ApiResponse<TenantResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> GetById(Guid id) =>
         (await tenantService.GetByIdAsync(id)).ToActionResult(HttpContext);
+
+    /// <summary>Renaming breaks every public link already shared with the old slug — audited.</summary>
+    [HttpPatch("{id:guid}/slug")]
+    [ProducesResponseType(typeof(ApiResponse<TenantResponse>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ChangeSlug(Guid id, [FromBody] TenantSlugUpdateRequest request) =>
+        (await tenantService.ChangeSlugAsync(id, request.Slug, Guid.Parse(User.FindFirstValue("sub")!))).ToActionResult(HttpContext);
 
     [HttpPost("{id:guid}/offboard")]
     [ProducesResponseType(typeof(ApiResponse<TenantResponse>), StatusCodes.Status200OK)]

@@ -17,6 +17,11 @@ public sealed class TenantRepository(TenantDbContext dbContext) : ITenantReposit
     public Task<TenantEntity?> GetByIdAsync(Guid tenantId) =>
         dbContext.Tenants.FirstOrDefaultAsync(t => t.TenantId == tenantId);
 
+    public Task<TenantEntity?> GetBySlugAsync(string slug) =>
+        dbContext.Tenants.FirstOrDefaultAsync(t => t.Slug == slug);
+
+    public Task<bool> SlugExistsAsync(string slug) => dbContext.Tenants.AnyAsync(t => t.Slug == slug);
+
     public async Task<(IReadOnlyList<TenantEntity> Items, bool HasMore, int TotalCount)> ListAsync(
         (DateTimeOffset CreatedAt, Guid Id)? cursor, int limit)
     {

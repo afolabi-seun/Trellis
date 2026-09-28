@@ -13,6 +13,16 @@ public interface ITenantService
 
     Task<ServiceResult<PagedResponse<TenantResponse>>> ListAsync(string? cursor, int limit);
 
+    /// <summary>
+    /// Public pages: the tenant behind a slug, or NotFound. Only ONBOARDING/ACTIVE tenants resolve
+    /// (a suspended or offboarded tenant's public pages vanish); every failure is the same NotFound, so a
+    /// slug's existence is never disclosed. Anonymous-safe — takes no ambient tenant context.
+    /// </summary>
+    Task<ServiceResult<TenantPublicInfo>> ResolveSlugAsync(string slug);
+
+    /// <summary>SUPER_ADMIN only. Renaming breaks every public link already shared with the old slug.</summary>
+    Task<ServiceResult<TenantResponse>> ChangeSlugAsync(Guid tenantId, string slug, Guid actorUserId);
+
     /// <summary>multi_tenant_design.md's Tenant Offboarding steps 1-2: status transition, session revocation, audit. Steps 3/5 (export job, scheduled erasure) are a tracked follow-up, not built this phase.</summary>
     Task<ServiceResult<TenantResponse>> OffboardTenantAsync(Guid tenantId);
 

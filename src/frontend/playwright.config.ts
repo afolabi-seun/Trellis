@@ -16,5 +16,8 @@ export default defineConfig({
   },
   use: {
     baseURL: "http://localhost:4173",
+    // Any *.test hostname resolves to this machine, so tenant-custom-domain rendering can be proven
+    // end to end (tenant-domain.spec.ts) without editing /etc/hosts. Every other spec uses localhost.
+    launchOptions: { args: ["--host-resolver-rules=MAP *.test 127.0.0.1"] },
   },
 });

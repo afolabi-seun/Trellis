@@ -13,6 +13,7 @@ import {
 } from "@mantine/core";
 import { useDisclosure } from "@mantine/hooks";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { z } from "zod";
 import { useNavigate } from "react-router-dom";
@@ -26,7 +27,18 @@ const provisionSchema = z.object({
   tenantName: z.string().min(1, "Tenant name is required."),
   countryCode: z.string().length(2, "Use a 2-letter ISO 3166-1 country code.").toUpperCase(),
   adminEmail: z.string().email("Enter a valid email address."),
+  slug: z
+    .string()
+    .regex(/^([a-z0-9]([a-z0-9-]{1,61}[a-z0-9]))?$/, "3-63 lowercase letters, digits or hyphens.")
+    .optional(),
 });
+
+const slugSchema = z.object({
+  slug: z
+    .string()
+    .regex(/^[a-z0-9]([a-z0-9-]{1,61}[a-z0-9])$/, "3-63 lowercase letters, digits or hyphens."),
+});
+type SlugFormValues = z.infer<typeof slugSchema>;
 
 type ProvisionFormValues = z.infer<typeof provisionSchema>;
 
@@ -50,6 +62,9 @@ export function TenantsListPage() {
   const navigate = useNavigate();
   const { claims, logout } = useAuth();
   const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
+  const [slugTarget, setSlugTarget] = useState<{ id: string; name: string; slug: string } | null>(
+    null,
+  );
 
   const handleLogout = async () => {
     try {
@@ -73,11 +88,27 @@ export function TenantsListPage() {
   } = useForm<ProvisionFormValues>({ resolver: zodResolver(provisionSchema) });
 
   const provisionMutation = useMutation({
-    mutationFn: tenantsApi.provision,
+    mutationFn: (values: ProvisionFormValues) =>
+      tenantsApi.provision({ ...values, slug: values.slug || null }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["platform", "tenants"] });
       reset();
       closeModal();
+    },
+  });
+
+  const {
+    register: registerSlug,
+    handleSubmit: handleSlugSubmit,
+    reset: resetSlug,
+    formState: { errors: slugErrors },
+  } = useForm<SlugFormValues>({ resolver: zodResolver(slugSchema) });
+
+  const slugMutation = useMutation({
+    mutationFn: ({ id, slug }: { id: string; slug: string }) => tenantsApi.changeSlug(id, slug),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["platform", "tenants"] });
+      setSlugTarget(null);
     },
   });
 
@@ -123,6 +154,7 @@ export function TenantsListPage() {
         <Table.Thead>
           <Table.Tr>
             <Table.Th>Name</Table.Th>
+            <Table.Th>Slug</Table.Th>
             <Table.Th>Country</Table.Th>
             <Table.Th>Status</Table.Th>
             <Table.Th>Subscription tier</Table.Th>
@@ -134,6 +166,25 @@ export function TenantsListPage() {
           {tenantsQuery.data?.items?.map((tenant) => (
             <Table.Tr key={tenant.tenantId}>
               <Table.Td>{tenant.tenantName}</Table.Td>
+              <Table.Td>
+                <Group gap="xs">
+                  <Text size="sm">{tenant.slug}</Text>
+                  <Button
+                    size="xs"
+                    variant="subtle"
+                    onClick={() => {
+                      resetSlug({ slug: tenant.slug ?? "" });
+                      setSlugTarget({
+                        id: tenant.tenantId!,
+                        name: tenant.tenantName!,
+                        slug: tenant.slug!,
+                      });
+                    }}
+                  >
+                    Change slug
+                  </Button>
+                </Group>
+              </Table.Td>
               <Table.Td>{tenant.countryCode}</Table.Td>
               <Table.Td>
                 <Badge color={statusColor[tenant.status ?? ""] ?? "gray.8"}>{tenant.status}</Badge>
@@ -203,8 +254,50 @@ export function TenantsListPage() {
               error={errors.adminEmail?.message}
               {...register("adminEmail")}
             />
+            <TextInput
+              label="Slug"
+              description="Used in public listing URLs. Leave blank to derive it from the tenant name."
+              placeholder="acme-pm"
+              error={errors.slug?.message}
+              {...register("slug")}
+            />
             <Button type="submit" loading={provisionMutation.isPending} fullWidth>
               Provision
+            </Button>
+          </Stack>
+        </form>
+      </Modal>
+
+      <Modal
+        opened={slugTarget !== null}
+        onClose={() => setSlugTarget(null)}
+        title={`Change slug — ${slugTarget?.name ?? ""}`}
+      >
+        <Alert color="orange" title="Existing links will break" mb="md" styles={dangerAlertStyles}>
+          Public listing links already shared with the old slug (<strong>{slugTarget?.slug}</strong>
+          ) stop working as soon as this is saved.
+        </Alert>
+        {slugMutation.isError && (
+          <Alert color="red" title="Could not change slug" mb="md" styles={dangerAlertStyles}>
+            {slugMutation.error instanceof TrellisApiError &&
+            slugMutation.error.code === "TRL-E-TEN-2003"
+              ? "That slug is already in use or not allowed."
+              : "Something went wrong."}
+          </Alert>
+        )}
+        <form
+          onSubmit={handleSlugSubmit((values) =>
+            slugMutation.mutate({ id: slugTarget!.id, slug: values.slug }),
+          )}
+        >
+          <Stack gap="md">
+            <TextInput
+              label="New slug"
+              error={slugErrors.slug?.message}
+              {...registerSlug("slug")}
+            />
+            <Button type="submit" loading={slugMutation.isPending} fullWidth>
+              Save slug
             </Button>
           </Stack>
         </form>

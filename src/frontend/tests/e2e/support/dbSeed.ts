@@ -16,6 +16,11 @@ const CONNECTION_STRING = "postgres://trellis:trellis_dev_only@localhost:5432/tr
 const SEED_PASSWORD_HASH = "nUh9NgQbo28zQoE6Nus8Ug==:drONev4S6qxCnjtKRsQ5tfpzzUUm0Qloxk0rYL0mVxI=";
 export const SEED_PASSWORD = "E2eTestPassw0rd!";
 
+/** Public URLs identify a tenant by slug, never its GUID. Seeded tenants get a unique, valid slug derived from their fixed id, so specs can build public URLs without a lookup. */
+export function tenantSlugFor(tenantId: string): string {
+  return `t-${tenantId.replace(/-/g, "").slice(0, 10)}`;
+}
+
 export async function seedSuperAdmin(username: string): Promise<void> {
   const client = new Client({ connectionString: CONNECTION_STRING });
   await client.connect();
@@ -35,14 +40,15 @@ export async function seedTenant(
   tenantId: string,
   tenantName: string,
   tier: string = "STARTER",
+  slug: string = tenantSlugFor(tenantId),
 ): Promise<void> {
   const client = new Client({ connectionString: CONNECTION_STRING });
   await client.connect();
   try {
     await client.query(
-      `insert into trellis_tenant.tenant (tenant_id, tenant_name, country_code, status, subscription_tier, created_at, updated_at)
-       values ($1, $2, 'US', 'ACTIVE', $3, now(), now())`,
-      [tenantId, tenantName, tier],
+      `insert into trellis_tenant.tenant (tenant_id, tenant_name, slug, country_code, status, subscription_tier, created_at, updated_at)
+       values ($1, $2, $3, 'US', 'ACTIVE', $4, now(), now())`,
+      [tenantId, tenantName, slug, tier],
     );
   } finally {
     await client.end();
@@ -327,6 +333,10 @@ export async function deleteTenantByName(tenantName: string): Promise<void> {
   const client = new Client({ connectionString: CONNECTION_STRING });
   await client.connect();
   try {
+    await client.query(
+      `delete from trellis_tenant.tenant_domain where tenant_id in (select tenant_id from trellis_tenant.tenant where tenant_name = $1)`,
+      [tenantName],
+    );
     await client.query(`delete from trellis_tenant.tenant where tenant_name = $1`, [tenantName]);
   } finally {
     await client.end();
@@ -726,6 +736,52 @@ export async function getDocumentsForUnit(unitAssetId: string): Promise<UnitDocu
       versionCount: r.version_count as number,
       currentVersionNumber: r.current_version as number,
     }));
+  } finally {
+    await client.end();
+  }
+}
+
+/** A custom domain already proven by DNS — real DNS verification can't be driven from a test, so the VERIFIED row is seeded directly (the verification logic itself is unit- and smoke-tested). */
+export async function seedVerifiedDomain(tenantId: string, domain: string): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(
+      `insert into trellis_tenant.tenant_domain (tenant_domain_id, tenant_id, domain, status, verification_token, verified_at, created_at)
+       values (gen_random_uuid(), $1, $2, 'VERIFIED', 'e2e-token', now(), now())`,
+      [tenantId, domain],
+    );
+  } finally {
+    await client.end();
+  }
+}
+
+export async function deleteTenantDomainsForTenant(tenantId: string): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(`delete from trellis_tenant.tenant_domain where tenant_id = $1`, [tenantId]);
+  } finally {
+    await client.end();
+  }
+}
+
+/** A LISTED vacancy listing seeded directly, so public pages have something to show without driving the staff listing flow again. */
+export async function seedVacancyListing(
+  listingId: string,
+  tenantId: string,
+  unitAssetId: string,
+  description: string,
+): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(
+      `insert into trellis_leasing.vacancy_listing
+         (vacancy_listing_id, tenant_id, unit_asset_id, rent_amount, currency, available_from, description, status, created_by, created_at, updated_at)
+       values ($1, $2, $3, 1200, 'USD', '2026-12-01', $4, 'LISTED', gen_random_uuid(), now(), now())`,
+      [listingId, tenantId, unitAssetId, description],
+    );
   } finally {
     await client.end();
   }

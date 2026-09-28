@@ -19,6 +19,8 @@ public sealed class TenantConfiguration : IEntityTypeConfiguration<TenantEntity>
 
         builder.Property(t => t.TenantId).HasColumnName("tenant_id");
         builder.Property(t => t.TenantName).HasColumnName("tenant_name").HasMaxLength(200).IsRequired();
+        builder.Property(t => t.Slug).HasColumnName("slug").HasMaxLength(63).IsRequired();
+        builder.HasIndex(t => t.Slug).IsUnique();
         builder.Property(t => t.CountryCode).HasColumnName("country_code").HasMaxLength(2).IsRequired();
 
         // data_model.md's schema stores status/tier as uppercase strings (ONBOARDING, STARTER,

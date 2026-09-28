@@ -15,6 +15,7 @@ using Trellis.Api.Modules.Notification.Application.Interfaces;
 using Trellis.Api.Modules.Notification.Domain.Entities;
 using Trellis.Api.Modules.PropertyAsset.Application.Dtos;
 using Trellis.Api.Modules.PropertyAsset.Application.Interfaces;
+using Trellis.Api.Modules.Tenant.Application.Interfaces;
 using Xunit;
 
 namespace Trellis.Tests.Leasing;
@@ -29,16 +30,18 @@ public sealed class ApplicationLinkServiceTests : IDisposable
     private readonly IModuleEntitlementService _entitlements = Substitute.For<IModuleEntitlementService>();
     private readonly IUnitAssetService _unitAssetService = Substitute.For<IUnitAssetService>();
     private readonly INotificationService _notificationService = Substitute.For<INotificationService>();
+    private readonly ITenantDomainService _tenantDomainService = Substitute.For<ITenantDomainService>();
 
     public void Dispose() => TenantContext.Current = null;
 
     private ApplicationLinkService CreateSut() => new(
         _tokenRepository, _listingRepository, _entitlements, _unitAssetService, _notificationService,
         Options.Create(new LeasingOptions { ApplicationLinkExpiryDays = 7 }),
-        Options.Create(new AppOptions { BaseUrl = "https://app.example.com/" }));
+        _tenantDomainService);
 
     private VacancyListing ArrangeListing()
     {
+        _tenantDomainService.GetLinkBaseUrlAsync(_tenantId).Returns("https://app.example.com");
         var listing = VacancyListing.Create(_tenantId, _unitId, 1500m, "USD", new DateOnly(2026, 11, 1), null, Guid.NewGuid());
         _entitlements.IsEntitledAsync(_tenantId, "LEASING").Returns(true);
         _listingRepository.GetByIdForTenantAsync(_tenantId, _listingId).Returns(listing);
@@ -68,6 +71,21 @@ public sealed class ApplicationLinkServiceTests : IDisposable
         templateData!.ToString().Should().Contain($"https://app.example.com/apply/{rawToken}");
         await _notificationService.Received(1).SendAsync(
             _tenantId, "APPLICATION_LINK", "applicant@example.com", Arg.Any<object>(), Arg.Any<RelatedEntityRef>(), NotificationRecipientType.ProspectiveTenant);
+    }
+
+    [Fact]
+    public async Task IssueApplicationLinkAsync_BuildsTheLinkOnTheTenantsOwnVerifiedDomain_WhenItHasOne()
+    {
+        ArrangeListing();
+        _tenantDomainService.GetLinkBaseUrlAsync(_tenantId).Returns("https://listings.acme.com");
+        object? templateData = null;
+        await _notificationService.SendAsync(
+            Arg.Any<Guid?>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Do<object>(d => templateData = d), Arg.Any<RelatedEntityRef>(), Arg.Any<NotificationRecipientType?>());
+        var sut = CreateSut();
+
+        var result = await sut.IssueApplicationLinkAsync(_tenantId, _listingId, "applicant@example.com");
+
+        templateData!.ToString().Should().Contain($"https://listings.acme.com/apply/{result.Data}");
     }
 
     [Fact]
