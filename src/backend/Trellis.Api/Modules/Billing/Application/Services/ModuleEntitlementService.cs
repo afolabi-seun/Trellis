@@ -17,7 +17,24 @@ public sealed class ModuleEntitlementService(IModuleEntitlementRepository reposi
     public async Task<bool> IsEntitledAsync(Guid tenantId, string moduleKey)
     {
         var entitlement = await repository.GetAsync(tenantId, moduleKey);
-        return entitlement is { Status: EntitlementStatus.Active };
+        if (entitlement is not null)
+        {
+            return entitlement.Status == EntitlementStatus.Active;
+        }
+
+        if (!DefaultFreeModuleKeys.Contains(moduleKey))
+        {
+            return false;
+        }
+
+        // Lazy bootstrap — EnsureDefaultEntitlementsAsync's daily poll is the proactive path for
+        // already-known tenants, but a tenant provisioned minutes ago and immediately hitting
+        // Inspection/Ai would otherwise be incorrectly locked out until the next poll (up to
+        // 24h). This is the correctness backstop: the check itself never depends on background-job
+        // timing for a tenant genuinely entitled to a free default module.
+        await repository.AddAsync(ModuleEntitlement.Create(tenantId, moduleKey, 0));
+        await repository.SaveChangesAsync();
+        return true;
     }
 
     public async Task<ServiceResult<IReadOnlyList<ModuleEntitlementResponse>>> ListForTenantAsync(Guid tenantId)

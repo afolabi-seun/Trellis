@@ -50,6 +50,20 @@ public sealed class ModuleEntitlementServiceTests
     }
 
     [Fact]
+    public async Task IsEntitledAsync_WhenNoRowExistsYetForADefaultFreeModule_LazilyBootstrapsItActive()
+    {
+        var tenantId = Guid.NewGuid();
+        _repository.GetAsync(tenantId, "INSPECTION").Returns((ModuleEntitlement?)null);
+        var sut = CreateSut();
+
+        var result = await sut.IsEntitledAsync(tenantId, "INSPECTION");
+
+        result.Should().BeTrue();
+        await _repository.Received(1).AddAsync(Arg.Is<ModuleEntitlement>(e => e.ModuleKey == "INSPECTION" && e.MonthlyPrice == 0));
+        await _repository.Received(1).SaveChangesAsync();
+    }
+
+    [Fact]
     public async Task SetAsync_WhenNoEntitlementExistsYet_CreatesOneAtTheRequestedStatusAndPrice()
     {
         var tenantId = Guid.NewGuid();
