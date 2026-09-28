@@ -2,6 +2,19 @@ import { apiFetch } from "./client";
 import type { components } from "./schema";
 
 type TenantDomainResponse = components["schemas"]["TenantDomainResponse"];
+type TenantSettingsResponse = components["schemas"]["TenantSettingsResponse"];
+type NotificationSettingsDto = components["schemas"]["NotificationSettingsDto"];
+
+/** The caller's own tenant's settings. Any staff role may read; only a TENANT_ADMIN may change who is notified. */
+export const tenantSettingsApi = {
+  get: () => apiFetch<TenantSettingsResponse>("/api/v1/settings"),
+
+  updateNotifications: (settings: NotificationSettingsDto) =>
+    apiFetch<TenantSettingsResponse>("/api/v1/settings/notifications", {
+      method: "PUT",
+      body: settings,
+    }),
+};
 
 /** A tenant's own custom domains (ENTERPRISE tier; TENANT_ADMIN only). A domain is unusable until DNS proves control. */
 export const tenantDomainsApi = {

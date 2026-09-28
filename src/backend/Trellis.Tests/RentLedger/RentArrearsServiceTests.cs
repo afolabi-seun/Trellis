@@ -16,6 +16,8 @@ using Trellis.Api.Modules.RentLedger.Application.Services;
 using Trellis.Api.Modules.RentLedger.Domain.Entities;
 using Trellis.Api.Modules.Reporting.Application.Interfaces;
 using Trellis.Api.Modules.Reporting.Domain.Entities;
+using Trellis.Api.Modules.Tenant.Application.Dtos;
+using Trellis.Api.Modules.Tenant.Application.Interfaces;
 using Xunit;
 
 namespace Trellis.Tests.RentLedger;
@@ -30,11 +32,15 @@ public sealed class RentArrearsServiceTests : IDisposable
     private static readonly DateOnly January20 = new(2026, 1, 20);
     private static readonly DateOnly February20 = new(2026, 2, 20);
 
+    private static readonly string[] AdminOnlyRoles = ["TENANT_ADMIN"];
+    private static readonly string[] StaffOnlyRoles = ["DEPARTMENT_STAFF"];
+
     private readonly Guid _tenantId = Guid.NewGuid();
     private readonly IRentScheduleRepository _scheduleRepository = Substitute.For<IRentScheduleRepository>();
     private readonly IRentPaymentRecordRepository _paymentRepository = Substitute.For<IRentPaymentRecordRepository>();
     private readonly IModuleEntitlementService _entitlements = Substitute.For<IModuleEntitlementService>();
     private readonly IAuthService _authService = Substitute.For<IAuthService>();
+    private readonly ITenantSettingsService _tenantSettingsService = Substitute.For<ITenantSettingsService>();
     private readonly IUnitAssetService _unitAssetService = Substitute.For<IUnitAssetService>();
     private readonly INotificationService _notificationService = Substitute.For<INotificationService>();
     private readonly IAuditService _auditService = Substitute.For<IAuditService>();
@@ -43,6 +49,8 @@ public sealed class RentArrearsServiceTests : IDisposable
     {
         _entitlements.IsEntitledAsync(Arg.Any<Guid>(), "RENT_COLLECTION").Returns(true);
         _paymentRepository.GetReceivedTotalsAsync(Arg.Any<IReadOnlyCollection<Guid>>()).Returns(new Dictionary<Guid, decimal>());
+        _tenantSettingsService.GetNotificationSettingsAsync(Arg.Any<Guid>()).Returns(
+            new NotificationSettingsDto(["TENANT_ADMIN", "DEPARTMENT_STAFF"], ["TENANT_ADMIN", "DEPARTMENT_STAFF"]));
         _authService.GetUsersByRolesAsync(Arg.Any<Guid>(), Arg.Any<IEnumerable<string>>()).Returns(
             (IReadOnlyList<AppUserSummary>)[new AppUserSummary(Guid.NewGuid(), "admin@example.com", null), new AppUserSummary(Guid.NewGuid(), "staff@example.com", null)]);
         _unitAssetService.GetByIdAsync(Arg.Any<Guid>()).Returns(ServiceResult<UnitAssetResponse>.Success(
@@ -52,7 +60,7 @@ public sealed class RentArrearsServiceTests : IDisposable
     public void Dispose() => TenantContext.Current = null;
 
     private RentArrearsService CreateSut() => new(
-        _scheduleRepository, _paymentRepository, _entitlements, _authService, _unitAssetService, _notificationService, _auditService,
+        _scheduleRepository, _paymentRepository, _entitlements, _authService, _tenantSettingsService, _unitAssetService, _notificationService, _auditService,
         NullLogger<RentArrearsService>.Instance);
 
     private RentSchedule Schedule(Guid? tenantId = null) =>
@@ -235,5 +243,46 @@ public sealed class RentArrearsServiceTests : IDisposable
 
         var text = data!.ToString()!;
         text.Should().Contain("Unit 4B").And.Contain("1000.00").And.Contain("USD").And.Contain("2026-01-05");
+    }
+
+    [Fact]
+    public async Task RaiseArrearsAlertsAsync_NotifiesOnlyTheRolesTheTenantChose_ForRentArrears()
+    {
+        Arrange(Schedule());
+        _tenantSettingsService.GetNotificationSettingsAsync(_tenantId).Returns(
+            new NotificationSettingsDto(["TENANT_ADMIN", "DEPARTMENT_STAFF"], ["TENANT_ADMIN"]));
+        var sut = CreateSut();
+
+        await sut.RaiseArrearsAlertsAsync(January20);
+
+        await _authService.Received(1).GetUsersByRolesAsync(_tenantId, Arg.Is<IEnumerable<string>>(r => r.SequenceEqual(AdminOnlyRoles)));
+    }
+
+    [Fact]
+    public async Task RaiseArrearsAlertsAsync_ReadsEachTenantsRecipientSettingsOnce_NotOncePerSchedule()
+    {
+        Arrange(Schedule(), Schedule(), Schedule());
+        var sut = CreateSut();
+
+        await sut.RaiseArrearsAlertsAsync(January20);
+
+        await _tenantSettingsService.Received(1).GetNotificationSettingsAsync(_tenantId);
+    }
+
+    [Fact]
+    public async Task RaiseArrearsAlertsAsync_EachTenantUsesItsOwnRecipientSetting()
+    {
+        var otherTenant = Guid.NewGuid();
+        Arrange(Schedule(), Schedule(otherTenant));
+        _tenantSettingsService.GetNotificationSettingsAsync(_tenantId).Returns(
+            new NotificationSettingsDto(["TENANT_ADMIN"], ["TENANT_ADMIN"]));
+        _tenantSettingsService.GetNotificationSettingsAsync(otherTenant).Returns(
+            new NotificationSettingsDto(["DEPARTMENT_STAFF"], ["DEPARTMENT_STAFF"]));
+        var sut = CreateSut();
+
+        await sut.RaiseArrearsAlertsAsync(January20);
+
+        await _authService.Received(1).GetUsersByRolesAsync(_tenantId, Arg.Is<IEnumerable<string>>(r => r.SequenceEqual(AdminOnlyRoles)));
+        await _authService.Received(1).GetUsersByRolesAsync(otherTenant, Arg.Is<IEnumerable<string>>(r => r.SequenceEqual(StaffOnlyRoles)));
     }
 }

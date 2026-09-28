@@ -4032,6 +4032,86 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/settings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TenantSettingsResponseApiResponse"];
+                        "application/json": components["schemas"]["TenantSettingsResponseApiResponse"];
+                        "text/json": components["schemas"]["TenantSettingsResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/notifications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["NotificationSettingsDto"];
+                    "text/json": components["schemas"]["NotificationSettingsDto"];
+                    "application/*+json": components["schemas"]["NotificationSettingsDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TenantSettingsResponseApiResponse"];
+                        "application/json": components["schemas"]["TenantSettingsResponseApiResponse"];
+                        "text/json": components["schemas"]["TenantSettingsResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/reports/shared/{token}": {
         parameters: {
             query?: never;
@@ -6288,6 +6368,10 @@ export interface components {
             /** Format: double */
             monthlyPrice?: number;
         };
+        NotificationSettingsDto: {
+            applicationSubmittedRoles?: string[] | null;
+            rentArrearsRoles?: string[] | null;
+        };
         ObjectApiResponse: {
             readonly status?: string | null;
             readonly data?: unknown;
@@ -6892,6 +6976,17 @@ export interface components {
         TenantResponsePagedResponseApiResponse: {
             readonly status?: string | null;
             data?: components["schemas"]["TenantResponsePagedResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        TenantSettingsResponse: {
+            defaultCurrency?: string | null;
+            countryCode?: string | null;
+            notifications?: components["schemas"]["NotificationSettingsDto"];
+        };
+        TenantSettingsResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["TenantSettingsResponse"];
             error?: components["schemas"]["ApiError"];
             meta: components["schemas"]["ApiMeta"];
         };

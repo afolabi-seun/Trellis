@@ -240,3 +240,12 @@ compliance question being asked first.
 - [Data Model](./data_model.md) — schema conventions and the new `tenant_or_platform_default` RLS shape introduced here
 - [Project Architecture](./project_architecture.md) — the module boundary and interface-injection discipline this module follows like every other
 - [Build Roadmap](./roadmap.md) — pulled into Phase 1, not a later phase, once BDR-SEC-005 made it a Phase 1 dependency
+
+## Recipient configuration for staff alerts
+
+Staff-facing alerts that are not routed by workflow department — `APPLICATION_SUBMITTED` (Leasing) and
+`RENT_ARREARS_FLAGGED` (Rent Collection) — go to a tenant-chosen subset of the two staff roles
+(`TENANT_ADMIN`, `DEPARTMENT_STAFF`). The choice lives in `tenant.config_json` (see `data_model.md`), is edited
+by a Tenant Admin on the Settings screen, defaults to both roles, and can never be empty: a missing, corrupted
+or unreadable setting falls back to both roles rather than silencing an alert. This is a recipient choice, not
+the per-template channel opt-out (`tenant_notification_channel_pref`, BDR-NOTIF-005), which remains unbuilt.

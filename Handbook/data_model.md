@@ -54,7 +54,7 @@ handbook's own "don't build ahead of need" principle applied to documentation, n
 | country_code | CHAR(2) | NOT NULL | ISO 3166-1 alpha-2 (data residency, BDR-SEC-004) |
 | status | VARCHAR(20) | NOT NULL DEFAULT 'ONBOARDING' | ONBOARDING\|ACTIVE\|SUSPENDED\|OFFBOARDING\|OFFBOARDED |
 | subscription_tier | VARCHAR(20) | NOT NULL DEFAULT 'STARTER' | STARTER\|PROFESSIONAL\|ENTERPRISE |
-| config_json | JSONB | NULLABLE | Feature flags, tenant-level overrides |
+| config_json | JSONB | NULLABLE | Feature flags, tenant-level overrides. Keys in use: `notifications.applicationSubmittedRoles` / `notifications.rentArrearsRoles` (which staff roles receive those alerts; absent or unreadable = both). Updates merge into the document, so unknown keys survive |
 | created_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | |
 | updated_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | |
 

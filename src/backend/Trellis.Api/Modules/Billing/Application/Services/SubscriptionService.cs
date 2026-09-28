@@ -18,15 +18,6 @@ public sealed class SubscriptionService(
     IAuditService auditService,
     IOptions<BillingOptions> options) : ISubscriptionService
 {
-    // billing_design.md: currency "derived from tenant.country_code at provisioning (ZAR, KES)" —
-    // a small, explicit map rather than a third-party ISO-4217-by-country library dependency for
-    // the two countries this phase actually names; any other country code falls back to USD.
-    private static readonly Dictionary<string, string> CountryCurrencyMap = new()
-    {
-        ["ZA"] = "ZAR",
-        ["KE"] = "KES",
-    };
-
     public async Task<ServiceResult<SubscriptionSummaryResponse>> GetSummaryForTenantAsync(Guid tenantId)
     {
         var subscription = await repository.GetByTenantIdAsync(tenantId);
@@ -50,7 +41,7 @@ public sealed class SubscriptionService(
             return existing;
         }
 
-        var currency = CountryCurrencyMap.GetValueOrDefault(countryCode, "USD");
+        var currency = CurrencyDefaults.ForCountry(countryCode);
         var anchorDay = Math.Clamp(tenantCreatedAt.Day, 1, 28);
 
         var subscription = Subscription.Create(tenantId, currency, anchorDay);

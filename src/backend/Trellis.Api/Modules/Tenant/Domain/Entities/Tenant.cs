@@ -88,6 +88,13 @@ public class Tenant
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
+    /// <summary>Replaces the whole config document — callers merge into the existing JSON first (TenantSettingsSerializer) so other keys survive.</summary>
+    public void SetConfigJson(string? configJson)
+    {
+        ConfigJson = configJson;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
     public void Activate() => TransitionTo(TenantStatus.Active, TenantStatus.Onboarding, TenantStatus.Suspended);
 
     public void Suspend() => TransitionTo(TenantStatus.Suspended, TenantStatus.Active);

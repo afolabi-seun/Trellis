@@ -13,6 +13,7 @@ using Trellis.Api.Modules.RentLedger.Domain.Entities;
 using Trellis.Api.Modules.RentLedger.Domain.ValueObjects;
 using Trellis.Api.Modules.Reporting.Application.Interfaces;
 using Trellis.Api.Modules.Reporting.Domain.Entities;
+using Trellis.Api.Modules.Tenant.Application.Interfaces;
 
 namespace Trellis.Api.Modules.RentLedger.Application.Services;
 
@@ -22,6 +23,9 @@ namespace Trellis.Api.Modules.RentLedger.Application.Services;
 /// LastArrearsAlertedPeriod holds the due date of the latest past-grace unpaid period at the last
 /// alert, so a schedule that stays unpaid alerts again each time another period slips past grace,
 /// and one that is paid up then falls behind later alerts afresh.
+///
+/// Recipients are the roles the tenant chose for rent-arrears alerts (Tenant settings; default both staff
+/// roles), read once per tenant per run.
 ///
 /// Runs under the caller's SystemContext with no ambient tenant, so the cross-tenant batch query is
 /// unscoped and each tenant's entitlement is checked explicitly (a job can't use the attribute).
@@ -34,18 +38,19 @@ public sealed class RentArrearsService(
     IRentPaymentRecordRepository paymentRepository,
     IModuleEntitlementService moduleEntitlementService,
     IAuthService authService,
+    ITenantSettingsService tenantSettingsService,
     IUnitAssetService unitAssetService,
     INotificationService notificationService,
     IAuditService auditService,
     ILogger<RentArrearsService> logger) : IRentArrearsService
 {
     private const int BatchSize = 100;
-    private static readonly string[] StaffRoles = ["TENANT_ADMIN", "DEPARTMENT_STAFF"];
 
     public async Task<int> RaiseArrearsAlertsAsync(DateOnly asOf)
     {
         var raised = 0;
         var entitlement = new Dictionary<Guid, bool>();
+        var recipientRoles = new Dictionary<Guid, IReadOnlyList<string>>();
         Guid? afterId = null;
 
         try
@@ -89,7 +94,13 @@ public sealed class RentArrearsService(
 
                         TenantContext.Current = new TenantContext(schedule.TenantId);
 
-                        await NotifyStaffAsync(schedule, evaluation);
+                        if (!recipientRoles.TryGetValue(schedule.TenantId, out var roles))
+                        {
+                            roles = (await tenantSettingsService.GetNotificationSettingsAsync(schedule.TenantId)).RentArrearsRoles;
+                            recipientRoles[schedule.TenantId] = roles;
+                        }
+
+                        await NotifyStaffAsync(schedule, evaluation, roles);
 
                         schedule.MarkArrearsAlerted(period);
                         await scheduleRepository.SaveChangesAsync();
@@ -117,12 +128,12 @@ public sealed class RentArrearsService(
         return raised;
     }
 
-    private async Task NotifyStaffAsync(RentSchedule schedule, RentEvaluation evaluation)
+    private async Task NotifyStaffAsync(RentSchedule schedule, RentEvaluation evaluation, IReadOnlyList<string> roles)
     {
         var unit = await unitAssetService.GetByIdAsync(schedule.UnitAssetId);
         var unitLabel = unit.Outcome == ServiceResultOutcome.Success ? unit.Data!.Label : "a unit";
 
-        var staff = await authService.GetUsersByRolesAsync(schedule.TenantId, StaffRoles);
+        var staff = await authService.GetUsersByRolesAsync(schedule.TenantId, roles);
         foreach (var user in staff)
         {
             await notificationService.SendAsync(

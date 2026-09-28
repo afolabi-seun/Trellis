@@ -42,13 +42,15 @@ public sealed class ApplicationServiceTests : IDisposable
     private readonly IAuthService _authService = Substitute.For<IAuthService>();
     private readonly INotificationService _notificationService = Substitute.For<INotificationService>();
     private readonly IDocumentService _documentService = Substitute.For<IDocumentService>();
+    private static readonly string[] AdminOnlyRoles = ["TENANT_ADMIN"];
     private readonly IAuditService _auditService = Substitute.For<IAuditService>();
+    private readonly ITenantSettingsService _tenantSettingsService = Substitute.For<ITenantSettingsService>();
 
     public void Dispose() => TenantContext.Current = null;
 
     private ApplicationService CreateSut() => new(
         _repository, _listingRepository, _screeningResultRepository, _eventRepository, _tokenRepository, _linkService,
-        _screeningProvider, _eSignatureProvider, _tenantService, _authService, _notificationService, _documentService, _auditService);
+        _screeningProvider, _eSignatureProvider, _tenantService, _authService, _tenantSettingsService, _notificationService, _documentService, _auditService);
 
     private static ApplicationSubmitRequest ValidRequest(bool consent = true) =>
         new("Ada Applicant", "+27821234567", new DateOnly(1990, 1, 1), "1 Main Rd", "Acme", 5000m, consent);
@@ -67,6 +69,8 @@ public sealed class ApplicationServiceTests : IDisposable
             new TenantResponse(_tenantId, "Acme PM", "ZA", "ACTIVE", "PROFESSIONAL", DateTimeOffset.UtcNow)));
         _screeningProvider.RequestScreeningAsync(Arg.Any<ApplicantDetails>())
             .Returns(new ScreeningOutcome("NOOP", ScreeningOutcomeSummary.Pass, null));
+        _tenantSettingsService.GetNotificationSettingsAsync(_tenantId).Returns(
+            new NotificationSettingsDto(["TENANT_ADMIN", "DEPARTMENT_STAFF"], ["TENANT_ADMIN", "DEPARTMENT_STAFF"]));
         _authService.GetUsersByRolesAsync(_tenantId, Arg.Any<IEnumerable<string>>()).Returns(
             (IReadOnlyList<AppUserSummary>)[new AppUserSummary(Guid.NewGuid(), "admin@example.com", _tenantId), new AppUserSummary(Guid.NewGuid(), "staff@example.com", _tenantId)]);
 
@@ -129,6 +133,20 @@ public sealed class ApplicationServiceTests : IDisposable
             _tenantId, "SCREENING_COMPLETE", "verified@example.com", Arg.Any<object>(), Arg.Any<RelatedEntityRef>(), NotificationRecipientType.ProspectiveTenant);
         await _notificationService.Received(1).SendAsync(_tenantId, "APPLICATION_SUBMITTED", "admin@example.com", Arg.Any<object>(), Arg.Any<RelatedEntityRef>());
         await _notificationService.Received(1).SendAsync(_tenantId, "APPLICATION_SUBMITTED", "staff@example.com", Arg.Any<object>(), Arg.Any<RelatedEntityRef>());
+    }
+
+    [Fact]
+    public async Task SubmitAsync_NotifiesOnlyTheRolesTheTenantChose_ForNewApplications()
+    {
+        ArrangeValidLink();
+        _tenantSettingsService.GetNotificationSettingsAsync(_tenantId).Returns(
+            new NotificationSettingsDto(["TENANT_ADMIN"], ["TENANT_ADMIN", "DEPARTMENT_STAFF"]));
+        var sut = CreateSut();
+
+        await sut.SubmitAsync(RawToken, ValidRequest());
+
+        await _authService.Received(1).GetUsersByRolesAsync(_tenantId, Arg.Is<IEnumerable<string>>(r => r.SequenceEqual(AdminOnlyRoles)));
+        await _authService.DidNotReceive().GetUsersByRolesAsync(_tenantId, Arg.Is<IEnumerable<string>>(r => r.Contains("DEPARTMENT_STAFF")));
     }
 
     [Fact]

@@ -23,6 +23,9 @@ public static class AuditTypes
         /// <summary>Renaming breaks every public link shared with the old slug, so it is always recorded (SUPER_ADMIN only).</summary>
         public const string TenantSlugChanged = "TENANT_SLUG_CHANGED";
 
+        /// <summary>Who receives which alert changed — recorded with the role lists only (never any user data).</summary>
+        public const string TenantSettingsUpdated = "TENANT_SETTINGS_UPDATED";
+
         public const string TenantDomainAdded = "TENANT_DOMAIN_ADDED";
         public const string TenantDomainVerified = "TENANT_DOMAIN_VERIFIED";
         public const string TenantDomainRemoved = "TENANT_DOMAIN_REMOVED";

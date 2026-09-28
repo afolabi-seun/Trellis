@@ -1,4 +1,5 @@
 using FluentValidation;
+using Trellis.Api.Core.Helpers;
 using Trellis.Api.Modules.Tenant.Application.Dtos;
 using Trellis.Api.Modules.Tenant.Domain.ValueObjects;
 
@@ -31,5 +32,16 @@ public sealed class TenantDomainCreateRequestValidator : AbstractValidator<Tenan
     public TenantDomainCreateRequestValidator()
     {
         RuleFor(x => x.Domain).NotEmpty().MaximumLength(253);
+    }
+}
+
+public sealed class NotificationSettingsDtoValidator : AbstractValidator<NotificationSettingsDto>
+{
+    public NotificationSettingsDtoValidator()
+    {
+        RuleFor(x => x.ApplicationSubmittedRoles).Must(r => StaffRoles.IsValidSelection(r?.ToList()))
+            .WithMessage("Choose at least one of TENANT_ADMIN, DEPARTMENT_STAFF (no duplicates).");
+        RuleFor(x => x.RentArrearsRoles).Must(r => StaffRoles.IsValidSelection(r?.ToList()))
+            .WithMessage("Choose at least one of TENANT_ADMIN, DEPARTMENT_STAFF (no duplicates).");
     }
 }

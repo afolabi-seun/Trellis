@@ -32,12 +32,11 @@ public sealed class ApplicationService(
     IESignatureProvider eSignatureProvider,
     ITenantService tenantService,
     IAuthService authService,
+    ITenantSettingsService tenantSettingsService,
     INotificationService notificationService,
     IDocumentService documentService,
     IAuditService auditService) : IApplicationService
 {
-    private static readonly string[] StaffRoles = ["TENANT_ADMIN", "DEPARTMENT_STAFF"];
-
     public async Task<ServiceResult<ApplicationSubmitResponse>> SubmitAsync(string rawLinkToken, ApplicationSubmitRequest request)
     {
         // Resolving the token IS the caller's authentication AND BDR-LSE-008's email-control
@@ -293,7 +292,9 @@ public sealed class ApplicationService(
 
     private async Task NotifyStaffAsync(LeasingApplication application, string unitLabel)
     {
-        var staff = await authService.GetUsersByRolesAsync(application.TenantId, StaffRoles);
+        // The tenant chooses which staff roles hear about new applications (Tenant settings; default both).
+        var recipients = await tenantSettingsService.GetNotificationSettingsAsync(application.TenantId);
+        var staff = await authService.GetUsersByRolesAsync(application.TenantId, recipients.ApplicationSubmittedRoles);
         foreach (var user in staff)
         {
             await notificationService.SendAsync(

@@ -33,3 +33,8 @@ public sealed record TenantDomainCreateRequest(string Domain);
 public sealed record TenantDomainResponse(
     Guid TenantDomainId, string Domain, string Status, string? VerificationRecordName, string? VerificationRecordValue,
     DateTimeOffset? VerifiedAt, DateTimeOffset CreatedAt);
+
+public sealed record NotificationSettingsDto(IReadOnlyList<string> ApplicationSubmittedRoles, IReadOnlyList<string> RentArrearsRoles);
+
+/// <summary>What staff can read about their own tenant's settings. DefaultCurrency comes from the tenant's country and defaults the currency on listing and rent-schedule forms.</summary>
+public sealed record TenantSettingsResponse(string DefaultCurrency, string CountryCode, NotificationSettingsDto Notifications);
