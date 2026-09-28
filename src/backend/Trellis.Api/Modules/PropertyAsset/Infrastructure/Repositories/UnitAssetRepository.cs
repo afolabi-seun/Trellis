@@ -32,6 +32,9 @@ public sealed class UnitAssetRepository(PropertyDbContext dbContext) : TenantAwa
         return (page.Take(limit).ToList(), hasMore, totalCount);
     }
 
+    public async Task<IReadOnlyList<Guid>> ListIdsByPropertiesAsync(IReadOnlyCollection<Guid> propertyIds) =>
+        await Scoped(dbContext.UnitAssets).Where(u => propertyIds.Contains(u.PropertyId)).Select(u => u.UnitAssetId).ToListAsync();
+
     public Task<int> CountActiveForTenantAsync(Guid tenantId) =>
         dbContext.UnitAssets.CountAsync(u => u.TenantId == tenantId && u.Status == UnitAssetStatus.Active);
 

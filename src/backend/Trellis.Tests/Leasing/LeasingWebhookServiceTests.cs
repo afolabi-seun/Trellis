@@ -9,6 +9,7 @@ using Trellis.Api.Modules.Leasing.Application.Services;
 using Trellis.Api.Modules.Leasing.Domain.Entities;
 using Trellis.Api.Modules.PropertyAsset.Application.Dtos;
 using Trellis.Api.Modules.PropertyAsset.Application.Interfaces;
+using Trellis.Api.Modules.RentLedger.Application.Interfaces;
 using Trellis.Api.Modules.Reporting.Application.Interfaces;
 using Xunit;
 using LeasingApplication = Trellis.Api.Modules.Leasing.Domain.Entities.Application;
@@ -26,12 +27,13 @@ public sealed class LeasingWebhookServiceTests : IDisposable
     private readonly IESignatureProvider _eSignatureProvider = Substitute.For<IESignatureProvider>();
     private readonly IDocumentService _documentService = Substitute.For<IDocumentService>();
     private readonly IUnitAssetService _unitAssetService = Substitute.For<IUnitAssetService>();
+    private readonly IRentScheduleService _rentScheduleService = Substitute.For<IRentScheduleService>();
     private readonly IAuditService _auditService = Substitute.For<IAuditService>();
 
     public void Dispose() => TenantContext.Current = null;
 
     private LeasingWebhookService CreateSut() => new(
-        _applicationRepository, _listingRepository, _eventRepository, _eSignatureProvider, _documentService, _unitAssetService, _auditService);
+        _applicationRepository, _listingRepository, _eventRepository, _eSignatureProvider, _documentService, _unitAssetService, _rentScheduleService, _auditService);
 
     private (LeasingApplication Application, VacancyListing Listing) ArrangeSentApplication()
     {
@@ -49,6 +51,9 @@ public sealed class LeasingWebhookServiceTests : IDisposable
                 new DocumentResponse(Guid.NewGuid(), null, _unitId, null, null, "LEASE", null, "ACTIVE", null, "AAAAAAAAAAA=", DateTimeOffset.UtcNow)));
         _unitAssetService.MarkOccupiedAsync(_unitId).Returns(ServiceResult<UnitAssetResponse>.Success(
             new UnitAssetResponse(_unitId, Guid.NewGuid(), "4B", "ACTIVE", "OCCUPIED", null, null, "AAAAAAAAAAA=", DateTimeOffset.UtcNow)));
+        _rentScheduleService.EnsureScheduleForLeaseAsync(
+                Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<DateOnly>(), Arg.Any<Guid?>())
+            .Returns(ServiceResult<bool>.Success(true));
         return (application, listing);
     }
 
@@ -141,6 +146,67 @@ public sealed class LeasingWebhookServiceTests : IDisposable
     {
         var (application, _) = ArrangeSentApplication();
         _unitAssetService.MarkOccupiedAsync(_unitId).Returns(ServiceResult<UnitAssetResponse>.BusinessRuleViolation("TRL-E-AST-3000"));
+        var sut = CreateSut();
+
+        await sut.ProcessSignatureCompletedAsync("env-1", "{}");
+
+        application.Status.Should().Be(ApplicationStatus.Leased);
+    }
+
+    [Fact]
+    public async Task ProcessSignatureCompletedAsync_StartsTheRentScheduleFromTheListingTerms_AsTheStaffMemberWhoSentIt()
+    {
+        var (application, listing) = ArrangeSentApplication();
+        var sut = CreateSut();
+
+        await sut.ProcessSignatureCompletedAsync("env-1", "{}");
+
+        await _rentScheduleService.Received(1).EnsureScheduleForLeaseAsync(
+            _tenantId, _unitId, application.ApplicationId, listing.RentAmount, listing.Currency, listing.AvailableFrom, _staffId);
+    }
+
+    [Fact]
+    public async Task ProcessSignatureCompletedAsync_CreatesTheRentScheduleBeforeTheLeasingSave_SoARetryCanStillReachIt()
+    {
+        // After the Leasing save the application is Leased and a retry returns at the top — so the schedule must exist by then.
+        ArrangeSentApplication();
+        var order = new List<string>();
+        _rentScheduleService.EnsureScheduleForLeaseAsync(
+                Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<DateOnly>(), Arg.Any<Guid?>())
+            .Returns(_ => { order.Add("rent"); return ServiceResult<bool>.Success(true); });
+        _applicationRepository.SaveChangesAsync().Returns(_ => { order.Add("save"); return Task.CompletedTask; });
+        var sut = CreateSut();
+
+        await sut.ProcessSignatureCompletedAsync("env-1", "{}");
+
+        order.Should().Equal("rent", "save");
+    }
+
+    [Fact]
+    public async Task ProcessSignatureCompletedAsync_WhenTheRentScheduleFails_Throws_SoTheProviderRetries_AndTheLeaseIsNotClosedOut()
+    {
+        var (application, listing) = ArrangeSentApplication();
+        _rentScheduleService.EnsureScheduleForLeaseAsync(
+                Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<DateOnly>(), Arg.Any<Guid?>())
+            .Returns(ServiceResult<bool>.BusinessRuleViolation("TRL-E-RENT-12001"));
+        var sut = CreateSut();
+
+        var act = () => sut.ProcessSignatureCompletedAsync("env-1", "{}");
+
+        await act.Should().ThrowAsync<InvalidOperationException>();
+        application.Status.Should().Be(ApplicationStatus.Approved);
+        listing.Status.Should().Be(VacancyListingStatus.Listed);
+        await _applicationRepository.DidNotReceive().SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task ProcessSignatureCompletedAsync_WhenTheTenantHasNoRentCollection_StillCompletesTheLease()
+    {
+        // EnsureScheduleForLeaseAsync returns Success(false) for an unentitled tenant (or an already-created schedule) — never blocks a signed lease.
+        var (application, _) = ArrangeSentApplication();
+        _rentScheduleService.EnsureScheduleForLeaseAsync(
+                Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<DateOnly>(), Arg.Any<Guid?>())
+            .Returns(ServiceResult<bool>.Success(false));
         var sut = CreateSut();
 
         await sut.ProcessSignatureCompletedAsync("env-1", "{}");

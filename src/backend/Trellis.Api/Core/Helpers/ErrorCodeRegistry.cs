@@ -196,4 +196,17 @@ public static class ErrorCodeRegistry
         /// <summary>TRL-E-LSE-11004 — UploadPhotoAsync: the uploaded file's actual bytes aren't JPG/PNG/HEIC, or the listing is already at MaxPhotosPerListing.</summary>
         public const string PhotoRejected = "TRL-E-LSE-11004";
     }
+
+    /// <summary>api_standards.md's registry table: Rent Collection | TRL-E-RENT | 12000–12999 — the doc reserves the block but enumerates no individual codes.</summary>
+    public static class RentLedger
+    {
+        /// <summary>TRL-E-RENT-12000 — a RentSchedule/RentPaymentRecord transition its current status doesn't allow (ending an ended schedule, voiding a voided record).</summary>
+        public const string InvalidStatusTransition = "TRL-E-RENT-12000";
+
+        /// <summary>TRL-E-RENT-12001 — CreateAsync: the unit already has an ACTIVE rent schedule (friendly pre-check ahead of the partial unique index).</summary>
+        public const string UnitAlreadyHasActiveSchedule = "TRL-E-RENT-12001";
+
+        /// <summary>TRL-E-RENT-12002 — RecordAsync/UpdateAsync against an ENDED schedule.</summary>
+        public const string ScheduleNotActive = "TRL-E-RENT-12002";
+    }
 }

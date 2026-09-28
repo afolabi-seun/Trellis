@@ -49,6 +49,39 @@ public sealed class ReportExportServiceTests
     }
 
     [Fact]
+    public void GenerateOwnerReportCsv_WithARentSection_AppendsTheExactRentRows()
+    {
+        var content = SampleContent with { Rent = new OwnerReportRentSection(5, 2, 1, 6300.5m, new DateOnly(2026, 2, 3)) };
+
+        var lines = System.Text.Encoding.UTF8.GetString(_sut.GenerateOwnerReportCsv(content)).Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
+
+        lines[8].Should().Be("Rent schedules current,5");
+        lines[9].Should().Be("Rent schedules overdue,2");
+        lines[10].Should().Be("Rent schedules in arrears,1");
+        lines[11].Should().Be("Rent recorded as received in period,6300.50");
+        lines[12].Should().Be("Rent status as of,2026-02-03");
+        lines.Should().HaveCount(13);
+    }
+
+    [Fact]
+    public void GenerateOwnerReportCsv_WithoutARentSection_HasNoRentRows()
+    {
+        var lines = System.Text.Encoding.UTF8.GetString(_sut.GenerateOwnerReportCsv(SampleContent)).Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
+
+        lines.Should().NotContain(l => l.StartsWith("Rent", StringComparison.Ordinal));
+    }
+
+    [Fact]
+    public void GenerateOwnerReportPdf_WithARentSection_StillProducesAWellFormedPdf()
+    {
+        var content = SampleContent with { Rent = new OwnerReportRentSection(5, 2, 1, 6300.5m, new DateOnly(2026, 2, 3)) };
+
+        var bytes = _sut.GenerateOwnerReportPdf(content);
+
+        System.Text.Encoding.ASCII.GetString(bytes, 0, 4).Should().Be("%PDF");
+    }
+
+    [Fact]
     public void GenerateDashboardCsv_ProducesExactHeaderAndRows()
     {
         var bytes = _sut.GenerateDashboardCsv(SampleSummary);

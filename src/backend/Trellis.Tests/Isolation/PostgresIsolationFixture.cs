@@ -10,6 +10,7 @@ using Trellis.Api.Modules.Inspection.Infrastructure.Data;
 using Trellis.Api.Modules.Leasing.Infrastructure.Data;
 using Trellis.Api.Modules.Notification.Infrastructure.Data;
 using Trellis.Api.Modules.PropertyAsset.Infrastructure.Data;
+using Trellis.Api.Modules.RentLedger.Infrastructure.Data;
 using Trellis.Api.Modules.Reporting.Infrastructure.Data;
 using Trellis.Api.Modules.Vendor.Infrastructure.Data;
 using Trellis.Api.Modules.Workflow.Infrastructure.Data;
@@ -96,6 +97,7 @@ public sealed class PostgresIsolationFixture : IAsyncLifetime
         // migrated above, already did), only owner_report/report_share_link.
         await MigrateAsync(() => new ReportingDbContext(BuildOptions<ReportingDbContext>()));
         await MigrateAsync(() => new LeasingDbContext(BuildOptions<LeasingDbContext>()));
+        await MigrateAsync(() => new RentLedgerDbContext(BuildOptions<RentLedgerDbContext>()));
     }
 
     public async Task DisposeAsync() => await _container.DisposeAsync();
@@ -213,6 +215,16 @@ public sealed class PostgresIsolationFixture : IAsyncLifetime
             .AddInterceptors(new TenantScopeConnectionInterceptor())
             .Options;
         return new LeasingDbContext(options);
+    }
+
+    /// <summary>Same shape as <see cref="CreateAppAuthContext"/>, for Rent Collection's own isolation tests.</summary>
+    public RentLedgerDbContext CreateAppRentLedgerContext()
+    {
+        var options = new DbContextOptionsBuilder<RentLedgerDbContext>()
+            .UseNpgsql(AppConnectionString)
+            .AddInterceptors(new TenantScopeConnectionInterceptor())
+            .Options;
+        return new RentLedgerDbContext(options);
     }
 
     private DbContextOptions<TContext> BuildOptions<TContext>() where TContext : DbContext =>

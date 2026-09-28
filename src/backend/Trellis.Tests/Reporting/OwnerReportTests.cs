@@ -39,6 +39,23 @@ public sealed class OwnerReportTests
     }
 
     [Fact]
+    public void MarkReady_WithRentFigures_StoresTheSnapshot_AndWithoutThemLeavesThemNull()
+    {
+        var withRent = CreateGenerating();
+        withRent.MarkReady(1, 0, 0, 0, 0, [0x25], 3, 1, 2, 900.25m, new DateOnly(2026, 2, 3));
+        var withoutRent = CreateGenerating();
+        withoutRent.MarkReady(1, 0, 0, 0, 0, [0x25]);
+
+        withRent.RentCurrentCount.Should().Be(3);
+        withRent.RentOverdueCount.Should().Be(1);
+        withRent.RentArrearsCount.Should().Be(2);
+        withRent.RentReceivedAmount.Should().Be(900.25m);
+        withRent.RentAsOf.Should().Be(new DateOnly(2026, 2, 3));
+        withoutRent.RentCurrentCount.Should().BeNull();
+        withoutRent.RentReceivedAmount.Should().BeNull();
+    }
+
+    [Fact]
     public void MarkReady_CalledTwice_ThrowsOnTheSecondCall()
     {
         var report = CreateGenerating();

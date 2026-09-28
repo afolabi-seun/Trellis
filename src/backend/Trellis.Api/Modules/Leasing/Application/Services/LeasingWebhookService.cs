@@ -5,6 +5,7 @@ using Trellis.Api.Modules.Document.Application.Interfaces;
 using Trellis.Api.Modules.Leasing.Application.Interfaces;
 using Trellis.Api.Modules.Leasing.Domain.Entities;
 using Trellis.Api.Modules.PropertyAsset.Application.Interfaces;
+using Trellis.Api.Modules.RentLedger.Application.Interfaces;
 using Trellis.Api.Modules.Reporting.Application.Interfaces;
 using Trellis.Api.Modules.Reporting.Domain.Entities;
 
@@ -12,8 +13,9 @@ namespace Trellis.Api.Modules.Leasing.Application.Services;
 
 /// <summary>
 /// BDR-LSE-005/006/007 — the one place the whole e-signature completion converges: file the signed
-/// lease (Document), flip the unit to occupied (PropertyAsset), close out the listing and
-/// application (Leasing), and write the audit trail.
+/// lease (Document), flip the unit to occupied (PropertyAsset), start its rent schedule
+/// (RentLedger, BDR-RENT-001), close out the listing and application (Leasing), and write the
+/// audit trail.
 ///
 /// The <c>TenantContext.Current = ...</c> below is deliberate and NOT a repeat of the rejected
 /// Phase 8 share-link pattern. There, setting it was unnecessary (Reporting's own lookups never
@@ -31,6 +33,7 @@ public sealed class LeasingWebhookService(
     IESignatureProvider eSignatureProvider,
     IDocumentService documentService,
     IUnitAssetService unitAssetService,
+    IRentScheduleService rentScheduleService,
     IAuditService auditService) : ILeasingWebhookService
 {
     public async Task ProcessSignatureCompletedAsync(string envelopeId, string rawPayloadJson)
@@ -65,6 +68,17 @@ public sealed class LeasingWebhookService(
         {
             // BusinessRuleViolation = already OCCUPIED (a retry after a partial failure) — fine, the goal state holds.
             throw new InvalidOperationException($"Marking the unit occupied failed: {occupied.Outcome}.");
+        }
+
+        // BDR-RENT-001 — must land BEFORE the Leasing save below: after it the application is Leased,
+        // so a webhook retry would hit the early return above and never create the schedule. The
+        // call is idempotent by lease application id, so a retry after a later failure is safe.
+        var schedule = await rentScheduleService.EnsureScheduleForLeaseAsync(
+            application.TenantId, listing.UnitAssetId, application.ApplicationId, listing.RentAmount, listing.Currency,
+            listing.AvailableFrom, uploadedBy);
+        if (schedule.Outcome != ServiceResultOutcome.Success)
+        {
+            throw new InvalidOperationException($"Creating the rent schedule failed: {schedule.Outcome} {schedule.ErrorCode}.");
         }
 
         listing.MarkLeased();

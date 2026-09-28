@@ -124,6 +124,26 @@ namespace Trellis.Api.Modules.Reporting.Infrastructure.Data.Migrations
                         .HasColumnType("timestamp with time zone")
                         .HasColumnName("ready_at");
 
+                    b.Property<int?>("RentArrearsCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("rent_arrears_count");
+
+                    b.Property<DateOnly?>("RentAsOf")
+                        .HasColumnType("date")
+                        .HasColumnName("rent_as_of");
+
+                    b.Property<int?>("RentCurrentCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("rent_current_count");
+
+                    b.Property<int?>("RentOverdueCount")
+                        .HasColumnType("integer")
+                        .HasColumnName("rent_overdue_count");
+
+                    b.Property<decimal?>("RentReceivedAmount")
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("rent_received_amount");
+
                     b.Property<string>("Status")
                         .IsRequired()
                         .HasMaxLength(20)

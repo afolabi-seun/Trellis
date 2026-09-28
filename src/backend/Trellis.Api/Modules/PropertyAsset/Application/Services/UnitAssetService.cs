@@ -152,6 +152,9 @@ public sealed class UnitAssetService(IUnitAssetRepository repository, IPropertyR
         return ServiceResult<UnitAssetResponse>.Success(ToResponse(unitAsset));
     }
 
+    public Task<IReadOnlyList<Guid>> ListUnitAssetIdsByPropertiesAsync(IReadOnlyCollection<Guid> propertyIds) =>
+        repository.ListIdsByPropertiesAsync(propertyIds);
+
     public Task<int> CountActiveForTenantAsync(Guid tenantId) => repository.CountActiveForTenantAsync(tenantId);
 
     private UnitAssetResponse ToResponse(UnitAsset unitAsset) => new(

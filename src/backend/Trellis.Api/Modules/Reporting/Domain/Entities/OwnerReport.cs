@@ -24,13 +24,13 @@ public enum OwnerReportPeriodType
 /// other figure) it showed at generation time, even if the Owner record is renamed afterward.
 ///
 /// The financial section is <see cref="TotalMaintenanceCost"/> — a sum of Workflow's own
-/// WorkflowInstance.CostAmount for this Owner's properties — not "income" or "expense" figures.
-/// This is a deliberate scope correction made while implementing this entity, not the original
-/// plan: no rent-collection or ledger module exists anywhere in this codebase yet (Leasing/
-/// RentLedger are still unbuilt Add-on modules per project_architecture.md's Module Catalogue),
-/// so there is no real income data to report. roadmap.md's own Phase 8 framing — "Reporting waits
-/// for real usage data" — argues directly against fabricating an income figure here; maintenance
-/// cost is the one real financial number this codebase can actually produce today.
+/// WorkflowInstance.CostAmount for this Owner's properties — not "income" or "expense" figures,
+/// which nothing in Trellis records. Rent collection (BDR-RENT-005) adds a separate, nullable
+/// rent section: how many of the Owner's rent schedules are current, overdue, or in arrears as of
+/// generation, and the rent recorded as received (outside Trellis — Trellis never processes or
+/// holds funds) during the period. All five Rent* fields are NULL when the tenant isn't entitled
+/// to the Rent Collection add-on — "not tracked", never a misleading zero — and are stored as
+/// scalar snapshots (not re-queried) so a CSV re-download reproduces the figures the PDF showed.
 /// </summary>
 public sealed class OwnerReport : ITenantOwned
 {
@@ -47,6 +47,11 @@ public sealed class OwnerReport : ITenantOwned
     public int OpenMaintenanceCount { get; private set; }
     public int CompliantDocumentCount { get; private set; }
     public int ExpiringDocumentCount { get; private set; }
+    public int? RentCurrentCount { get; private set; }
+    public int? RentOverdueCount { get; private set; }
+    public int? RentArrearsCount { get; private set; }
+    public decimal? RentReceivedAmount { get; private set; }
+    public DateOnly? RentAsOf { get; private set; }
     public byte[]? PdfContent { get; private set; }
     public Guid GeneratedBy { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
@@ -73,7 +78,9 @@ public sealed class OwnerReport : ITenantOwned
     /// <summary>Immutable once Ready — a re-generation for the same Owner/period creates a new row, never overwrites this one.</summary>
     public void MarkReady(
         int propertyCount, decimal totalMaintenanceCost, int openMaintenanceCount,
-        int compliantDocumentCount, int expiringDocumentCount, byte[] pdfContent)
+        int compliantDocumentCount, int expiringDocumentCount, byte[] pdfContent,
+        int? rentCurrentCount = null, int? rentOverdueCount = null, int? rentArrearsCount = null,
+        decimal? rentReceivedAmount = null, DateOnly? rentAsOf = null)
     {
         if (Status != OwnerReportStatus.Generating)
         {
@@ -85,6 +92,11 @@ public sealed class OwnerReport : ITenantOwned
         OpenMaintenanceCount = openMaintenanceCount;
         CompliantDocumentCount = compliantDocumentCount;
         ExpiringDocumentCount = expiringDocumentCount;
+        RentCurrentCount = rentCurrentCount;
+        RentOverdueCount = rentOverdueCount;
+        RentArrearsCount = rentArrearsCount;
+        RentReceivedAmount = rentReceivedAmount;
+        RentAsOf = rentAsOf;
         PdfContent = pdfContent;
         Status = OwnerReportStatus.Ready;
         ReadyAt = DateTimeOffset.UtcNow;

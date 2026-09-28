@@ -21,6 +21,9 @@ public interface IUnitAssetService
 
     Task<ServiceResult<UnitAssetResponse>> MarkVacantAsync(Guid unitAssetId);
 
+    /// <summary>BDR-RENT-005 — the Owner report's rent rollup needs every unit id under an Owner's properties; mirrors IPropertyService.ListPropertyIdsByOwnerAsync's plain-list shape. Requires the caller's TenantContext.Current (Scoped()).</summary>
+    Task<IReadOnlyList<Guid>> ListUnitAssetIdsByPropertiesAsync(IReadOnlyCollection<Guid> propertyIds);
+
     /// <summary>billing_design.md's usage metering — Billing's own UsageSnapshotBackgroundService depends on this, the same plain-constructor-dependency cross-module pattern DocumentService already uses for IWorkflowInstanceService/IExtractionService.</summary>
     Task<int> CountActiveForTenantAsync(Guid tenantId);
 }

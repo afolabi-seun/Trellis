@@ -83,6 +83,26 @@ public sealed class QuestPdfOwnerReportRenderer : IReportExportService
                         AddRow(table, "Compliant documents", content.CompliantDocumentCount.ToString(CultureInfo.InvariantCulture));
                         AddRow(table, "Documents expiring soon", content.ExpiringDocumentCount.ToString(CultureInfo.InvariantCulture));
                     });
+
+                    if (content.Rent is { } rent)
+                    {
+                        // BDR-RENT-006 — worded as a record of payments received elsewhere, never as Trellis handling money.
+                        column.Item().PaddingTop(10).Text("Rent Collection").FontSize(13).Bold();
+                        column.Item().Text($"Payments recorded as received outside Trellis. Status as of {rent.AsOf:yyyy-MM-dd}.").FontSize(9);
+                        column.Item().Table(table =>
+                        {
+                            table.ColumnsDefinition(columns =>
+                            {
+                                columns.RelativeColumn();
+                                columns.RelativeColumn();
+                            });
+
+                            AddRow(table, "Rent schedules current", rent.CurrentCount.ToString(CultureInfo.InvariantCulture));
+                            AddRow(table, "Rent schedules overdue", rent.OverdueCount.ToString(CultureInfo.InvariantCulture));
+                            AddRow(table, "Rent schedules in arrears", rent.ArrearsCount.ToString(CultureInfo.InvariantCulture));
+                            AddRow(table, "Rent recorded as received in period", rent.ReceivedInPeriod.ToString("C", CurrencyCulture));
+                        });
+                    }
                 });
 
                 page.Footer().AlignCenter().Text(x =>
@@ -93,8 +113,9 @@ public sealed class QuestPdfOwnerReportRenderer : IReportExportService
             });
         }).GeneratePdf();
 
-    public byte[] GenerateOwnerReportCsv(OwnerReportContent content) => CsvWriter.Write(
-        ["Metric", "Value"],
+    public byte[] GenerateOwnerReportCsv(OwnerReportContent content)
+    {
+        List<IReadOnlyList<string>> rows =
         [
             ["Owner", content.OwnerName],
             ["Period", $"{content.PeriodStart:yyyy-MM-dd} to {content.PeriodEnd:yyyy-MM-dd}"],
@@ -103,7 +124,19 @@ public sealed class QuestPdfOwnerReportRenderer : IReportExportService
             ["Open maintenance requests", content.OpenMaintenanceCount.ToString(CultureInfo.InvariantCulture)],
             ["Compliant documents", content.CompliantDocumentCount.ToString(CultureInfo.InvariantCulture)],
             ["Documents expiring soon", content.ExpiringDocumentCount.ToString(CultureInfo.InvariantCulture)],
-        ]);
+        ];
+
+        if (content.Rent is { } rent)
+        {
+            rows.Add(["Rent schedules current", rent.CurrentCount.ToString(CultureInfo.InvariantCulture)]);
+            rows.Add(["Rent schedules overdue", rent.OverdueCount.ToString(CultureInfo.InvariantCulture)]);
+            rows.Add(["Rent schedules in arrears", rent.ArrearsCount.ToString(CultureInfo.InvariantCulture)]);
+            rows.Add(["Rent recorded as received in period", rent.ReceivedInPeriod.ToString("F2", CultureInfo.InvariantCulture)]);
+            rows.Add(["Rent status as of", rent.AsOf.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)]);
+        }
+
+        return CsvWriter.Write(["Metric", "Value"], rows);
+    }
 
     public byte[] GenerateDashboardCsv(DashboardSummaryResponse summary) => CsvWriter.Write(
         ["Metric", "Value"],

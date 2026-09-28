@@ -14,6 +14,7 @@ using Trellis.Api.Modules.Inspection;
 using Trellis.Api.Modules.Leasing;
 using Trellis.Api.Modules.Notification;
 using Trellis.Api.Modules.PropertyAsset;
+using Trellis.Api.Modules.RentLedger;
 using Trellis.Api.Modules.Reporting;
 using Trellis.Api.Modules.Tenant;
 using Trellis.Api.Modules.Vendor;
@@ -42,10 +43,15 @@ builder.Services.AddTrellisSwaggerGen();
 builder.Services.AddTrellisCore(builder.Configuration);
 
 // Tenant → Notification → Auth → PropertyAsset → Vendor → Document → Workflow → Inspection → Ai →
-// Billing → Reporting → Leasing, per data_model.md's migration dependency order and roadmap.md's
-// Phase 1 → Phase 9 sequencing. Leasing registers last and depends on Billing's entitlement service,
+// Billing → Reporting → Leasing → RentLedger, per data_model.md's migration dependency order and
+// roadmap.md's Phase 1 → Phase 10 sequencing. Leasing depends on Billing's entitlement service,
 // Document, PropertyAsset, Notification, Auth, Tenant and Reporting's IAuditService through their
-// own Application interfaces — same lazy-resolution safety as every module above. Vendor registers before Document/Workflow/Inspection since all three now
+// own Application interfaces, and now also on RentLedger's IRentScheduleService (Leasing creates a
+// rent schedule on lease execution); RentLedger registers last and depends on PropertyAsset, Auth,
+// Notification, Billing's entitlement service and Reporting's IAuditService the same way, while
+// Reporting's Owner report in turn depends on RentLedger — a cycle at the module level that is
+// perfectly safe, since only Application interfaces cross the boundary and the container resolves
+// lazily against the fully-built collection (see the Reporting note below). Vendor registers before Document/Workflow/Inspection since all three now
 // depend on its published IVendorAssignmentReader (Workflow's vendor-safe projection, Document's
 // evidence upload, Inspection's own vendor-portal reads).
 //
@@ -78,6 +84,7 @@ builder.Services.AddAiModule(builder.Configuration);
 builder.Services.AddBillingModule(builder.Configuration);
 builder.Services.AddReportingModule(builder.Configuration);
 builder.Services.AddLeasingModule(builder.Configuration);
+builder.Services.AddRentLedgerModule(builder.Configuration);
 
 var app = builder.Build();
 

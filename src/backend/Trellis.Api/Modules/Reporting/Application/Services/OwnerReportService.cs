@@ -6,6 +6,7 @@ using Trellis.Api.Modules.Document.Application.Interfaces;
 using Trellis.Api.Modules.Notification.Application.Dtos;
 using Trellis.Api.Modules.Notification.Application.Interfaces;
 using Trellis.Api.Modules.PropertyAsset.Application.Interfaces;
+using Trellis.Api.Modules.RentLedger.Application.Interfaces;
 using Trellis.Api.Modules.Reporting.Application.Dtos;
 using Trellis.Api.Modules.Reporting.Application.Interfaces;
 using Trellis.Api.Modules.Reporting.Domain.Entities;
@@ -30,6 +31,8 @@ public sealed class OwnerReportService(
     ITenantService tenantService,
     IOwnerService ownerService,
     IPropertyService propertyService,
+    IUnitAssetService unitAssetService,
+    IRentScheduleService rentScheduleService,
     IWorkflowInstanceService workflowInstanceService,
     IDocumentService documentService) : IOwnerReportService
 {
@@ -57,17 +60,20 @@ public sealed class OwnerReportService(
             var propertyIds = await propertyService.ListPropertyIdsByOwnerAsync(ownerId);
             var (totalCost, openCount) = await workflowInstanceService.GetOwnerMaintenanceSummaryAsync(propertyIds, periodStart, periodEnd);
             var (compliantCount, expiringCount) = await CountDocumentComplianceAsync(ownerId, periodEnd);
+            var rent = await BuildRentSectionAsync(propertyIds, periodStart, periodEnd);
 
             var tenantResult = await tenantService.GetByIdAsync(tenantId);
             var tenantName = tenantResult.Outcome == ServiceResultOutcome.Success ? tenantResult.Data!.TenantName : string.Empty;
 
             var content = new OwnerReportContent(
                 tenantName, owner.Name, report.PeriodType.ToUpperSnakeCase(), periodStart, periodEnd,
-                propertyIds.Count, totalCost, openCount, compliantCount, expiringCount);
+                propertyIds.Count, totalCost, openCount, compliantCount, expiringCount, rent);
 
             var pdfBytes = exportService.GenerateOwnerReportPdf(content);
 
-            report.MarkReady(propertyIds.Count, totalCost, openCount, compliantCount, expiringCount, pdfBytes);
+            report.MarkReady(
+                propertyIds.Count, totalCost, openCount, compliantCount, expiringCount, pdfBytes,
+                rent?.CurrentCount, rent?.OverdueCount, rent?.ArrearsCount, rent?.ReceivedInPeriod, rent?.AsOf);
             await repository.SaveChangesAsync();
         }
         catch (Exception)
@@ -125,7 +131,7 @@ public sealed class OwnerReportService(
         var content = new OwnerReportContent(
             string.Empty, report.OwnerName, report.PeriodType.ToUpperSnakeCase(), report.PeriodStart, report.PeriodEnd,
             report.PropertyCount, report.TotalMaintenanceCost, report.OpenMaintenanceCount,
-            report.CompliantDocumentCount, report.ExpiringDocumentCount);
+            report.CompliantDocumentCount, report.ExpiringDocumentCount, ToRentSection(report));
 
         return ServiceResult<byte[]>.Success(exportService.GenerateOwnerReportCsv(content));
     }
@@ -158,6 +164,25 @@ public sealed class OwnerReportService(
         return ServiceResult<bool>.Success(true);
     }
 
+    /// <summary>BDR-RENT-005 — null when the tenant isn't entitled to Rent Collection. Status is as of generation time; the period only bounds "received in period".</summary>
+    private async Task<OwnerReportRentSection?> BuildRentSectionAsync(IReadOnlyList<Guid> propertyIds, DateOnly periodStart, DateOnly periodEnd)
+    {
+        var unitAssetIds = propertyIds.Count == 0 ? [] : await unitAssetService.ListUnitAssetIdsByPropertiesAsync(propertyIds);
+        var asOf = DateOnly.FromDateTime(DateTime.UtcNow);
+
+        var summary = await rentScheduleService.GetOwnerRentSummaryAsync(unitAssetIds, periodStart, periodEnd, asOf);
+        return summary is null
+            ? null
+            : new OwnerReportRentSection(summary.CurrentCount, summary.OverdueCount, summary.ArrearsCount, summary.ReceivedInPeriod, asOf);
+    }
+
+    private static OwnerReportRentSection? ToRentSection(OwnerReport report) =>
+        report.RentCurrentCount is null
+            ? null
+            : new OwnerReportRentSection(
+                report.RentCurrentCount.Value, report.RentOverdueCount ?? 0, report.RentArrearsCount ?? 0,
+                report.RentReceivedAmount ?? 0m, report.RentAsOf ?? DateOnly.FromDateTime(report.ReadyAt?.UtcDateTime ?? DateTime.UtcNow));
+
     private async Task<(int Compliant, int Expiring)> CountDocumentComplianceAsync(Guid ownerId, DateOnly asOfDate)
     {
         var documentsResult = await documentService.ListByOwnerAsync(ownerId, null, 1000);
@@ -188,5 +213,6 @@ public sealed class OwnerReportService(
         report.CompliantDocumentCount,
         report.ExpiringDocumentCount,
         report.CreatedAt,
-        report.ReadyAt);
+        report.ReadyAt,
+        ToRentSection(report));
 }

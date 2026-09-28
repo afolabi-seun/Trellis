@@ -71,6 +71,11 @@ trellis_rentledger.rent_payment_record    — one recorded (not processed) payme
 | due_day_of_month | SMALLINT | NOT NULL CHECK (1–31) | |
 | grace_period_days | SMALLINT | NOT NULL DEFAULT 5 | Configurable per BDR-RENT-003 |
 | status | VARCHAR(20) | NOT NULL DEFAULT 'ACTIVE' | ACTIVE\|ENDED |
+| start_date | DATE | NOT NULL | *Added in the Phase 10 build.* "How many periods are owed" is undefined without it. Lease-created schedules use the listing's `available_from`; manual ones are staff-entered. The first due date is the first `due_day_of_month` on/after this date. |
+| last_arrears_alerted_period | DATE | NULLABLE | *Added in the Phase 10 build.* The due date of the latest past-grace unpaid period when the last arrears alert fired — a **per-period** dedupe key (see Arrears Flagging), not a once-ever timestamp |
+| ended_at, created_by, created_at, updated_at | | | Standard bookkeeping; `created_by` is null only for system-created rows |
+
+**Uniqueness (partial indexes):** at most one `ACTIVE` schedule per `unit_asset_id`, and at most one schedule per `lease_application_id` (which makes the lease-execution webhook's retry idempotent). A new lease on a unit with a still-`ACTIVE` schedule ends the prior one rather than failing — a signed lease is never blocked. A schedule created from a lease takes `due_day_of_month = min(available_from.day, 28)`; it is editable afterwards.
 
 ### trellis_rentledger.rent_payment_record
 
@@ -83,6 +88,8 @@ trellis_rentledger.rent_payment_record    — one recorded (not processed) payme
 | method_reference | VARCHAR(255) | NULLABLE | Free-text, e.g. "EFT ref 88213" — never a card/account number (see below) |
 | recorded_by_user_id | UUID | FK → `trellis_auth.app_user` NOT NULL | Who entered this record — required for the audit trail, since this is a manual claim of fact, not a system-observed event |
 | recorded_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | |
+| tenant_id | UUID | NOT NULL | *Added in the Phase 10 build* — the design's own "standard `tenant_isolation`" RLS needs it on this table too |
+| voided_at, voided_by, void_reason | TIMESTAMPTZ / UUID / VARCHAR(500) | NULLABLE | *Added in the Phase 10 build.* Amount, date, and reference are immutable; a mistaken entry is **voided** (excluded from every total, kept for audit), never edited or deleted — the app role has no DELETE grant |
 
 **RLS**: standard `tenant_isolation` on both tables (`data_model.md`). No Vendor-visibility
 clause — a Vendor has no relationship to rent collection, ever, same reasoning as Leasing.
@@ -105,6 +112,10 @@ resilience patterns in `error_handling.md`): for a given `rent_schedule`, is the
 grace_period_days` passed without one? This keeps the two tables append-only and avoids a
 correctness class of bug where a stored "is_overdue" flag drifts from the underlying records
 after a late payment is entered.
+
+**How "covers the current due period" is decided.** A cumulative model, not per-period matching: the total recorded as received (non-voided) is compared with the total rent due so far. `Current` = nothing due is unpaid; `Overdue` = something is unpaid but every unpaid period is still inside its grace window; `InArrears` = something is unpaid past its grace period. Late, partial, early, and multiple payments all just work with no allocation rules. A due day beyond a short month's length falls on that month's last day. The status is computed on read and by the alert job; no status is stored.
+
+**Alert dedupe.** Unlike Document expiry (a once-ever `last_alerted_at`), a monthly recurring schedule must alert again when another period slips past grace, so `last_arrears_alerted_period` holds the latest past-grace unpaid due date at the last alert; a new alert fires only when that date advances. Recipients are the tenant's `TENANT_ADMIN` and `DEPARTMENT_STAFF` users (no per-tenant recipient setting exists yet); the job checks the tenant's `RENT_COLLECTION` entitlement before alerting.
 
 BDR-RENT-004's staff notification reuses the same notification delivery mechanism Document
 expiry alerts already use (`data_model.md`), rather than introducing a second notification

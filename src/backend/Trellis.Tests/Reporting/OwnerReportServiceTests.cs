@@ -9,6 +9,9 @@ using Trellis.Api.Modules.Notification.Application.Dtos;
 using Trellis.Api.Modules.Notification.Application.Interfaces;
 using Trellis.Api.Modules.PropertyAsset.Application.Dtos;
 using Trellis.Api.Modules.PropertyAsset.Application.Interfaces;
+using Trellis.Api.Modules.RentLedger.Application.Dtos;
+using Trellis.Api.Modules.RentLedger.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Application.Dtos;
 using Trellis.Api.Modules.Reporting.Application.Interfaces;
 using Trellis.Api.Modules.Reporting.Application.Services;
 using Trellis.Api.Modules.Reporting.Domain.Entities;
@@ -28,6 +31,8 @@ public sealed class OwnerReportServiceTests : IDisposable
     private readonly ITenantService _tenantService = Substitute.For<ITenantService>();
     private readonly IOwnerService _ownerService = Substitute.For<IOwnerService>();
     private readonly IPropertyService _propertyService = Substitute.For<IPropertyService>();
+    private readonly IUnitAssetService _unitAssetService = Substitute.For<IUnitAssetService>();
+    private readonly IRentScheduleService _rentScheduleService = Substitute.For<IRentScheduleService>();
     private readonly IWorkflowInstanceService _workflowInstanceService = Substitute.For<IWorkflowInstanceService>();
     private readonly IDocumentService _documentService = Substitute.For<IDocumentService>();
     private readonly Guid _tenantId = Guid.NewGuid();
@@ -35,14 +40,14 @@ public sealed class OwnerReportServiceTests : IDisposable
     public OwnerReportServiceTests()
     {
         TenantContext.Current = new TenantContext(_tenantId);
-        _exportService.GenerateOwnerReportPdf(Arg.Any<Trellis.Api.Modules.Reporting.Application.Dtos.OwnerReportContent>()).Returns([0x25, 0x50, 0x44, 0x46]);
+        _exportService.GenerateOwnerReportPdf(Arg.Any<OwnerReportContent>()).Returns([0x25, 0x50, 0x44, 0x46]);
     }
 
     public void Dispose() => TenantContext.Current = null;
 
     private OwnerReportService CreateSut() => new(
         _repository, _exportService, _auditService, _notificationService, _tenantService, _ownerService,
-        _propertyService, _workflowInstanceService, _documentService);
+        _propertyService, _unitAssetService, _rentScheduleService, _workflowInstanceService, _documentService);
 
     private static OwnerResponse SampleOwner(string? email = "owner@example.com") =>
         new(Guid.NewGuid(), "Jane Owner", email, null, "ACTIVE", "AAAAAAAAAAA=", DateTimeOffset.UtcNow);
@@ -149,5 +154,85 @@ public sealed class OwnerReportServiceTests : IDisposable
         await _notificationService.Received(1).SendAsync(
             _tenantId, "OWNER_REPORT_READY", "owner@example.com", Arg.Any<object>(), Arg.Any<RelatedEntityRef>());
         await _auditService.Received(1).RecordAsync(_tenantId, Arg.Any<Guid>(), AuditActorType.HumanUser, AuditTypes.Reporting.OwnerReportDelivered, Arg.Any<string>());
+    }
+
+    private Guid ArrangeGenerationForOwner(out List<Guid> unitIds)
+    {
+        var owner = SampleOwner();
+        _ownerService.GetByIdAsync(owner.OwnerId).Returns(ServiceResult<OwnerResponse>.Success(owner));
+        _tenantService.GetByIdAsync(_tenantId).Returns(ServiceResult<TenantResponse>.Success(
+            new TenantResponse(_tenantId, "Acme PM", "US", "ACTIVE", "PROFESSIONAL", DateTimeOffset.UtcNow)));
+
+        var propertyIds = new List<Guid> { Guid.NewGuid() };
+        _propertyService.ListPropertyIdsByOwnerAsync(owner.OwnerId).Returns((IReadOnlyList<Guid>)propertyIds);
+        _workflowInstanceService.GetOwnerMaintenanceSummaryAsync(propertyIds, Arg.Any<DateOnly>(), Arg.Any<DateOnly>()).Returns((0m, 0));
+        _documentService.ListByOwnerAsync(owner.OwnerId, null, 1000).Returns(ServiceResult<PagedResponse<DocumentResponse>>.Success(
+            new PagedResponse<DocumentResponse>([], null, false, 0)));
+
+        unitIds = [Guid.NewGuid(), Guid.NewGuid()];
+        _unitAssetService.ListUnitAssetIdsByPropertiesAsync(Arg.Any<IReadOnlyCollection<Guid>>()).Returns((IReadOnlyList<Guid>)unitIds);
+        return owner.OwnerId;
+    }
+
+    [Fact]
+    public async Task GenerateAsync_WhenRentCollectionIsEnabled_IncludesTheRentSection_InTheRenderedContentAndTheResponse()
+    {
+        var ownerId = ArrangeGenerationForOwner(out var unitIds);
+        _rentScheduleService.GetOwnerRentSummaryAsync(Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<DateOnly>(), Arg.Any<DateOnly>(), Arg.Any<DateOnly>())
+            .Returns(new OwnerRentSummary(3, 1, 2, 4500.50m));
+        var sut = CreateSut();
+
+        var result = await sut.GenerateAsync(ownerId, OwnerReportPeriodType.Monthly, new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31), Guid.NewGuid());
+
+        result.Data!.Rent.Should().NotBeNull();
+        result.Data.Rent!.CurrentCount.Should().Be(3);
+        result.Data.Rent.OverdueCount.Should().Be(1);
+        result.Data.Rent.ArrearsCount.Should().Be(2);
+        result.Data.Rent.ReceivedInPeriod.Should().Be(4500.50m);
+        _exportService.Received(1).GenerateOwnerReportPdf(Arg.Is<OwnerReportContent>(c => c.Rent != null && c.Rent.ArrearsCount == 2));
+        await _rentScheduleService.Received(1).GetOwnerRentSummaryAsync(
+            Arg.Is<IReadOnlyList<Guid>>(ids => ids.SequenceEqual(unitIds)), new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31), Arg.Any<DateOnly>());
+    }
+
+    [Fact]
+    public async Task GenerateAsync_WhenRentCollectionIsNotEnabled_OmitsTheRentSection_NotAMisleadingZero()
+    {
+        var ownerId = ArrangeGenerationForOwner(out _);
+        _rentScheduleService.GetOwnerRentSummaryAsync(Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<DateOnly>(), Arg.Any<DateOnly>(), Arg.Any<DateOnly>())
+            .Returns((OwnerRentSummary?)null);
+        var sut = CreateSut();
+
+        var result = await sut.GenerateAsync(ownerId, OwnerReportPeriodType.Monthly, new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31), Guid.NewGuid());
+
+        result.Data!.Rent.Should().BeNull();
+        _exportService.Received(1).GenerateOwnerReportPdf(Arg.Is<OwnerReportContent>(c => c.Rent == null));
+    }
+
+    [Fact]
+    public async Task DownloadCsvAsync_ReproducesTheStoredRentSnapshot_NotALiveRequery()
+    {
+        var report = OwnerReport.Create(_tenantId, Guid.NewGuid(), "Jane Owner", OwnerReportPeriodType.Monthly, new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31), Guid.NewGuid());
+        report.MarkReady(1, 0, 0, 0, 0, [0x25], 3, 1, 2, 4500.50m, new DateOnly(2026, 2, 3));
+        _repository.GetByIdAsync(Arg.Any<Guid>()).Returns(report);
+        var sut = CreateSut();
+
+        await sut.DownloadCsvAsync(report.OwnerReportId);
+
+        _exportService.Received(1).GenerateOwnerReportCsv(Arg.Is<OwnerReportContent>(c =>
+            c.Rent != null && c.Rent.CurrentCount == 3 && c.Rent.ArrearsCount == 2 && c.Rent.ReceivedInPeriod == 4500.50m && c.Rent.AsOf == new DateOnly(2026, 2, 3)));
+        await _rentScheduleService.DidNotReceiveWithAnyArgs().GetOwnerRentSummaryAsync(default!, default, default, default);
+    }
+
+    [Fact]
+    public async Task DownloadCsvAsync_ForAReportGeneratedBeforeRentCollectionExisted_HasNoRentSection()
+    {
+        var report = OwnerReport.Create(_tenantId, Guid.NewGuid(), "Jane Owner", OwnerReportPeriodType.Monthly, new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31), Guid.NewGuid());
+        report.MarkReady(1, 0, 0, 0, 0, [0x25]);
+        _repository.GetByIdAsync(Arg.Any<Guid>()).Returns(report);
+        var sut = CreateSut();
+
+        await sut.DownloadCsvAsync(report.OwnerReportId);
+
+        _exportService.Received(1).GenerateOwnerReportCsv(Arg.Is<OwnerReportContent>(c => c.Rent == null));
     }
 }
