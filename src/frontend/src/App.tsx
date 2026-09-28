@@ -10,6 +10,8 @@ import { InspectionsListPage } from "./features/admin/inspection/InspectionsList
 import { OwnersListPage } from "./features/admin/propertyasset/OwnersListPage";
 import { PropertiesListPage } from "./features/admin/propertyasset/PropertiesListPage";
 import { PropertyDetailPage } from "./features/admin/propertyasset/PropertyDetailPage";
+import { OwnerReportsPage } from "./features/admin/reporting/OwnerReportsPage";
+import { ReportingDashboardPage } from "./features/admin/reporting/ReportingDashboardPage";
 import { VendorsListPage } from "./features/admin/vendor/VendorsListPage";
 import { DepartmentsListPage } from "./features/admin/workflow/DepartmentsListPage";
 import { WorkflowInstancesBoardPage } from "./features/admin/workflow/WorkflowInstancesBoardPage";
@@ -48,8 +50,10 @@ export function App() {
           <Route path="inspections/:id" element={<InspectionDetailPage />} />
           <Route path="extraction-jobs" element={<ExtractionReviewQueuePage />} />
           <Route path="extraction-jobs/:id" element={<ExtractionJobDetailPage />} />
+          <Route path="reporting" element={<ReportingDashboardPage />} />
           <Route element={<RequireRole allowedRoles={["TENANT_ADMIN"]} />}>
             <Route path="billing" element={<BillingSettingsPage />} />
+            <Route path="owner-reports" element={<OwnerReportsPage />} />
           </Route>
         </Route>
       </Route>

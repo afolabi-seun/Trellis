@@ -428,6 +428,62 @@ export async function seedModuleEntitlement(
   }
 }
 
+/** reporting.spec.ts's own Owner — real cross-module data an Owner report and the dashboard's document-compliance count both read from. */
+export async function seedOwner(
+  ownerId: string,
+  tenantId: string,
+  name: string,
+  email: string,
+): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(
+      `insert into trellis_property.owner (owner_id, tenant_id, name, email, status, created_at, updated_at)
+       values ($1, $2, $3, $4, 'ACTIVE', now(), now())`,
+      [ownerId, tenantId, name, email],
+    );
+  } finally {
+    await client.end();
+  }
+}
+
+/** reporting.spec.ts's own Property — PropertyService.ListPropertyIdsByOwnerAsync's real data source for an Owner report's maintenance-cost aggregate. */
+export async function seedProperty(
+  propertyId: string,
+  tenantId: string,
+  ownerId: string,
+  address: string,
+): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(
+      `insert into trellis_property.property (property_id, tenant_id, owner_id, address, property_type, status, created_at, updated_at)
+       values ($1, $2, $3, $4, 'SingleFamily', 'ACTIVE', now(), now())`,
+      [propertyId, tenantId, ownerId, address],
+    );
+  } finally {
+    await client.end();
+  }
+}
+
+/** owner_report/report_share_link only — never trellis_audit.audit_record, which is append-only and can't be deleted (its own trigger rejects DELETE unconditionally, even for this privileged role). */
+export async function deleteReportingDataForTenant(tenantId: string): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(`delete from trellis_reporting.report_share_link where tenant_id = $1`, [
+      tenantId,
+    ]);
+    await client.query(`delete from trellis_reporting.owner_report where tenant_id = $1`, [
+      tenantId,
+    ]);
+  } finally {
+    await client.end();
+  }
+}
+
 export async function deleteBillingDataForTenant(tenantId: string): Promise<void> {
   const client = new Client({ connectionString: CONNECTION_STRING });
   await client.connect();

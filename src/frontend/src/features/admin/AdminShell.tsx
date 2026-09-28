@@ -79,12 +79,26 @@ export function AdminShell() {
           >
             Extraction review
           </NavLink>
+          <NavLink
+            to="/admin/reporting"
+            style={({ isActive }) => ({ fontWeight: isActive ? 700 : 400 })}
+          >
+            Reporting
+          </NavLink>
           {claims?.role === "TENANT_ADMIN" && (
             <NavLink
               to="/admin/billing"
               style={({ isActive }) => ({ fontWeight: isActive ? 700 : 400 })}
             >
               Billing
+            </NavLink>
+          )}
+          {claims?.role === "TENANT_ADMIN" && (
+            <NavLink
+              to="/admin/owner-reports"
+              style={({ isActive }) => ({ fontWeight: isActive ? 700 : 400 })}
+            >
+              Owner reports
             </NavLink>
           )}
         </Group>

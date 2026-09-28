@@ -2741,6 +2741,405 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/reporting/dashboard": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DashboardSummaryResponseApiResponse"];
+                        "application/json": components["schemas"]["DashboardSummaryResponseApiResponse"];
+                        "text/json": components["schemas"]["DashboardSummaryResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/dashboard/export.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/owner-reports": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    ownerId?: string;
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OwnerReportResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["OwnerReportResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["OwnerReportResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["OwnerReportCreateRequest"];
+                    "text/json": components["schemas"]["OwnerReportCreateRequest"];
+                    "application/*+json": components["schemas"]["OwnerReportCreateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OwnerReportResponseApiResponse"];
+                        "application/json": components["schemas"]["OwnerReportResponseApiResponse"];
+                        "text/json": components["schemas"]["OwnerReportResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/owner-reports/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["OwnerReportResponseApiResponse"];
+                        "application/json": components["schemas"]["OwnerReportResponseApiResponse"];
+                        "text/json": components["schemas"]["OwnerReportResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/owner-reports/{id}/download.pdf": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/owner-reports/{id}/download.csv": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/owner-reports/{id}/deliver": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["BooleanApiResponse"];
+                        "application/json": components["schemas"]["BooleanApiResponse"];
+                        "text/json": components["schemas"]["BooleanApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/owner-reports/{id}/share-links": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ReportShareLinkResponseApiResponse"];
+                        "application/json": components["schemas"]["ReportShareLinkResponseApiResponse"];
+                        "text/json": components["schemas"]["ReportShareLinkResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/reporting/share-links/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post?: never;
+        delete: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["BooleanApiResponse"];
+                        "application/json": components["schemas"]["BooleanApiResponse"];
+                        "text/json": components["schemas"]["BooleanApiResponse"];
+                    };
+                };
+            };
+        };
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/reports/shared/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    token: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/platform/tenants": {
         parameters: {
             query?: never;
@@ -4030,6 +4429,22 @@ export interface components {
         ConfirmCardCaptureRequest: {
             reference?: string | null;
         };
+        DashboardSummaryResponse: {
+            /** Format: int32 */
+            openWorkOrders?: number;
+            /** Format: int32 */
+            expiringDocuments?: number;
+            /** Format: int32 */
+            upcomingInspections?: number;
+            /** Format: int32 */
+            bottleneckedSteps?: number;
+        };
+        DashboardSummaryResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["DashboardSummaryResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
         DepartmentCreateRequest: {
             name?: string | null;
         };
@@ -4454,6 +4869,61 @@ export interface components {
             email?: string | null;
             phone?: string | null;
         };
+        OwnerReportCreateRequest: {
+            /** Format: uuid */
+            ownerId?: string;
+            periodType?: string | null;
+            /** Format: date */
+            periodStart?: string;
+            /** Format: date */
+            periodEnd?: string;
+        };
+        OwnerReportResponse: {
+            /** Format: uuid */
+            ownerReportId?: string;
+            /** Format: uuid */
+            ownerId?: string;
+            ownerName?: string | null;
+            periodType?: string | null;
+            /** Format: date */
+            periodStart?: string;
+            /** Format: date */
+            periodEnd?: string;
+            status?: string | null;
+            /** Format: int32 */
+            propertyCount?: number;
+            /** Format: double */
+            totalMaintenanceCost?: number;
+            /** Format: int32 */
+            openMaintenanceCount?: number;
+            /** Format: int32 */
+            compliantDocumentCount?: number;
+            /** Format: int32 */
+            expiringDocumentCount?: number;
+            /** Format: date-time */
+            createdAt?: string;
+            /** Format: date-time */
+            readyAt?: string | null;
+        };
+        OwnerReportResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["OwnerReportResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        OwnerReportResponsePagedResponse: {
+            items?: components["schemas"]["OwnerReportResponse"][] | null;
+            nextCursor?: string | null;
+            hasMore?: boolean;
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        OwnerReportResponsePagedResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["OwnerReportResponsePagedResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
         OwnerResponse: {
             /** Format: uuid */
             ownerId?: string;
@@ -4610,6 +5080,24 @@ export interface components {
         RecoveryCodesRegenerateResponseApiResponse: {
             readonly status?: string | null;
             data?: components["schemas"]["RecoveryCodesRegenerateResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        ReportShareLinkResponse: {
+            /** Format: uuid */
+            reportShareLinkId?: string;
+            /** Format: uuid */
+            ownerReportId?: string;
+            token?: string | null;
+            status?: string | null;
+            /** Format: date-time */
+            expiresAt?: string;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        ReportShareLinkResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["ReportShareLinkResponse"];
             error?: components["schemas"]["ApiError"];
             meta: components["schemas"]["ApiMeta"];
         };
