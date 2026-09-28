@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { Client } from "pg";
 
 // Same dev-only local Postgres credentials documented in src/backend/Trellis.Api/.env.example
@@ -460,7 +461,7 @@ export async function seedProperty(
   try {
     await client.query(
       `insert into trellis_property.property (property_id, tenant_id, owner_id, address, property_type, status, created_at, updated_at)
-       values ($1, $2, $3, $4, 'SingleFamily', 'ACTIVE', now(), now())`,
+       values ($1, $2, $3, $4, 'RESIDENTIAL', 'ACTIVE', now(), now())`,
       [propertyId, tenantId, ownerId, address],
     );
   } finally {
@@ -502,6 +503,134 @@ export async function deleteBillingDataForTenant(tenantId: string): Promise<void
       tenantId,
     ]);
     await client.query(`delete from trellis_billing.subscription where tenant_id = $1`, [tenantId]);
+  } finally {
+    await client.end();
+  }
+}
+
+/** leasing.spec.ts's own vacant unit — listing creation only offers active, vacant units, and Unit creation itself is already covered by propertyasset.spec.ts. */
+export async function seedUnitAsset(
+  unitAssetId: string,
+  tenantId: string,
+  propertyId: string,
+  label: string,
+): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(
+      `insert into trellis_property.unit_asset (unit_asset_id, tenant_id, property_id, label, status, occupancy_status, created_at, updated_at)
+       values ($1, $2, $3, $4, 'ACTIVE', 'VACANT', now(), now())`,
+      [unitAssetId, tenantId, propertyId, label],
+    );
+  } finally {
+    await client.end();
+  }
+}
+
+export async function getUnitOccupancyStatus(unitAssetId: string): Promise<string> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    const result = await client.query(
+      `select occupancy_status from trellis_property.unit_asset where unit_asset_id = $1`,
+      [unitAssetId],
+    );
+    return result.rows[0].occupancy_status as string;
+  } finally {
+    await client.end();
+  }
+}
+
+/** The applicant's emailed link can't be read by a test, so a token with a known raw value is seeded directly (only its SHA-256 hash is ever stored, exactly as the app does). The listing is looked up by unit, since it was created through the UI. */
+export async function seedApplicationLinkToken(
+  tenantId: string,
+  unitAssetId: string,
+  applicantEmail: string,
+  rawToken: string,
+): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    const hash = createHash("sha256").update(rawToken).digest("hex");
+    await client.query(
+      `insert into trellis_leasing.application_link_token
+         (application_link_token_id, tenant_id, vacancy_listing_id, applicant_email, token_hash, status, expires_at, created_at)
+       select gen_random_uuid(), $1, vacancy_listing_id, $3, $4, 'ACTIVE', now() + interval '7 days', now()
+       from trellis_leasing.vacancy_listing where tenant_id = $1 and unit_asset_id = $2 and status in ('LISTED','UNDER_APPLICATION')`,
+      [tenantId, unitAssetId, applicantEmail, hash],
+    );
+  } finally {
+    await client.end();
+  }
+}
+
+/** The unsigned lease draft a staff member would upload through the normal Documents flow before sending for signature. */
+export async function seedLeaseDraftDocument(
+  documentId: string,
+  tenantId: string,
+  unitAssetId: string,
+): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    const versionId = documentId.replace(/^.{8}/, "deadbeef");
+    await client.query(
+      `insert into trellis_document.document (document_id, tenant_id, unit_asset_id, document_type, status, created_at, updated_at)
+       values ($1, $2, $3, 'LEASE', 'ACTIVE', now(), now())`,
+      [documentId, tenantId, unitAssetId],
+    );
+    await client.query(
+      `insert into trellis_document.document_version
+         (document_version_id, document_id, tenant_id, version_number, file_name, content_type, file_size_bytes, storage_key, scan_status, uploaded_by, created_at)
+       values ($1, $2, $3, 1, 'lease-draft.pdf', 'application/pdf', 4, $4, 'CLEAN', gen_random_uuid(), now())`,
+      [versionId, documentId, tenantId, `e2e/${documentId}`],
+    );
+    await client.query(
+      `update trellis_document.document set current_version_id = $2 where document_id = $1`,
+      [documentId, versionId],
+    );
+  } finally {
+    await client.end();
+  }
+}
+
+export async function getEnvelopeIdForTenant(tenantId: string): Promise<string> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    const result = await client.query(
+      `select envelope_id from trellis_leasing.application where tenant_id = $1 and envelope_id is not null`,
+      [tenantId],
+    );
+    return result.rows[0].envelope_id as string;
+  } finally {
+    await client.end();
+  }
+}
+
+/** Never trellis_audit.audit_record (append-only, its own trigger rejects DELETE). application_event is deletable here only because this is the privileged owner role — trellis_app has SELECT/INSERT only. */
+export async function deleteLeasingDataForTenant(tenantId: string): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(
+      `delete from trellis_leasing.leasing_webhook_event
+       where payload_json like any (
+         select '%' || envelope_id || '%' from trellis_leasing.application
+         where tenant_id = $1 and envelope_id is not null)`,
+      [tenantId],
+    );
+    for (const table of [
+      "screening_result",
+      "application_event",
+      "application_link_token",
+      "application",
+      "vacancy_listing_photo",
+      "vacancy_listing",
+    ]) {
+      await client.query(`delete from trellis_leasing.${table} where tenant_id = $1`, [tenantId]);
+    }
   } finally {
     await client.end();
   }

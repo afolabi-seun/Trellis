@@ -7,6 +7,9 @@ import { BillingSettingsPage } from "./features/admin/billing/BillingSettingsPag
 import { DocumentsLibraryPage } from "./features/admin/document/DocumentsLibraryPage";
 import { InspectionDetailPage } from "./features/admin/inspection/InspectionDetailPage";
 import { InspectionsListPage } from "./features/admin/inspection/InspectionsListPage";
+import { ApplicationsReviewPage } from "./features/admin/leasing/ApplicationsReviewPage";
+import { VacancyListingDetailPage } from "./features/admin/leasing/VacancyListingDetailPage";
+import { VacancyListingsPage } from "./features/admin/leasing/VacancyListingsPage";
 import { OwnersListPage } from "./features/admin/propertyasset/OwnersListPage";
 import { PropertiesListPage } from "./features/admin/propertyasset/PropertiesListPage";
 import { PropertyDetailPage } from "./features/admin/propertyasset/PropertyDetailPage";
@@ -20,6 +23,9 @@ import { ForgotPasswordPage } from "./features/auth/ForgotPasswordPage";
 import { LoginPage } from "./features/auth/LoginPage";
 import { MfaVerifyPage } from "./features/auth/MfaVerifyPage";
 import { ResetPasswordPage } from "./features/auth/ResetPasswordPage";
+import { ApplyPage } from "./features/public/leasing/ApplyPage";
+import { PublicVacancyListingDetailPage } from "./features/public/leasing/PublicVacancyListingDetailPage";
+import { PublicVacancyListingsPage } from "./features/public/leasing/PublicVacancyListingsPage";
 import { PlatformBillingPage } from "./features/platform/PlatformBillingPage";
 import { TenantsListPage } from "./features/platform/TenantsListPage";
 import { VendorAssignmentDetailPage } from "./features/vendor/VendorAssignmentDetailPage";
@@ -34,6 +40,10 @@ export function App() {
       <Route path="/mfa-verify" element={<MfaVerifyPage />} />
       <Route path="/forgot-password" element={<ForgotPasswordPage />} />
       <Route path="/reset-password" element={<ResetPasswordPage />} />
+
+      <Route path="/vacancies/:tenantId" element={<PublicVacancyListingsPage />} />
+      <Route path="/vacancies/:tenantId/:listingId" element={<PublicVacancyListingDetailPage />} />
+      <Route path="/apply/:token" element={<ApplyPage />} />
 
       <Route element={<RequireRole allowedRoles={["TENANT_ADMIN", "DEPARTMENT_STAFF"]} />}>
         <Route path="/admin" element={<AdminShell />}>
@@ -50,6 +60,9 @@ export function App() {
           <Route path="inspections/:id" element={<InspectionDetailPage />} />
           <Route path="extraction-jobs" element={<ExtractionReviewQueuePage />} />
           <Route path="extraction-jobs/:id" element={<ExtractionJobDetailPage />} />
+          <Route path="vacancy-listings" element={<VacancyListingsPage />} />
+          <Route path="vacancy-listings/:id" element={<VacancyListingDetailPage />} />
+          <Route path="applications" element={<ApplicationsReviewPage />} />
           <Route path="reporting" element={<ReportingDashboardPage />} />
           <Route element={<RequireRole allowedRoles={["TENANT_ADMIN"]} />}>
             <Route path="billing" element={<BillingSettingsPage />} />

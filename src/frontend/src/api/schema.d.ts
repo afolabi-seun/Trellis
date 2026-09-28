@@ -319,6 +319,248 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/applications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    vacancyListingId?: string;
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ApplicationResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["ApplicationResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["ApplicationResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ApplicationResponseApiResponse"];
+                        "application/json": components["schemas"]["ApplicationResponseApiResponse"];
+                        "text/json": components["schemas"]["ApplicationResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{id}/events": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ApplicationEventResponseIReadOnlyListApiResponse"];
+                        "application/json": components["schemas"]["ApplicationEventResponseIReadOnlyListApiResponse"];
+                        "text/json": components["schemas"]["ApplicationEventResponseIReadOnlyListApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{id}/approve": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ApplicationResponseApiResponse"];
+                        "application/json": components["schemas"]["ApplicationResponseApiResponse"];
+                        "text/json": components["schemas"]["ApplicationResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ApplicationResponseApiResponse"];
+                        "application/json": components["schemas"]["ApplicationResponseApiResponse"];
+                        "text/json": components["schemas"]["ApplicationResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/applications/{id}/send-for-signature": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["SendForSignatureRequest"];
+                    "text/json": components["schemas"]["SendForSignatureRequest"];
+                    "application/*+json": components["schemas"]["SendForSignatureRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ApplicationResponseApiResponse"];
+                        "application/json": components["schemas"]["ApplicationResponseApiResponse"];
+                        "text/json": components["schemas"]["ApplicationResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/login": {
         parameters: {
             query?: never;
@@ -1599,6 +1841,39 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/webhooks/esignature": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/inspections": {
         parameters: {
             query?: never;
@@ -2741,6 +3016,255 @@ export interface paths {
         };
         trace?: never;
     };
+    "/api/v1/public/application-links/{token}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    token: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ApplicationLinkContextResponseApiResponse"];
+                        "application/json": components["schemas"]["ApplicationLinkContextResponseApiResponse"];
+                        "text/json": components["schemas"]["ApplicationLinkContextResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/application-links/{token}/applications": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    token: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ApplicationSubmitRequest"];
+                    "text/json": components["schemas"]["ApplicationSubmitRequest"];
+                    "application/*+json": components["schemas"]["ApplicationSubmitRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ApplicationSubmitResponseApiResponse"];
+                        "application/json": components["schemas"]["ApplicationSubmitResponseApiResponse"];
+                        "text/json": components["schemas"]["ApplicationSubmitResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/tenants/{tenantId}/vacancy-listings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path: {
+                    tenantId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PublicVacancyListingResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["PublicVacancyListingResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["PublicVacancyListingResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/tenants/{tenantId}/vacancy-listings/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    tenantId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["PublicVacancyListingDetailResponseApiResponse"];
+                        "application/json": components["schemas"]["PublicVacancyListingDetailResponseApiResponse"];
+                        "text/json": components["schemas"]["PublicVacancyListingDetailResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/tenants/{tenantId}/vacancy-listings/{id}/photos/{photoId}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    tenantId: string;
+                    id: string;
+                    photoId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/public/tenants/{tenantId}/vacancy-listings/{id}/application-link": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    tenantId: string;
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ApplicationLinkIssueRequest"];
+                    "text/json": components["schemas"]["ApplicationLinkIssueRequest"];
+                    "application/*+json": components["schemas"]["ApplicationLinkIssueRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["BooleanApiResponse"];
+                        "application/json": components["schemas"]["BooleanApiResponse"];
+                        "text/json": components["schemas"]["BooleanApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reporting/dashboard": {
         parameters: {
             query?: never;
@@ -3547,6 +4071,262 @@ export interface paths {
                 };
             };
         };
+        trace?: never;
+    };
+    "/api/v1/vacancy-listings": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VacancyListingResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["VacancyListingResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["VacancyListingResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["VacancyListingCreateRequest"];
+                    "text/json": components["schemas"]["VacancyListingCreateRequest"];
+                    "application/*+json": components["schemas"]["VacancyListingCreateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VacancyListingResponseApiResponse"];
+                        "application/json": components["schemas"]["VacancyListingResponseApiResponse"];
+                        "text/json": components["schemas"]["VacancyListingResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vacancy-listings/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VacancyListingResponseApiResponse"];
+                        "application/json": components["schemas"]["VacancyListingResponseApiResponse"];
+                        "text/json": components["schemas"]["VacancyListingResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["VacancyListingUpdateRequest"];
+                    "text/json": components["schemas"]["VacancyListingUpdateRequest"];
+                    "application/*+json": components["schemas"]["VacancyListingUpdateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VacancyListingResponseApiResponse"];
+                        "application/json": components["schemas"]["VacancyListingResponseApiResponse"];
+                        "text/json": components["schemas"]["VacancyListingResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/vacancy-listings/{id}/withdraw": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VacancyListingResponseApiResponse"];
+                        "application/json": components["schemas"]["VacancyListingResponseApiResponse"];
+                        "text/json": components["schemas"]["VacancyListingResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vacancy-listings/{id}/photos": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "multipart/form-data": {
+                        /** Format: binary */
+                        File?: string;
+                    };
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["VacancyListingPhotoResponseApiResponse"];
+                        "application/json": components["schemas"]["VacancyListingPhotoResponseApiResponse"];
+                        "text/json": components["schemas"]["VacancyListingPhotoResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/vacancy-listings/{id}/photos/{photoId}/download": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    photoId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content?: never;
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
         trace?: never;
     };
     "/api/v1/vendor-assignments": {
@@ -4420,6 +5200,92 @@ export interface components {
             /** Format: date-time */
             timestamp: string;
         };
+        ApplicationEventResponse: {
+            /** Format: uuid */
+            applicationEventId?: string;
+            eventType?: string | null;
+            actorType?: string | null;
+            detailJson?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        ApplicationEventResponseIReadOnlyListApiResponse: {
+            readonly status?: string | null;
+            readonly data?: components["schemas"]["ApplicationEventResponse"][] | null;
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        ApplicationLinkContextResponse: {
+            /** Format: uuid */
+            vacancyListingId?: string;
+            unitLabel?: string | null;
+            /** Format: double */
+            rentAmount?: number;
+            currency?: string | null;
+            applicantEmail?: string | null;
+        };
+        ApplicationLinkContextResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["ApplicationLinkContextResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        ApplicationLinkIssueRequest: {
+            applicantEmail?: string | null;
+        };
+        ApplicationResponse: {
+            /** Format: uuid */
+            applicationId?: string;
+            /** Format: uuid */
+            vacancyListingId?: string;
+            applicantEmail?: string | null;
+            applicantFullName?: string | null;
+            status?: string | null;
+            screeningOutcomeSummary?: string | null;
+            /** Format: date-time */
+            submittedAt?: string;
+        };
+        ApplicationResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["ApplicationResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        ApplicationResponsePagedResponse: {
+            items?: components["schemas"]["ApplicationResponse"][] | null;
+            nextCursor?: string | null;
+            hasMore?: boolean;
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        ApplicationResponsePagedResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["ApplicationResponsePagedResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        ApplicationSubmitRequest: {
+            fullName?: string | null;
+            phone?: string | null;
+            /** Format: date */
+            dateOfBirth?: string;
+            currentAddress?: string | null;
+            employerName?: string | null;
+            /** Format: double */
+            monthlyIncome?: number | null;
+            consentToScreening?: boolean;
+        };
+        ApplicationSubmitResponse: {
+            /** Format: uuid */
+            applicationId?: string;
+            status?: string | null;
+        };
+        ApplicationSubmitResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["ApplicationSubmitResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
         BooleanApiResponse: {
             readonly status?: string | null;
             readonly data?: boolean;
@@ -5071,6 +5937,48 @@ export interface components {
             currentValuation?: number | null;
             rowVersion?: string | null;
         };
+        PublicVacancyListingDetailResponse: {
+            /** Format: uuid */
+            vacancyListingId?: string;
+            unitLabel?: string | null;
+            /** Format: double */
+            rentAmount?: number;
+            currency?: string | null;
+            /** Format: date */
+            availableFrom?: string;
+            description?: string | null;
+            photoIds?: string[] | null;
+        };
+        PublicVacancyListingDetailResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["PublicVacancyListingDetailResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        PublicVacancyListingResponse: {
+            /** Format: uuid */
+            vacancyListingId?: string;
+            unitLabel?: string | null;
+            /** Format: double */
+            rentAmount?: number;
+            currency?: string | null;
+            /** Format: date */
+            availableFrom?: string;
+            description?: string | null;
+        };
+        PublicVacancyListingResponsePagedResponse: {
+            items?: components["schemas"]["PublicVacancyListingResponse"][] | null;
+            nextCursor?: string | null;
+            hasMore?: boolean;
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        PublicVacancyListingResponsePagedResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["PublicVacancyListingResponsePagedResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
         RecoveryCodesRegenerateRequest: {
             currentPassword?: string | null;
         };
@@ -5149,6 +6057,10 @@ export interface components {
             data?: components["schemas"]["RoutingSuggestionResponsePagedResponse"];
             error?: components["schemas"]["ApiError"];
             meta: components["schemas"]["ApiMeta"];
+        };
+        SendForSignatureRequest: {
+            /** Format: uuid */
+            draftDocumentId?: string;
         };
         SubscriptionResponse: {
             /** Format: uuid */
@@ -5281,6 +6193,7 @@ export interface components {
             propertyId?: string;
             label?: string | null;
             status?: string | null;
+            occupancyStatus?: string | null;
             /** Format: double */
             sizeSqft?: number | null;
             /** Format: double */
@@ -5314,6 +6227,77 @@ export interface components {
             sizeSqft?: number | null;
             /** Format: double */
             acquisitionValue?: number | null;
+            rowVersion?: string | null;
+        };
+        VacancyListingCreateRequest: {
+            /** Format: uuid */
+            unitAssetId?: string;
+            /** Format: double */
+            rentAmount?: number;
+            currency?: string | null;
+            /** Format: date */
+            availableFrom?: string;
+            description?: string | null;
+        };
+        VacancyListingPhotoResponse: {
+            /** Format: uuid */
+            vacancyListingPhotoId?: string;
+            fileName?: string | null;
+            scanStatus?: string | null;
+            /** Format: int32 */
+            displayOrder?: number;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        VacancyListingPhotoResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["VacancyListingPhotoResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        VacancyListingResponse: {
+            /** Format: uuid */
+            vacancyListingId?: string;
+            /** Format: uuid */
+            unitAssetId?: string;
+            /** Format: double */
+            rentAmount?: number;
+            currency?: string | null;
+            /** Format: date */
+            availableFrom?: string;
+            description?: string | null;
+            status?: string | null;
+            photos?: components["schemas"]["VacancyListingPhotoResponse"][] | null;
+            rowVersion?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        VacancyListingResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["VacancyListingResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        VacancyListingResponsePagedResponse: {
+            items?: components["schemas"]["VacancyListingResponse"][] | null;
+            nextCursor?: string | null;
+            hasMore?: boolean;
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        VacancyListingResponsePagedResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["VacancyListingResponsePagedResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        VacancyListingUpdateRequest: {
+            /** Format: double */
+            rentAmount?: number;
+            currency?: string | null;
+            /** Format: date */
+            availableFrom?: string;
+            description?: string | null;
             rowVersion?: string | null;
         };
         VendorAssignmentCreateRequest: {
