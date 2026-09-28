@@ -34,6 +34,10 @@ public sealed class InspectionRepository(InspectionDbContext dbContext) : Tenant
         return (page.Take(limit).ToList(), hasMore, totalCount);
     }
 
+    public Task<int> CountUpcomingAsync(DateTimeOffset fromDate, DateTimeOffset toDate) =>
+        Scoped(dbContext.Inspections).CountAsync(
+            i => i.Status == InspectionStatus.Scheduled && i.ScheduledAt >= fromDate && i.ScheduledAt <= toDate);
+
     public string GetRowVersion(InspectionRecord inspection) => RowVersionHelper.Get(dbContext, inspection);
 
     public void SetExpectedRowVersion(InspectionRecord inspection, string rowVersion) => RowVersionHelper.SetExpected(dbContext, inspection, rowVersion);

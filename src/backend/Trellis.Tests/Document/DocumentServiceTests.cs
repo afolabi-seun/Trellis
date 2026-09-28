@@ -1,7 +1,6 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using NSubstitute;
-using Trellis.Api.Core.Audit;
 using Trellis.Api.Core.Files;
 using Trellis.Api.Core.Middleware;
 using Trellis.Api.Core.Results;
@@ -12,6 +11,8 @@ using Trellis.Api.Modules.Document.Application.Services;
 using Trellis.Api.Modules.Document.Application.Validators;
 using Trellis.Api.Modules.Document.Domain.Entities;
 using Trellis.Api.Modules.PropertyAsset.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Domain.Entities;
 using Trellis.Api.Modules.Workflow.Application.Interfaces;
 using Xunit;
 

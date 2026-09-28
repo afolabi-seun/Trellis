@@ -1,8 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
-using Trellis.Api.Core.Audit;
+using Trellis.Api.Modules.Reporting.Domain.Entities;
 
-namespace Trellis.Api.Core.Data.Configurations;
+namespace Trellis.Api.Modules.Reporting.Infrastructure.Data.Configurations;
 
 /// <summary>
 /// data_model.md's <c>trellis_audit.audit_record</c> — append-only (a migration-level trigger

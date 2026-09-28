@@ -162,4 +162,19 @@ public static class ErrorCodeRegistry
         /// <summary>TRL-E-BIL-10003 — IPaymentGateway.ChargeAsync returned a decline/error result.</summary>
         public const string ChargeFailed = "TRL-E-BIL-10003";
     }
+
+    /// <summary>
+    /// api_standards.md's registry table documents Reporting as TRL-E-RPT | 9000–9999, but Ai's
+    /// own real shipped codes already occupy TRL-E-AI-9000/9001/9002 — a pre-existing doc/
+    /// implementation drift from Phase 6, confirmed via direct read of this file, not fixed here.
+    /// Reporting's own codes start at 9100 to avoid that collision.
+    /// </summary>
+    public static class Reporting
+    {
+        /// <summary>TRL-E-RPT-9100 — an OwnerReport/ReportShareLink transition its current status doesn't allow.</summary>
+        public const string InvalidStatusTransition = "TRL-E-RPT-9100";
+
+        /// <summary>TRL-E-RPT-9101 — DeliverByEmailAsync called for an Owner with no email on file.</summary>
+        public const string OwnerHasNoEmail = "TRL-E-RPT-9101";
+    }
 }

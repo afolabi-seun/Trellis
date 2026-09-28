@@ -1,6 +1,5 @@
 using FluentAssertions;
 using NSubstitute;
-using Trellis.Api.Core.Audit;
 using Trellis.Api.Core.Dtos;
 using Trellis.Api.Core.Middleware;
 using Trellis.Api.Core.Results;
@@ -8,6 +7,8 @@ using Trellis.Api.Modules.Ai.Application.Dtos;
 using Trellis.Api.Modules.Ai.Application.Interfaces;
 using Trellis.Api.Modules.Ai.Application.Services;
 using Trellis.Api.Modules.Ai.Domain.Entities;
+using Trellis.Api.Modules.Reporting.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Domain.Entities;
 using Trellis.Api.Modules.Workflow.Application.Dtos;
 using Trellis.Api.Modules.Workflow.Application.Interfaces;
 using Xunit;

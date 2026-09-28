@@ -1,4 +1,4 @@
-namespace Trellis.Api.Core.Audit;
+namespace Trellis.Api.Modules.Reporting.Domain.Entities;
 
 public enum AuditActorType
 {

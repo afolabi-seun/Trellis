@@ -33,4 +33,14 @@ public interface IWorkflowInstanceService
     /// DEPARTMENT_STAFF-only [Authorize].
     /// </summary>
     Task<ServiceResult<VendorWorkflowInstanceView>> GetForVendorAsync(Guid vendorId, Guid workflowInstanceId);
+
+    /// <summary>Reporting's dashboard (BDR-RPT-001) — count of InProgress instances for the caller's own tenant.</summary>
+    Task<int> CountOpenAsync();
+
+    /// <summary>Reporting's dashboard (BDR-RPT-001) — count of steps still InProgress past thresholdDays.</summary>
+    Task<int> CountBottlenecksAsync(int thresholdDays);
+
+    /// <summary>Reporting's Owner report (BDR-OWN-002) — real "financial section" data source; see OwnerReport's own doc comment for why this is maintenance cost, not income/expense.</summary>
+    Task<(decimal TotalCost, int OpenCount)> GetOwnerMaintenanceSummaryAsync(
+        IReadOnlyList<Guid> propertyIds, DateOnly periodStart, DateOnly periodEnd);
 }

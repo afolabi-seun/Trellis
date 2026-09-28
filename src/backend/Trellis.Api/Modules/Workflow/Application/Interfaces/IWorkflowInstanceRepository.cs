@@ -22,5 +22,15 @@ public interface IWorkflowInstanceRepository
     Task<(IReadOnlyList<WorkflowInstance> Items, bool HasMore, int TotalCount)> ListAsync(
         (DateTimeOffset CreatedAt, Guid Id)? cursor, int limit);
 
+    /// <summary>Reporting's dashboard (BDR-RPT-001) — tenant-scoped via Scoped(), a plain count, not a full ServiceResult&lt;T&gt; shape, matching UnitAssetRepository's own CountActiveForTenantAsync precedent for cross-module aggregate reads.</summary>
+    Task<int> CountByStatusAsync(WorkflowInstanceStatus status);
+
+    /// <summary>"Bottleneck" = a WorkflowStepInstance still InProgress past thresholdDays, using the step's own CreatedAt as the activation-time proxy — WorkflowStepInstance has no separately tracked "became active" timestamp.</summary>
+    Task<int> CountBottleneckedStepsAsync(int thresholdDays);
+
+    /// <summary>Reporting's Owner report (BDR-OWN-002) — TotalCost sums CostAmount for instances against the given properties created within [periodStart, periodEnd]; OpenCount is a current-state count (InProgress), not period-bound, matching the dashboard's own "open work orders" semantics.</summary>
+    Task<(decimal TotalCost, int OpenCount)> GetOwnerMaintenanceSummaryAsync(
+        IReadOnlyList<Guid> propertyIds, DateOnly periodStart, DateOnly periodEnd);
+
     Task SaveChangesAsync();
 }

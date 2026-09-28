@@ -14,6 +14,9 @@ public interface IPropertyRepository
     /// <summary>True if this property still has any non-archived unit/asset — blocks Archive() when true.</summary>
     Task<bool> HasActiveUnitAssetsAsync(Guid propertyId);
 
+    /// <summary>Reporting's Owner report (BDR-OWN-002) — every property this Owner holds, tenant-scoped via Scoped(). Includes archived properties: a report's period may predate an archival, and excluding them would silently drop real maintenance history.</summary>
+    Task<IReadOnlyList<Guid>> ListIdsByOwnerAsync(Guid ownerId);
+
     string GetRowVersion(Property property);
 
     void SetExpectedRowVersion(Property property, string rowVersion);

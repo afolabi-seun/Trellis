@@ -141,4 +141,6 @@ public sealed class PropertyService(IPropertyRepository repository) : IPropertyS
             "MIXED_USE" => PropertyType.MixedUse,
             var other => Enum.Parse<PropertyType>(other, true),
         };
+
+    public Task<IReadOnlyList<Guid>> ListPropertyIdsByOwnerAsync(Guid ownerId) => repository.ListIdsByOwnerAsync(ownerId);
 }

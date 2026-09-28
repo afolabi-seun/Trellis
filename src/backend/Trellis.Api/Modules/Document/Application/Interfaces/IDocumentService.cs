@@ -35,4 +35,7 @@ public interface IDocumentService
 
     /// <summary>security_guide.md's one exception: a stream only if scan_status = CLEAN, or regardless of status if the caller is the version's own uploader.</summary>
     Task<ServiceResult<DocumentDownloadResult>> DownloadAsync(Guid documentId, Guid callerUserId);
+
+    /// <summary>Reporting's dashboard (BDR-RPT-001) — count of the caller's own tenant's documents expiring within lookaheadDays.</summary>
+    Task<int> CountExpiringAsync(int lookaheadDays);
 }

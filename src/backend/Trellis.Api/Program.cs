@@ -13,6 +13,7 @@ using Trellis.Api.Modules.Document;
 using Trellis.Api.Modules.Inspection;
 using Trellis.Api.Modules.Notification;
 using Trellis.Api.Modules.PropertyAsset;
+using Trellis.Api.Modules.Reporting;
 using Trellis.Api.Modules.Tenant;
 using Trellis.Api.Modules.Vendor;
 using Trellis.Api.Modules.Workflow;
@@ -40,24 +41,28 @@ builder.Services.AddTrellisSwaggerGen();
 builder.Services.AddTrellisCore(builder.Configuration);
 
 // Tenant → Notification → Auth → PropertyAsset → Vendor → Document → Workflow → Inspection → Ai →
-// Billing, per data_model.md's migration dependency order and roadmap.md's Phase 1 → Phase 7
-// sequencing. Vendor registers before Document/Workflow/Inspection since all three now depend on
-// its published IVendorAssignmentReader (Workflow's vendor-safe projection, Document's evidence
-// upload, Inspection's own vendor-portal reads).
+// Billing → Reporting, per data_model.md's migration dependency order and roadmap.md's Phase 1 →
+// Phase 8 sequencing. Vendor registers before Document/Workflow/Inspection since all three now
+// depend on its published IVendorAssignmentReader (Workflow's vendor-safe projection, Document's
+// evidence upload, Inspection's own vendor-portal reads).
 //
-// Ai and Billing both register last, matching the fixed migration order — this is a convention,
-// not a requirement. DocumentService has a compile-time constructor dependency on Ai's own
-// IExtractionService (Modules/Ai/Application/Interfaces, not Core), and Inspection's/Ai's own
-// controllers now depend on Billing's RequiresModuleEntitlementAttribute
+// Ai, Billing, and now Reporting all register last, matching the fixed migration order — this is
+// a convention, not a requirement. DocumentService has a compile-time constructor dependency on
+// Ai's own IExtractionService (Modules/Ai/Application/Interfaces, not Core), and Inspection's/
+// Ai's own controllers now depend on Billing's RequiresModuleEntitlementAttribute
 // (Modules/Billing/Presentation/Filters), even though Billing's DbContext migrates after both in
 // the schema chain above. This is safe: ASP.NET Core resolves constructor dependencies lazily
 // against the fully-built container, so registration order across Add*Module() calls never gates
 // resolution — only the Postgres migration order genuinely does. DocumentService already proves
 // this today with its longer-standing dependency on Workflow's own IWorkflowInstanceService, a
-// module that also migrates after Document. Don't "fix" this into a Core hoist later on
-// registration-order grounds alone — there's no actual problem to fix. (RequiresModuleEntitlementAttribute
-// itself stays inside Billing's own Presentation/Filters, not Core, since Core never depends on
-// any Module — see that attribute's own doc comment.)
+// module that also migrates after Document. Reporting is the newest, most pointed proof yet: every
+// module registered above it (Tenant first) already depends on IAuditService, which now lives in
+// Reporting and is registered dead last — and every one of those earlier modules resolves it fine,
+// because the container is built once, from the whole IServiceCollection, before the first
+// request. Don't "fix" this into a Core hoist later on registration-order grounds alone — there's
+// no actual problem to fix. (RequiresModuleEntitlementAttribute itself stays inside Billing's own
+// Presentation/Filters, not Core, since Core never depends on any Module — see that attribute's
+// own doc comment.)
 builder.Services.AddTenantModule(builder.Configuration);
 builder.Services.AddNotificationModule(builder.Configuration);
 builder.Services.AddAuthModule(builder.Configuration);
@@ -68,6 +73,7 @@ builder.Services.AddWorkflowModule(builder.Configuration);
 builder.Services.AddInspectionModule(builder.Configuration);
 builder.Services.AddAiModule(builder.Configuration);
 builder.Services.AddBillingModule(builder.Configuration);
+builder.Services.AddReportingModule(builder.Configuration);
 
 var app = builder.Build();
 

@@ -1,9 +1,10 @@
-using Trellis.Api.Core.Audit;
 using Trellis.Api.Core.Helpers;
 using Trellis.Api.Core.Results;
 using Trellis.Api.Modules.Billing.Application.Dtos;
 using Trellis.Api.Modules.Billing.Application.Interfaces;
 using Trellis.Api.Modules.Billing.Domain.Entities;
+using Trellis.Api.Modules.Reporting.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Domain.Entities;
 
 namespace Trellis.Api.Modules.Billing.Application.Services;
 

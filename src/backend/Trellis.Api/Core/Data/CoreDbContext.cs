@@ -1,17 +1,16 @@
 using Microsoft.EntityFrameworkCore;
-using Trellis.Api.Core.Audit;
 
 namespace Trellis.Api.Core.Data;
 
 /// <summary>
-/// The one cross-cutting <c>DbContext</c> that isn't owned by a module — <c>trellis_audit</c>
-/// belongs to the not-yet-built Reporting module (data_model.md), but every module needs
-/// <see cref="IAuditService"/> from Phase 1 onward. Migrates first, ahead of every module, since
-/// Tenant's own provisioning flow writes an audit record on its first real use.
+/// The idempotency-key store — <c>trellis_audit.audit_record</c> used to live here too (before
+/// Reporting, Phase 8, was built), tracked by <see cref="IdempotencyKey"/>'s own migration
+/// history table staying in the <c>trellis_audit</c> schema even after the ownership transfer
+/// (see the Core migration that moved <c>AuditRecord</c> out — the schema name is a historical
+/// artifact of that shared past, not a live Reporting dependency).
 /// </summary>
 public sealed class CoreDbContext(DbContextOptions<CoreDbContext> options) : DbContext(options)
 {
-    public DbSet<AuditRecord> AuditRecords => Set<AuditRecord>();
     public DbSet<IdempotencyKey> IdempotencyKeys => Set<IdempotencyKey>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) =>

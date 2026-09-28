@@ -46,4 +46,7 @@ public interface IInspectionService
     /// </summary>
     Task<ServiceResult<VendorInspectionView>> CompleteFromVendorAsync(
         Guid vendorId, Guid inspectionId, InspectionCompleteRequest request, Guid uploadedBy);
+
+    /// <summary>Reporting's dashboard (BDR-RPT-001) — count of the caller's own tenant's Scheduled inspections within the next lookaheadDays.</summary>
+    Task<int> CountUpcomingAsync(int lookaheadDays);
 }

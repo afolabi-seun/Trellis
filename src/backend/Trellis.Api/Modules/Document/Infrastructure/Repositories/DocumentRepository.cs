@@ -43,6 +43,10 @@ public sealed class DocumentRepository(DocumentDbContext dbContext) : TenantAwar
             .Take(batchSize)
             .ToListAsync();
 
+    public Task<int> CountDueForExpiryAsync(DateOnly lookaheadDate) =>
+        Scoped(dbContext.Documents).CountAsync(
+            d => d.Status == DocumentStatus.Active && d.ExpiresAt != null && d.ExpiresAt <= lookaheadDate);
+
     public string GetRowVersion(DocumentRecord document) => RowVersionHelper.Get(dbContext, document);
 
     public void SetExpectedRowVersion(DocumentRecord document, string rowVersion) => RowVersionHelper.SetExpected(dbContext, document, rowVersion);

@@ -1,4 +1,4 @@
-namespace Trellis.Api.Core.Audit;
+namespace Trellis.Api.Modules.Reporting.Domain.Entities;
 
 /// <summary>
 /// The <c>audit_type</c> registry (data_model.md:225-228, extended by each module's own design
@@ -82,5 +82,14 @@ public static class AuditTypes
         public const string PaymentMethodAdded = "PAYMENT_METHOD_ADDED";
         public const string ModuleEntitlementChanged = "MODULE_ENTITLEMENT_CHANGED";
         public const string WebhookEventProcessed = "WEBHOOK_EVENT_PROCESSED";
+    }
+
+    /// <summary>BDR-OWN-002/004 — Owner report generation and delivery, this module's own first use of the registry it now owns.</summary>
+    public static class Reporting
+    {
+        public const string OwnerReportGenerated = "OWNER_REPORT_GENERATED";
+        public const string OwnerReportDelivered = "OWNER_REPORT_DELIVERED";
+        public const string ReportShareLinkCreated = "REPORT_SHARE_LINK_CREATED";
+        public const string ReportShareLinkRevoked = "REPORT_SHARE_LINK_REVOKED";
     }
 }

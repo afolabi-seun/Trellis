@@ -1,11 +1,12 @@
 using Microsoft.EntityFrameworkCore;
-using Trellis.Api.Core.Audit;
 using Trellis.Api.Core.Data;
 using Trellis.Api.Core.Dtos;
 using Trellis.Api.Core.Helpers;
 using Trellis.Api.Core.Middleware;
 using Trellis.Api.Core.Results;
 using Trellis.Api.Modules.Inspection.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Domain.Entities;
 using Trellis.Api.Modules.Tenant.Application.Interfaces;
 using Trellis.Api.Modules.Vendor.Application.Dtos;
 using Trellis.Api.Modules.Vendor.Application.Interfaces;

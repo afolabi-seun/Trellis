@@ -35,6 +35,9 @@ public interface IDocumentRepository
     /// <summary>BDR-DOC-003's own poll — documents whose ExpiresAt falls within the lookahead window and haven't already been alerted, across every tenant (called under SystemContext.Enter()).</summary>
     Task<IReadOnlyList<DocumentRecord>> GetDueForExpiryAlertAsync(DateOnly lookaheadDate, int batchSize);
 
+    /// <summary>Reporting's dashboard (BDR-RPT-001) — the tenant-scoped (Scoped()) opposite of GetDueForExpiryAlertAsync: one tenant's own count, not a cross-tenant batch, and doesn't consult LastAlertedAt (a document due for its 3rd reminder is still "expiring soon" for this count).</summary>
+    Task<int> CountDueForExpiryAsync(DateOnly lookaheadDate);
+
     string GetRowVersion(DocumentRecord document);
 
     void SetExpectedRowVersion(DocumentRecord document, string rowVersion);

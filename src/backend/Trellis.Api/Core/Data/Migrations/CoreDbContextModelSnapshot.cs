@@ -22,45 +22,6 @@ namespace Trellis.Api.Core.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
-            modelBuilder.Entity("Trellis.Api.Core.Audit.AuditRecord", b =>
-                {
-                    b.Property<Guid>("AuditId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("audit_id");
-
-                    b.Property<DateTimeOffset>("RecordedAt")
-                        .HasColumnType("timestamp with time zone")
-                        .HasColumnName("recorded_at");
-
-                    b.Property<Guid>("ActorId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("actor_id");
-
-                    b.Property<string>("ActorType")
-                        .IsRequired()
-                        .HasMaxLength(20)
-                        .HasColumnType("character varying(20)")
-                        .HasColumnName("actor_type");
-
-                    b.Property<string>("AuditType")
-                        .IsRequired()
-                        .HasMaxLength(50)
-                        .HasColumnType("character varying(50)")
-                        .HasColumnName("audit_type");
-
-                    b.Property<string>("DetailJson")
-                        .HasColumnType("jsonb")
-                        .HasColumnName("detail_json");
-
-                    b.Property<Guid?>("TenantId")
-                        .HasColumnType("uuid")
-                        .HasColumnName("tenant_id");
-
-                    b.HasKey("AuditId", "RecordedAt");
-
-                    b.ToTable("audit_record", "trellis_audit");
-                });
-
             modelBuilder.Entity("Trellis.Api.Core.Data.IdempotencyKey", b =>
                 {
                     b.Property<Guid>("TenantId")

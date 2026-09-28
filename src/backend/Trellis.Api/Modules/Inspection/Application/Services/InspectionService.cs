@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Trellis.Api.Core.Audit;
 using Trellis.Api.Core.Data;
 using Trellis.Api.Core.Dtos;
 using Trellis.Api.Core.Files;
@@ -13,6 +12,8 @@ using Trellis.Api.Modules.Inspection.Domain.Entities;
 using Trellis.Api.Modules.Inspection.Domain.Exceptions;
 using Trellis.Api.Modules.Inspection.Domain.ValueObjects;
 using Trellis.Api.Modules.PropertyAsset.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Domain.Entities;
 
 namespace Trellis.Api.Modules.Inspection.Application.Services;
 
@@ -421,5 +422,11 @@ public sealed class InspectionService(
             items.Select(ToItemResponse).ToList(),
             photos.Select(ToPhotoResponse).ToList(),
             inspection.CreatedAt);
+    }
+
+    public Task<int> CountUpcomingAsync(int lookaheadDays)
+    {
+        var now = DateTimeOffset.UtcNow;
+        return repository.CountUpcomingAsync(now, now.AddDays(lookaheadDays));
     }
 }

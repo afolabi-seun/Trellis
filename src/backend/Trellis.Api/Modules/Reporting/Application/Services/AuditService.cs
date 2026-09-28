@@ -1,9 +1,11 @@
-using Trellis.Api.Core.Data;
 using Trellis.Api.Core.Middleware;
+using Trellis.Api.Modules.Reporting.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Domain.Entities;
+using Trellis.Api.Modules.Reporting.Infrastructure.Data;
 
-namespace Trellis.Api.Core.Audit;
+namespace Trellis.Api.Modules.Reporting.Application.Services;
 
-public sealed class AuditService(CoreDbContext dbContext) : IAuditService
+public sealed class AuditService(ReportingDbContext dbContext) : IAuditService
 {
     public async Task RecordAsync(
         Guid? tenantId, Guid actorId, AuditActorType actorType, string auditType, string? detailJson = null)

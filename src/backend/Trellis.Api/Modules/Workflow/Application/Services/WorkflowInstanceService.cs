@@ -1,5 +1,4 @@
 using Microsoft.EntityFrameworkCore;
-using Trellis.Api.Core.Audit;
 using Trellis.Api.Core.Data;
 using Trellis.Api.Core.Dtos;
 using Trellis.Api.Core.Helpers;
@@ -8,6 +7,8 @@ using Trellis.Api.Core.Results;
 using Trellis.Api.Modules.Auth.Application.Interfaces;
 using Trellis.Api.Modules.Notification.Application.Dtos;
 using Trellis.Api.Modules.Notification.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Domain.Entities;
 using Trellis.Api.Modules.Workflow.Application.Dtos;
 using Trellis.Api.Modules.Workflow.Application.Interfaces;
 using Trellis.Api.Modules.Workflow.Domain.Entities;
@@ -184,6 +185,14 @@ public sealed class WorkflowInstanceService(
             ? ServiceResult<VendorWorkflowInstanceView>.NotFound()
             : ServiceResult<VendorWorkflowInstanceView>.Success(ToVendorView(instance));
     }
+
+    public Task<int> CountOpenAsync() => repository.CountByStatusAsync(WorkflowInstanceStatus.InProgress);
+
+    public Task<int> CountBottlenecksAsync(int thresholdDays) => repository.CountBottleneckedStepsAsync(thresholdDays);
+
+    public Task<(decimal TotalCost, int OpenCount)> GetOwnerMaintenanceSummaryAsync(
+        IReadOnlyList<Guid> propertyIds, DateOnly periodStart, DateOnly periodEnd) =>
+        repository.GetOwnerMaintenanceSummaryAsync(propertyIds, periodStart, periodEnd);
 
     /// <summary>TenantAdminOrDepartmentLead — TENANT_ADMIN always passes; DEPARTMENT_STAFF passes iff a member of the active step's routed department. No seniority concept exists anywhere in the schema, so "Lead" is simplified to "any staff member of the required department."</summary>
     private static bool IsAuthorizedForStep(string callerRole, IReadOnlyCollection<Guid> callerDepartmentIds, WorkflowStepInstance step) =>

@@ -1,8 +1,9 @@
-using Trellis.Api.Core.Audit;
 using Trellis.Api.Core.Dtos;
 using Trellis.Api.Core.Helpers;
 using Trellis.Api.Core.Results;
 using Trellis.Api.Modules.Auth.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Domain.Entities;
 using Trellis.Api.Modules.Tenant.Application.Dtos;
 using Trellis.Api.Modules.Tenant.Application.Interfaces;
 using Trellis.Api.Modules.Tenant.Infrastructure.Data;

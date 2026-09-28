@@ -1,11 +1,12 @@
 using FluentAssertions;
 using Microsoft.Extensions.Options;
 using NSubstitute;
-using Trellis.Api.Core.Audit;
 using Trellis.Api.Modules.Billing.Application.Interfaces;
 using Trellis.Api.Modules.Billing.Application.Services;
 using Trellis.Api.Modules.Billing.Configuration;
 using Trellis.Api.Modules.Billing.Domain.Entities;
+using Trellis.Api.Modules.Reporting.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Domain.Entities;
 using Xunit;
 
 namespace Trellis.Tests.Billing;

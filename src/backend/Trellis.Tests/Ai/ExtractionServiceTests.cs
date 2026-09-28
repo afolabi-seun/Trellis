@@ -1,12 +1,13 @@
 using FluentAssertions;
 using NSubstitute;
-using Trellis.Api.Core.Audit;
 using Trellis.Api.Core.Files;
 using Trellis.Api.Core.Results;
 using Trellis.Api.Modules.Ai.Application.Dtos;
 using Trellis.Api.Modules.Ai.Application.Interfaces;
 using Trellis.Api.Modules.Ai.Application.Services;
 using Trellis.Api.Modules.Ai.Domain.Entities;
+using Trellis.Api.Modules.Reporting.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Domain.Entities;
 using Xunit;
 
 namespace Trellis.Tests.Ai;
@@ -102,7 +103,7 @@ public sealed class ExtractionServiceTests
         job.Status.Should().Be(ExtractionStatus.Confirmed);
         await _overrideLogRepository.Received(1).AddAsync(Arg.Any<OverrideLogEntry>());
         await _auditService.Received(1).RecordAsync(
-            job.TenantId, Arg.Any<Guid>(), AuditActorType.HumanUser, Trellis.Api.Core.Audit.AuditTypes.Ai.SuggestionOverridden, Arg.Any<string>());
+            job.TenantId, Arg.Any<Guid>(), AuditActorType.HumanUser, AuditTypes.Ai.SuggestionOverridden, Arg.Any<string>());
     }
 
     [Fact]

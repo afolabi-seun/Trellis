@@ -1,6 +1,5 @@
 using FluentValidation;
 using Microsoft.EntityFrameworkCore;
-using Trellis.Api.Core.Audit;
 using Trellis.Api.Core.Dtos;
 using Trellis.Api.Core.Files;
 using Trellis.Api.Core.Helpers;
@@ -13,6 +12,8 @@ using Trellis.Api.Modules.Document.Application.Interfaces;
 using Trellis.Api.Modules.Document.Domain.Entities;
 using Trellis.Api.Modules.Document.Domain.Exceptions;
 using Trellis.Api.Modules.PropertyAsset.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Domain.Entities;
 using Trellis.Api.Modules.Workflow.Application.Interfaces;
 
 namespace Trellis.Api.Modules.Document.Application.Services;
@@ -321,4 +322,7 @@ public sealed class DocumentService(
             repository.GetRowVersion(document),
             document.CreatedAt);
     }
+
+    public Task<int> CountExpiringAsync(int lookaheadDays) =>
+        repository.CountDueForExpiryAsync(DateOnly.FromDateTime(DateTime.UtcNow).AddDays(lookaheadDays));
 }

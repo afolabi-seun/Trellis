@@ -20,6 +20,9 @@ public interface IInspectionRepository
     Task<(IReadOnlyList<InspectionRecord> Items, bool HasMore, int TotalCount)> ListAsync(
         (DateTimeOffset CreatedAt, Guid Id)? cursor, int limit);
 
+    /// <summary>Reporting's dashboard (BDR-RPT-001) — Scheduled inspections whose ScheduledAt falls within the window.</summary>
+    Task<int> CountUpcomingAsync(DateTimeOffset fromDate, DateTimeOffset toDate);
+
     string GetRowVersion(InspectionRecord inspection);
 
     void SetExpectedRowVersion(InspectionRecord inspection, string rowVersion);

@@ -2,7 +2,6 @@ using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using NSubstitute;
-using Trellis.Api.Core.Audit;
 using Trellis.Api.Core.Configuration;
 using Trellis.Api.Core.Results;
 using Trellis.Api.Modules.Auth.Application.Interfaces;
@@ -10,6 +9,8 @@ using Trellis.Api.Modules.Auth.Application.Services;
 using Trellis.Api.Modules.Auth.Configuration;
 using Trellis.Api.Modules.Auth.Domain.Entities;
 using Trellis.Api.Modules.Notification.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Domain.Entities;
 using Xunit;
 
 namespace Trellis.Tests.Auth;

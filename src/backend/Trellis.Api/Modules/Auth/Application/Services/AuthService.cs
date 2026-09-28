@@ -2,7 +2,6 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
-using Trellis.Api.Core.Audit;
 using Trellis.Api.Core.Configuration;
 using Trellis.Api.Core.Helpers;
 using Trellis.Api.Core.Middleware;
@@ -12,6 +11,8 @@ using Trellis.Api.Modules.Auth.Application.Interfaces;
 using Trellis.Api.Modules.Auth.Configuration;
 using Trellis.Api.Modules.Auth.Domain.Entities;
 using Trellis.Api.Modules.Notification.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Domain.Entities;
 
 namespace Trellis.Api.Modules.Auth.Application.Services;
 

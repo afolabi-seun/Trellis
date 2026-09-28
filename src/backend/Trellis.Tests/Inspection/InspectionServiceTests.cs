@@ -1,6 +1,5 @@
 using FluentAssertions;
 using NSubstitute;
-using Trellis.Api.Core.Audit;
 using Trellis.Api.Core.Data;
 using Trellis.Api.Core.Files;
 using Trellis.Api.Core.Middleware;
@@ -11,6 +10,8 @@ using Trellis.Api.Modules.Inspection.Application.Services;
 using Trellis.Api.Modules.Inspection.Domain.Entities;
 using Trellis.Api.Modules.PropertyAsset.Application.Dtos;
 using Trellis.Api.Modules.PropertyAsset.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Domain.Entities;
 using Xunit;
 
 namespace Trellis.Tests.Inspection;

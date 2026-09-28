@@ -1,6 +1,5 @@
 using System.Text.Json;
 using Microsoft.EntityFrameworkCore;
-using Trellis.Api.Core.Audit;
 using Trellis.Api.Core.Data;
 using Trellis.Api.Core.Dtos;
 using Trellis.Api.Core.Files;
@@ -11,6 +10,8 @@ using Trellis.Api.Modules.Ai.Application.Dtos;
 using Trellis.Api.Modules.Ai.Application.Interfaces;
 using Trellis.Api.Modules.Ai.Domain.Entities;
 using Trellis.Api.Modules.Ai.Domain.Exceptions;
+using Trellis.Api.Modules.Reporting.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Domain.Entities;
 
 namespace Trellis.Api.Modules.Ai.Application.Services;
 

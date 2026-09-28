@@ -36,6 +36,9 @@ public sealed class PropertyRepository(PropertyDbContext dbContext) : TenantAwar
         dbContext.UnitAssets.AnyAsync(u =>
             u.TenantId == TenantContext.Current!.TenantId && u.PropertyId == propertyId && u.Status == UnitAssetStatus.Active);
 
+    public async Task<IReadOnlyList<Guid>> ListIdsByOwnerAsync(Guid ownerId) =>
+        await Scoped(dbContext.Properties).Where(p => p.OwnerId == ownerId).Select(p => p.PropertyId).ToListAsync();
+
     public string GetRowVersion(Property property) => RowVersionHelper.Get(dbContext, property);
 
     public void SetExpectedRowVersion(Property property, string rowVersion) => RowVersionHelper.SetExpected(dbContext, property, rowVersion);

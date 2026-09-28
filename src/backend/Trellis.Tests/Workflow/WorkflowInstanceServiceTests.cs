@@ -1,11 +1,12 @@
 using FluentAssertions;
 using Microsoft.EntityFrameworkCore;
 using NSubstitute;
-using Trellis.Api.Core.Audit;
 using Trellis.Api.Core.Data;
 using Trellis.Api.Core.Results;
 using Trellis.Api.Modules.Auth.Application.Interfaces;
 using Trellis.Api.Modules.Notification.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Application.Interfaces;
+using Trellis.Api.Modules.Reporting.Domain.Entities;
 using Trellis.Api.Modules.Workflow.Application.Dtos;
 using Trellis.Api.Modules.Workflow.Application.Interfaces;
 using Trellis.Api.Modules.Workflow.Application.Services;
