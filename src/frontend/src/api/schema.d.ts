@@ -3265,6 +3265,331 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/rent-schedules": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    cursor?: string;
+                    limit?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RentScheduleResponsePagedResponseApiResponse"];
+                        "application/json": components["schemas"]["RentScheduleResponsePagedResponseApiResponse"];
+                        "text/json": components["schemas"]["RentScheduleResponsePagedResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RentScheduleCreateRequest"];
+                    "text/json": components["schemas"]["RentScheduleCreateRequest"];
+                    "application/*+json": components["schemas"]["RentScheduleCreateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RentScheduleResponseApiResponse"];
+                        "application/json": components["schemas"]["RentScheduleResponseApiResponse"];
+                        "text/json": components["schemas"]["RentScheduleResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/rent-schedules/arrears": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RentScheduleResponseIReadOnlyListApiResponse"];
+                        "application/json": components["schemas"]["RentScheduleResponseIReadOnlyListApiResponse"];
+                        "text/json": components["schemas"]["RentScheduleResponseIReadOnlyListApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/rent-schedules/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RentScheduleResponseApiResponse"];
+                        "application/json": components["schemas"]["RentScheduleResponseApiResponse"];
+                        "text/json": components["schemas"]["RentScheduleResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RentScheduleUpdateRequest"];
+                    "text/json": components["schemas"]["RentScheduleUpdateRequest"];
+                    "application/*+json": components["schemas"]["RentScheduleUpdateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RentScheduleResponseApiResponse"];
+                        "application/json": components["schemas"]["RentScheduleResponseApiResponse"];
+                        "text/json": components["schemas"]["RentScheduleResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        trace?: never;
+    };
+    "/api/v1/rent-schedules/{id}/end": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RentScheduleResponseApiResponse"];
+                        "application/json": components["schemas"]["RentScheduleResponseApiResponse"];
+                        "text/json": components["schemas"]["RentScheduleResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/rent-schedules/{id}/payment-records": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RentPaymentRecordResponseIReadOnlyListApiResponse"];
+                        "application/json": components["schemas"]["RentPaymentRecordResponseIReadOnlyListApiResponse"];
+                        "text/json": components["schemas"]["RentPaymentRecordResponseIReadOnlyListApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RentPaymentRecordCreateRequest"];
+                    "text/json": components["schemas"]["RentPaymentRecordCreateRequest"];
+                    "application/*+json": components["schemas"]["RentPaymentRecordCreateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RentPaymentRecordResponseApiResponse"];
+                        "application/json": components["schemas"]["RentPaymentRecordResponseApiResponse"];
+                        "text/json": components["schemas"]["RentPaymentRecordResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/rent-schedules/{id}/payment-records/{recordId}/void": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                    recordId: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RentPaymentRecordVoidRequest"];
+                    "text/json": components["schemas"]["RentPaymentRecordVoidRequest"];
+                    "application/*+json": components["schemas"]["RentPaymentRecordVoidRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RentPaymentRecordResponseApiResponse"];
+                        "application/json": components["schemas"]["RentPaymentRecordResponseApiResponse"];
+                        "text/json": components["schemas"]["RentPaymentRecordResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/reporting/dashboard": {
         parameters: {
             query?: never;
@@ -5744,6 +6069,18 @@ export interface components {
             /** Format: date */
             periodEnd?: string;
         };
+        OwnerReportRentSection: {
+            /** Format: int32 */
+            currentCount?: number;
+            /** Format: int32 */
+            overdueCount?: number;
+            /** Format: int32 */
+            arrearsCount?: number;
+            /** Format: double */
+            receivedInPeriod?: number;
+            /** Format: date */
+            asOf?: string;
+        };
         OwnerReportResponse: {
             /** Format: uuid */
             ownerReportId?: string;
@@ -5770,6 +6107,7 @@ export interface components {
             createdAt?: string;
             /** Format: date-time */
             readyAt?: string | null;
+            rent?: components["schemas"]["OwnerReportRentSection"];
         };
         OwnerReportResponseApiResponse: {
             readonly status?: string | null;
@@ -5990,6 +6328,125 @@ export interface components {
             data?: components["schemas"]["RecoveryCodesRegenerateResponse"];
             error?: components["schemas"]["ApiError"];
             meta: components["schemas"]["ApiMeta"];
+        };
+        RentPaymentRecordCreateRequest: {
+            /** Format: double */
+            amountReceived?: number;
+            /** Format: date */
+            dateReceived?: string;
+            methodReference?: string | null;
+        };
+        RentPaymentRecordResponse: {
+            /** Format: uuid */
+            rentPaymentRecordId?: string;
+            /** Format: uuid */
+            rentScheduleId?: string;
+            /** Format: double */
+            amountReceived?: number;
+            /** Format: date */
+            dateReceived?: string;
+            methodReference?: string | null;
+            /** Format: uuid */
+            recordedByUserId?: string;
+            /** Format: date-time */
+            recordedAt?: string;
+            isVoided?: boolean;
+            /** Format: date-time */
+            voidedAt?: string | null;
+            voidReason?: string | null;
+        };
+        RentPaymentRecordResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["RentPaymentRecordResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        RentPaymentRecordResponseIReadOnlyListApiResponse: {
+            readonly status?: string | null;
+            readonly data?: components["schemas"]["RentPaymentRecordResponse"][] | null;
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        RentPaymentRecordVoidRequest: {
+            reason?: string | null;
+        };
+        RentScheduleCreateRequest: {
+            /** Format: uuid */
+            unitAssetId?: string;
+            /** Format: double */
+            rentAmount?: number;
+            currency?: string | null;
+            /** Format: date */
+            startDate?: string;
+            /** Format: int32 */
+            dueDayOfMonth?: number;
+            /** Format: int32 */
+            gracePeriodDays?: number | null;
+        };
+        RentScheduleResponse: {
+            /** Format: uuid */
+            rentScheduleId?: string;
+            /** Format: uuid */
+            unitAssetId?: string;
+            unitLabel?: string | null;
+            /** Format: uuid */
+            leaseApplicationId?: string | null;
+            /** Format: double */
+            rentAmount?: number;
+            currency?: string | null;
+            /** Format: date */
+            startDate?: string;
+            /** Format: int32 */
+            dueDayOfMonth?: number;
+            /** Format: int32 */
+            gracePeriodDays?: number;
+            status?: string | null;
+            rentStatus?: string | null;
+            /** Format: int32 */
+            periodsInArrears?: number;
+            /** Format: double */
+            amountShort?: number;
+            /** Format: double */
+            totalReceived?: number;
+            /** Format: date */
+            oldestUnpaidDueDate?: string | null;
+            rowVersion?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        RentScheduleResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["RentScheduleResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        RentScheduleResponseIReadOnlyListApiResponse: {
+            readonly status?: string | null;
+            readonly data?: components["schemas"]["RentScheduleResponse"][] | null;
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        RentScheduleResponsePagedResponse: {
+            items?: components["schemas"]["RentScheduleResponse"][] | null;
+            nextCursor?: string | null;
+            hasMore?: boolean;
+            /** Format: int32 */
+            totalCount?: number;
+        };
+        RentScheduleResponsePagedResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["RentScheduleResponsePagedResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        RentScheduleUpdateRequest: {
+            /** Format: double */
+            rentAmount?: number;
+            /** Format: int32 */
+            dueDayOfMonth?: number;
+            /** Format: int32 */
+            gracePeriodDays?: number;
+            rowVersion?: string | null;
         };
         ReportShareLinkResponse: {
             /** Format: uuid */

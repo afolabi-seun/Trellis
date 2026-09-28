@@ -10,6 +10,9 @@ import { InspectionsListPage } from "./features/admin/inspection/InspectionsList
 import { ApplicationsReviewPage } from "./features/admin/leasing/ApplicationsReviewPage";
 import { VacancyListingDetailPage } from "./features/admin/leasing/VacancyListingDetailPage";
 import { VacancyListingsPage } from "./features/admin/leasing/VacancyListingsPage";
+import { RentArrearsPage } from "./features/admin/rentledger/RentArrearsPage";
+import { RentScheduleDetailPage } from "./features/admin/rentledger/RentScheduleDetailPage";
+import { RentSchedulesPage } from "./features/admin/rentledger/RentSchedulesPage";
 import { OwnersListPage } from "./features/admin/propertyasset/OwnersListPage";
 import { PropertiesListPage } from "./features/admin/propertyasset/PropertiesListPage";
 import { PropertyDetailPage } from "./features/admin/propertyasset/PropertyDetailPage";
@@ -63,6 +66,9 @@ export function App() {
           <Route path="vacancy-listings" element={<VacancyListingsPage />} />
           <Route path="vacancy-listings/:id" element={<VacancyListingDetailPage />} />
           <Route path="applications" element={<ApplicationsReviewPage />} />
+          <Route path="rent-schedules" element={<RentSchedulesPage />} />
+          <Route path="rent-schedules/:id" element={<RentScheduleDetailPage />} />
+          <Route path="rent-arrears" element={<RentArrearsPage />} />
           <Route path="reporting" element={<ReportingDashboardPage />} />
           <Route element={<RequireRole allowedRoles={["TENANT_ADMIN"]} />}>
             <Route path="billing" element={<BillingSettingsPage />} />

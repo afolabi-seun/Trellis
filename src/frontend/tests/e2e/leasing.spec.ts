@@ -1,3 +1,4 @@
+import { randomUUID } from "node:crypto";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import {
@@ -5,9 +6,11 @@ import {
   deleteBillingDataForTenant,
   deleteDocumentDataForTenant,
   deleteLeasingDataForTenant,
+  deleteRentLedgerDataForTenant,
   deletePropertyAssetDataForTenant,
   deleteTenantByName,
   getEnvelopeIdForTenant,
+  getRentSchedulesForUnit,
   getUnitOccupancyStatus,
   seedApplicationLinkToken,
   seedDepartmentStaff,
@@ -15,6 +18,7 @@ import {
   seedModuleEntitlement,
   seedOwner,
   seedProperty,
+  seedRentSchedule,
   seedTenant,
   seedTenantAdmin,
   seedUnitAsset,
@@ -62,12 +66,17 @@ test.beforeAll(async () => {
   await seedOwner(OWNER_ID, TENANT_ID, "Lee Owner", "lee.owner@example.com");
   await seedProperty(PROPERTY_ID, TENANT_ID, OWNER_ID, PROPERTY_ADDRESS);
   await seedUnitAsset(UNIT_ID, TENANT_ID, PROPERTY_ID, UNIT_LABEL);
+  // BDR-RENT-001: lease execution starts a rent schedule for tenants with the add-on — and a schedule
+  // left over from the unit's previous tenancy must be ended, never allowed to block the signed lease.
+  await seedModuleEntitlement(TENANT_ID, "RENT_COLLECTION", "ACTIVE");
+  await seedRentSchedule(randomUUID(), TENANT_ID, UNIT_ID, 800);
 
   await seedTenant(UNENTITLED_TENANT_ID, UNENTITLED_TENANT_NAME, "PROFESSIONAL");
   await seedTenantAdmin(UNENTITLED_ADMIN_USERNAME, UNENTITLED_TENANT_ID);
 });
 
 test.afterAll(async () => {
+  await deleteRentLedgerDataForTenant(TENANT_ID);
   await deleteLeasingDataForTenant(TENANT_ID);
   await deleteDocumentDataForTenant(TENANT_ID);
   await deletePropertyAssetDataForTenant(TENANT_ID);
@@ -213,6 +222,21 @@ test("BDR-LSE-004/005: staff review the application, approve it, and a completed
   expect(webhook.status()).toBe(200);
 
   expect(await getUnitOccupancyStatus(UNIT_ID)).toBe("OCCUPIED");
+
+  // BDR-RENT-001: the previous tenancy's schedule is ended and a new one starts from the listing's terms.
+  const schedules = await getRentSchedulesForUnit(UNIT_ID);
+  expect(schedules).toHaveLength(2);
+  expect(schedules[0]).toMatchObject({
+    status: "ENDED",
+    rentAmount: 800,
+    hasLeaseApplication: false,
+  });
+  expect(schedules[1]).toMatchObject({
+    status: "ACTIVE",
+    rentAmount: 1500,
+    dueDayOfMonth: 1,
+    hasLeaseApplication: true,
+  });
 
   await page.reload();
   await expect(page.getByText("LEASED", { exact: true }).first()).toBeVisible();

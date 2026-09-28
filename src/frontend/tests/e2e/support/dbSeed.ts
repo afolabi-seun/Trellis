@@ -635,3 +635,67 @@ export async function deleteLeasingDataForTenant(tenantId: string): Promise<void
     await client.end();
   }
 }
+
+/** rentledger.spec.ts / leasing.spec.ts — a schedule seeded directly, e.g. the prior tenancy a new lease must supersede. */
+export async function seedRentSchedule(
+  scheduleId: string,
+  tenantId: string,
+  unitAssetId: string,
+  rentAmount: number,
+): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(
+      `insert into trellis_rentledger.rent_schedule
+         (rent_schedule_id, tenant_id, unit_asset_id, rent_amount, currency, start_date, due_day_of_month, grace_period_days, status, created_at, updated_at)
+       values ($1, $2, $3, $4, 'USD', '2025-01-01', 1, 5, 'ACTIVE', now(), now())`,
+      [scheduleId, tenantId, unitAssetId, rentAmount],
+    );
+  } finally {
+    await client.end();
+  }
+}
+
+export interface RentScheduleRow {
+  status: string;
+  rentAmount: number;
+  dueDayOfMonth: number;
+  hasLeaseApplication: boolean;
+}
+
+export async function getRentSchedulesForUnit(unitAssetId: string): Promise<RentScheduleRow[]> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    const result = await client.query(
+      `select status, rent_amount, due_day_of_month, lease_application_id is not null as has_lease
+       from trellis_rentledger.rent_schedule where unit_asset_id = $1 order by created_at`,
+      [unitAssetId],
+    );
+    return result.rows.map((r) => ({
+      status: r.status as string,
+      rentAmount: Number(r.rent_amount),
+      dueDayOfMonth: r.due_day_of_month as number,
+      hasLeaseApplication: r.has_lease as boolean,
+    }));
+  } finally {
+    await client.end();
+  }
+}
+
+/** Payments first, then schedules. Never trellis_audit.audit_record (append-only). */
+export async function deleteRentLedgerDataForTenant(tenantId: string): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(`delete from trellis_rentledger.rent_payment_record where tenant_id = $1`, [
+      tenantId,
+    ]);
+    await client.query(`delete from trellis_rentledger.rent_schedule where tenant_id = $1`, [
+      tenantId,
+    ]);
+  } finally {
+    await client.end();
+  }
+}

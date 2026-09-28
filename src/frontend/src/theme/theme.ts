@@ -1,4 +1,4 @@
-import { createTheme, InputWrapper, type MantineColorsTuple } from "@mantine/core";
+import { createTheme, InputWrapper, Modal, type MantineColorsTuple } from "@mantine/core";
 
 // frontend_architecture.md, "Design System" — the pitch deck's brand palette as the app's
 // starting theme tokens. Mantine needs a 10-shade tuple per named color; these are a first
@@ -65,6 +65,12 @@ export const theme = createTheme({
     // fixing it here covers every current and future field description instead of one page's.
     InputWrapper: InputWrapper.extend({
       styles: { description: { color: "var(--mantine-color-gray-8)" } },
+    }),
+    // BDR-NFR-007 — Mantine's modal close button is an icon with no accessible name (axe:
+    // "button-name", critical), found by rentledger.spec.ts scanning an open modal. Set once here
+    // so every current and future Modal gets it.
+    Modal: Modal.extend({
+      defaultProps: { closeButtonProps: { "aria-label": "Close" } },
     }),
   },
 });

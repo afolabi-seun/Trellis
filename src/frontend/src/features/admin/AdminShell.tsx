@@ -86,6 +86,18 @@ export function AdminShell() {
             Applications
           </NavLink>
           <NavLink
+            to="/admin/rent-schedules"
+            style={({ isActive }) => ({ fontWeight: isActive ? 700 : 400 })}
+          >
+            Rent Schedules
+          </NavLink>
+          <NavLink
+            to="/admin/rent-arrears"
+            style={({ isActive }) => ({ fontWeight: isActive ? 700 : 400 })}
+          >
+            Rent Arrears
+          </NavLink>
+          <NavLink
             to="/admin/extraction-jobs"
             style={({ isActive }) => ({ fontWeight: isActive ? 700 : 400 })}
           >
