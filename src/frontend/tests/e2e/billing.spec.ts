@@ -102,6 +102,9 @@ test("BDR-BIL-009: a tenant with the Inspection entitlement disabled gets an ups
 
   await expect(page.getByText("Inspections isn't enabled for your plan")).toBeVisible();
   await expect(page.getByRole("button", { name: "Schedule inspection" })).toHaveCount(0);
+
+  const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
+  expect(results.violations).toEqual([]);
 });
 
 test("BDR-BIL-009: a tenant with the Inspection entitlement active still reaches the page normally", async ({

@@ -7,3 +7,9 @@
 // destructive-action button/alert needs the identical override.
 export const dangerAlertStyles = { label: { color: "#a61e1e" } };
 export const dangerButtonStyles = { label: { color: "#a61e1e" } };
+
+// Same Styles API mechanism for the blue info Alert: its title renders #1971c2 on the pale-blue
+// background at 4.39:1, just under the 4.5:1 floor (found by tests/e2e/leasing.spec.ts's axe scan
+// of the module-not-entitled upsell; InspectionsListPage's identical upsell had the same latent
+// flaw). blue.9 (#1864ab) measures ~5.6:1.
+export const infoAlertStyles = { title: { color: "var(--mantine-color-blue-9)" } };

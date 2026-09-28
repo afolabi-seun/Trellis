@@ -4,6 +4,11 @@ import { defineConfig } from "@playwright/test";
 // start, so accessibility is a gate from the first page built, not bolted on later.
 export default defineConfig({
   testDir: "./tests/e2e",
+  // Login is an Argon2id verification, and Playwright runs 4 workers against one API+Postgres, so
+  // the 5s/30s defaults intermittently timed out on unrelated specs' login and axe steps (seen
+  // repeatedly from Phase 8 onward as the suite grew) — a load artifact, not a product bug.
+  timeout: 60_000,
+  expect: { timeout: 10_000 },
   webServer: {
     command: "npm run preview",
     url: "http://localhost:4173",

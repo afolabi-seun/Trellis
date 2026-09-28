@@ -16,7 +16,7 @@ import { useForm } from "react-hook-form";
 import { Link, useParams } from "react-router-dom";
 import { z } from "zod";
 import { publicLeasingApi } from "../../../api/leasing";
-import { dangerAlertStyles } from "../../../theme/dangerStyles";
+import { dangerAlertStyles, infoAlertStyles } from "../../../theme/dangerStyles";
 import { formatCurrency } from "../../../utils/formatCurrency";
 
 const emailSchema = z.object({ email: z.string().email("Enter a valid email address.") });
@@ -85,11 +85,7 @@ export function PublicVacancyListingDetailPage() {
               Apply for this unit
             </Title>
             {linkMutation.isSuccess ? (
-              <Alert
-                color="blue"
-                title="Check your email"
-                styles={{ title: { color: "var(--mantine-color-blue-9)" } }}
-              >
+              <Alert color="blue" title="Check your email" styles={infoAlertStyles}>
                 If this unit is still available, we&apos;ve sent an application link to your inbox.
               </Alert>
             ) : (
@@ -98,7 +94,6 @@ export function PublicVacancyListingDetailPage() {
                   <TextInput
                     label="Your email address"
                     description="We'll email you a private link to complete your application."
-                    styles={{ description: { color: "var(--mantine-color-gray-8)" } }}
                     error={errors.email?.message}
                     {...register("email")}
                   />

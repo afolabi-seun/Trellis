@@ -18,7 +18,11 @@ import { useSearchParams } from "react-router-dom";
 import { TrellisApiError } from "../../../api/client";
 import { documentsApi } from "../../../api/documents";
 import { applicationsApi, vacancyListingsApi } from "../../../api/leasing";
-import { dangerAlertStyles, dangerButtonStyles } from "../../../theme/dangerStyles";
+import {
+  dangerAlertStyles,
+  dangerButtonStyles,
+  infoAlertStyles,
+} from "../../../theme/dangerStyles";
 
 const statusColor: Record<string, string> = {
   SUBMITTED: "blue.8",
@@ -101,11 +105,7 @@ export function ApplicationsReviewPage() {
     return (
       <Stack gap="md" p="lg">
         <Title order={2}>Applications</Title>
-        <Alert
-          color="blue"
-          title="Leasing isn't enabled for your plan"
-          styles={{ title: { color: "var(--mantine-color-blue-9)" } }}
-        >
+        <Alert color="blue" title="Leasing isn't enabled for your plan" styles={infoAlertStyles}>
           Rental applications are part of the Leasing add-on. Contact your Trellis administrator to
           enable it.
         </Alert>

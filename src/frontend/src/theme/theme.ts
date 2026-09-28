@@ -1,4 +1,4 @@
-import { createTheme, type MantineColorsTuple } from "@mantine/core";
+import { createTheme, InputWrapper, type MantineColorsTuple } from "@mantine/core";
 
 // frontend_architecture.md, "Design System" — the pitch deck's brand palette as the app's
 // starting theme tokens. Mantine needs a 10-shade tuple per named color; these are a first
@@ -59,4 +59,12 @@ export const theme = createTheme({
   colors: { navy, sage, success },
   fontFamily: "'IBM Plex Sans', system-ui, sans-serif",
   headings: { fontFamily: "'DM Sans', system-ui, sans-serif" },
+  components: {
+    // BDR-NFR-007 — Mantine's default field description is gray-6-ish (#868e96) at 3.32:1 on white,
+    // below the 4.5:1 floor (found by leasing.spec.ts's axe scan). gray.8 (#343a40) clears it, and
+    // fixing it here covers every current and future field description instead of one page's.
+    InputWrapper: InputWrapper.extend({
+      styles: { description: { color: "var(--mantine-color-gray-8)" } },
+    }),
+  },
 });

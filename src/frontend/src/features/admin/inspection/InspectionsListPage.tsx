@@ -24,7 +24,7 @@ import { propertiesApi } from "../../../api/properties";
 import { tenantVendorRelationshipsApi } from "../../../api/tenantVendorRelationships";
 import { vendorAssignmentsApi } from "../../../api/vendorAssignments";
 import { vendorsApi } from "../../../api/vendors";
-import { dangerAlertStyles } from "../../../theme/dangerStyles";
+import { dangerAlertStyles, infoAlertStyles } from "../../../theme/dangerStyles";
 
 const scheduleSchema = z.object({
   propertyId: z.string().min(1, "A property is required."),
@@ -138,7 +138,11 @@ export function InspectionsListPage() {
     return (
       <Stack gap="lg" p="lg">
         <Title order={2}>Inspections</Title>
-        <Alert color="blue" title="Inspections isn't enabled for your plan">
+        <Alert
+          color="blue"
+          title="Inspections isn't enabled for your plan"
+          styles={infoAlertStyles}
+        >
           Ask your Trellis account manager to enable the Inspections module to start scheduling and
           tracking property inspections.
         </Alert>

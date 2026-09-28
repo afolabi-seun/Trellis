@@ -24,7 +24,11 @@ import { vacancyListingsApi } from "../../../api/leasing";
 import { propertiesApi } from "../../../api/properties";
 import { unitsApi } from "../../../api/units";
 import { formatCurrency } from "../../../utils/formatCurrency";
-import { dangerAlertStyles, dangerButtonStyles } from "../../../theme/dangerStyles";
+import {
+  dangerAlertStyles,
+  dangerButtonStyles,
+  infoAlertStyles,
+} from "../../../theme/dangerStyles";
 
 const listingSchema = z.object({
   propertyId: z.string().min(1, "Select a property."),
@@ -106,11 +110,7 @@ export function VacancyListingsPage() {
     return (
       <Stack gap="md" p="lg">
         <Title order={2}>Vacancy listings</Title>
-        <Alert
-          color="blue"
-          title="Leasing isn't enabled for your plan"
-          styles={{ title: { color: "var(--mantine-color-blue-9)" } }}
-        >
+        <Alert color="blue" title="Leasing isn't enabled for your plan" styles={infoAlertStyles}>
           Vacancy listings and rental applications are an add-on module. Contact your Trellis
           administrator to enable Leasing for your account.
         </Alert>
@@ -242,7 +242,6 @@ export function VacancyListingsPage() {
                 <Select
                   label="Unit"
                   description="Only vacant, active units can be listed."
-                  styles={{ description: { color: "var(--mantine-color-gray-8)" } }}
                   data={unitOptions}
                   value={field.value ?? null}
                   onChange={(value) => field.onChange(value ?? "")}

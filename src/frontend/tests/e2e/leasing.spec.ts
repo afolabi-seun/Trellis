@@ -52,7 +52,7 @@ const TINY_JPEG = Buffer.from(
   "base64",
 );
 
-test.describe.configure({ mode: "serial", timeout: 60000 });
+test.describe.configure({ mode: "serial" });
 
 test.beforeAll(async () => {
   await seedTenant(TENANT_ID, TENANT_NAME, "PROFESSIONAL");
@@ -191,7 +191,7 @@ test("BDR-LSE-004/005: staff review the application, approve it, and a completed
   await expectNoAxeViolations(page);
 
   await page.getByRole("button", { name: "History" }).click();
-  await expect(page.getByText("SCREENING_RECEIVED")).toBeVisible({ timeout: 15000 });
+  await expect(page.getByText("SCREENING_RECEIVED")).toBeVisible();
   await expect(page.getByText("SUBMITTED", { exact: true }).first()).toBeVisible();
   await page.keyboard.press("Escape");
 
