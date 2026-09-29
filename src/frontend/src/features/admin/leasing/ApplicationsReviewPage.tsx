@@ -2,8 +2,10 @@ import {
   Alert,
   Badge,
   Button,
+  Code,
   Group,
   Modal,
+  PasswordInput,
   Select,
   Stack,
   Table,
@@ -16,6 +18,7 @@ import { useDisclosure } from "@mantine/hooks";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
 import { useSearchParams } from "react-router-dom";
+import { useAuth } from "../../../auth/useAuth";
 import { TrellisApiError } from "../../../api/client";
 import { documentsApi } from "../../../api/documents";
 import { applicationsApi, vacancyListingsApi } from "../../../api/leasing";
@@ -48,6 +51,9 @@ function errorMessage(error: unknown): string {
     if (error.code === "TRL-E-LSE-11005") {
       return "Choose a LEASE document filed against this listing's unit — the signed lease is added to it as a new version.";
     }
+    if (error.code === "TRL-E-AUT-1004") {
+      return "That password isn't correct.";
+    }
     return error.message;
   }
   return "Something went wrong.";
@@ -55,6 +61,7 @@ function errorMessage(error: unknown): string {
 
 /** BDR-LSE-004 — staff review. Only the coarse screening outcome ever appears here; no endpoint returns the full report. */
 export function ApplicationsReviewPage() {
+  const { claims } = useAuth();
   const queryClient = useQueryClient();
   const [searchParams, setSearchParams] = useSearchParams();
   const listingId = searchParams.get("listing");
@@ -65,6 +72,10 @@ export function ApplicationsReviewPage() {
   const [endLeaseFor, setEndLeaseFor] = useState<string | null>(null);
   const [effectiveDate, setEffectiveDate] = useState("");
   const [endLeaseReason, setEndLeaseReason] = useState("");
+  const [reportFor, setReportFor] = useState<string | null>(null);
+  const [reportPassword, setReportPassword] = useState("");
+  const [reportModalOpened, { open: openReportModal, close: closeReportModal }] =
+    useDisclosure(false);
 
   const listingsQuery = useQuery({
     queryKey: ["leasing", "listings"],
@@ -123,6 +134,10 @@ export function ApplicationsReviewPage() {
       setEffectiveDate("");
       setEndLeaseReason("");
     },
+  });
+  const viewReportMutation = useMutation({
+    mutationFn: ({ id, currentPassword }: { id: string; currentPassword: string }) =>
+      applicationsApi.viewScreeningReport(id, { currentPassword }),
   });
 
   const isModuleNotEntitled =
@@ -255,6 +270,18 @@ export function ApplicationsReviewPage() {
                           End lease
                         </Button>
                       )}
+                      {claims?.role === "TENANT_ADMIN" && application.screeningOutcomeSummary && (
+                        <Button
+                          size="xs"
+                          variant="subtle"
+                          onClick={() => {
+                            setReportFor(id);
+                            openReportModal();
+                          }}
+                        >
+                          View full report
+                        </Button>
+                      )}
                     </Group>
                   </Table.Td>
                 </Table.Tr>
@@ -344,6 +371,64 @@ export function ApplicationsReviewPage() {
           >
             End lease
           </Button>
+        </Stack>
+      </Modal>
+
+      <Modal
+        opened={reportModalOpened}
+        onClose={() => {
+          closeReportModal();
+          setReportFor(null);
+          setReportPassword("");
+          // Drops the decrypted report from memory the instant the modal closes — re-opening it
+          // requires the password again, not a cached copy of what was already decrypted.
+          viewReportMutation.reset();
+        }}
+        title="Full screening report"
+        size="lg"
+      >
+        <Stack gap="md">
+          {!viewReportMutation.data && (
+            <>
+              <Text size="sm">
+                Re-enter your password to view this applicant's full screening report. This action
+                is logged.
+              </Text>
+              {viewReportMutation.isError && (
+                <Alert color="red" title="Could not view report" styles={dangerAlertStyles}>
+                  {errorMessage(viewReportMutation.error)}
+                </Alert>
+              )}
+              <PasswordInput
+                label="Your password"
+                value={reportPassword}
+                onChange={(event) => setReportPassword(event.currentTarget.value)}
+              />
+              <Button
+                disabled={!reportPassword || !reportFor}
+                loading={viewReportMutation.isPending}
+                onClick={() =>
+                  viewReportMutation.mutate({ id: reportFor!, currentPassword: reportPassword })
+                }
+              >
+                View report
+              </Button>
+            </>
+          )}
+          {viewReportMutation.data && (
+            <>
+              <Alert color="orange" title="Sensitive information" styles={dangerAlertStyles}>
+                This report is not stored in your browser and disappears when you close this window.
+              </Alert>
+              <Text size="sm" c="gray.7">
+                Provider: {viewReportMutation.data.provider} · Outcome:{" "}
+                {viewReportMutation.data.outcomeSummary}
+              </Text>
+              <Code block tabIndex={0}>
+                {viewReportMutation.data.reportJson}
+              </Code>
+            </>
+          )}
         </Stack>
       </Modal>
     </Stack>

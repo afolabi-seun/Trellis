@@ -19,6 +19,8 @@ type ApplicationLinkContextResponse = components["schemas"]["ApplicationLinkCont
 type ApplicationSubmitRequest = components["schemas"]["ApplicationSubmitRequest"];
 type ApplicationSubmitResponse = components["schemas"]["ApplicationSubmitResponse"];
 type EndLeaseRequest = components["schemas"]["EndLeaseRequest"];
+type ViewScreeningReportRequest = components["schemas"]["ViewScreeningReportRequest"];
+type ScreeningReportResponse = components["schemas"]["ScreeningReportResponse"];
 
 /** BDR-LSE-001 — staff listing management. TENANT_ADMIN + DEPARTMENT_STAFF, gated by the LEASING module entitlement. */
 export const vacancyListingsApi = {
@@ -90,6 +92,13 @@ export const applicationsApi = {
   /** A staff-initiated move-out on a LEASED application — ends its rent schedule (if any) and frees the unit to be re-listed. */
   endLease: (id: string, request: EndLeaseRequest) =>
     apiFetch<ApplicationResponse>(`/api/v1/applications/${id}/end-lease`, {
+      method: "POST",
+      body: request,
+    }),
+
+  /** BDR-LSE-004's one exception — TENANT_ADMIN only, password re-entry required, every view server-audited. */
+  viewScreeningReport: (id: string, request: ViewScreeningReportRequest) =>
+    apiFetch<ScreeningReportResponse>(`/api/v1/applications/${id}/screening-report`, {
       method: "POST",
       body: request,
     }),

@@ -258,6 +258,39 @@ test("BDR-LSE-004/005: staff review the application, approve it, and a completed
   await expect(page.getByRole("link", { name: UNIT_LABEL })).toHaveCount(0);
 });
 
+test("BDR-LSE-004: only a Tenant Admin sees the full screening report, behind a password re-entry", async ({
+  page,
+}) => {
+  await login(page, DEPARTMENT_STAFF_USERNAME);
+  await page.getByRole("link", { name: "Applications", exact: true }).click();
+  await page.getByRole("textbox", { name: "Listing" }).click();
+  await page.getByRole("option", { name: new RegExp(LISTING_DESCRIPTION) }).click();
+  await expect(page.getByRole("cell", { name: "Pat Applicant" })).toBeVisible();
+  await expect(page.getByRole("button", { name: "View full report" })).toHaveCount(0);
+
+  await login(page, TENANT_ADMIN_USERNAME);
+  await page.getByRole("link", { name: "Applications", exact: true }).click();
+  await page.getByRole("textbox", { name: "Listing" }).click();
+  await page.getByRole("option", { name: new RegExp(LISTING_DESCRIPTION) }).click();
+  await page.getByRole("button", { name: "View full report" }).click();
+
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByText("Re-enter your password")).toBeVisible();
+  await dialog.getByLabel("Your password").fill("wrong-password-entirely");
+  await dialog.getByRole("button", { name: "View report" }).click();
+  await expect(dialog.getByText("That password isn't correct.")).toBeVisible();
+
+  await dialog.getByLabel("Your password").fill(SEED_PASSWORD);
+  await dialog.getByRole("button", { name: "View report" }).click();
+  await expect(dialog.getByText("Sensitive information")).toBeVisible();
+  await expect(dialog.getByText(/Provider: NOOP/)).toBeVisible();
+  await expect(dialog.getByText(/"simulated":true/)).toBeVisible();
+  await expectNoAxeViolations(page);
+
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeHidden();
+});
+
 test("BDR-LSE: staff end a lease, freeing the unit and its rent schedule so the unit can be re-listed", async ({
   page,
 }) => {

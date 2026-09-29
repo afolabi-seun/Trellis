@@ -606,6 +606,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/applications/{id}/screening-report": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["ViewScreeningReportRequest"];
+                    "text/json": components["schemas"]["ViewScreeningReportRequest"];
+                    "application/*+json": components["schemas"]["ViewScreeningReportRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ScreeningReportResponseApiResponse"];
+                        "application/json": components["schemas"]["ScreeningReportResponseApiResponse"];
+                        "text/json": components["schemas"]["ScreeningReportResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/login": {
         parameters: {
             query?: never;
@@ -6931,6 +6976,19 @@ export interface components {
             error?: components["schemas"]["ApiError"];
             meta: components["schemas"]["ApiMeta"];
         };
+        ScreeningReportResponse: {
+            provider?: string | null;
+            outcomeSummary?: string | null;
+            reportJson?: string | null;
+            /** Format: date-time */
+            receivedAt?: string;
+        };
+        ScreeningReportResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["ScreeningReportResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
         SendForSignatureRequest: {
             /** Format: uuid */
             draftDocumentId?: string;
@@ -7359,6 +7417,9 @@ export interface components {
             steps?: components["schemas"]["WorkflowStepInstanceResponse"][] | null;
             /** Format: date-time */
             createdAt?: string;
+        };
+        ViewScreeningReportRequest: {
+            currentPassword?: string | null;
         };
         WorkflowActionRequest: {
             note?: string | null;
