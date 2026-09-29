@@ -155,10 +155,11 @@ public sealed class RentLedgerIsolationTests(PostgresIsolationFixture fixture) :
         var repository = new RentPaymentRecordRepository(db);
 
         var totals = await repository.GetReceivedTotalsAsync([_scheduleAId]);
-        var inPeriod = await repository.GetReceivedInPeriodAsync([_scheduleAId], new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31));
+        var inPeriod = await repository.GetReceivedInPeriodByCurrencyAsync(
+            new Dictionary<Guid, string> { [_scheduleAId] = "USD" }, new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31));
 
         totals[_scheduleAId].Should().Be(1000m);
-        inPeriod.Should().Be(1000m);
+        inPeriod["USD"].Should().Be(1000m);
     }
 
     [Fact]

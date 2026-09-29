@@ -27,11 +27,21 @@ public sealed class RentPaymentRecordRepository(RentLedgerDbContext dbContext) :
             .Select(g => new { RentScheduleId = g.Key, Total = g.Sum(r => r.AmountReceived) })
             .ToDictionaryAsync(x => x.RentScheduleId, x => x.Total);
 
-    public async Task<decimal> GetReceivedInPeriodAsync(IReadOnlyCollection<Guid> rentScheduleIds, DateOnly periodStart, DateOnly periodEnd) =>
-        await dbContext.RentPaymentRecords
-            .Where(r => rentScheduleIds.Contains(r.RentScheduleId) && r.VoidedAt == null
+    // Currency lives on rent_schedule, not on the payment row, so the grouping happens in memory over the
+    // (small, already-loaded-by-the-caller) schedule-id-to-currency map rather than a cross-table SQL join.
+    public async Task<IReadOnlyDictionary<string, decimal>> GetReceivedInPeriodByCurrencyAsync(
+        IReadOnlyDictionary<Guid, string> scheduleCurrencies, DateOnly periodStart, DateOnly periodEnd)
+    {
+        var records = await dbContext.RentPaymentRecords
+            .Where(r => scheduleCurrencies.Keys.Contains(r.RentScheduleId) && r.VoidedAt == null
                 && r.DateReceived >= periodStart && r.DateReceived <= periodEnd)
-            .SumAsync(r => r.AmountReceived);
+            .Select(r => new { r.RentScheduleId, r.AmountReceived })
+            .ToListAsync();
+
+        return records
+            .GroupBy(r => scheduleCurrencies[r.RentScheduleId])
+            .ToDictionary(g => g.Key, g => g.Sum(r => r.AmountReceived));
+    }
 
     public Task SaveChangesAsync() => dbContext.SaveChangesAsync();
 }

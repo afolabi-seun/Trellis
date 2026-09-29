@@ -36,6 +36,14 @@ says "Pay Rent" instead of "Record Payment Received") is the exact kind of drift
 tracking tool into something that looks, to a regulator or a confused tenant, like a payment
 processor it isn't licensed to be.
 
+**BDR-RENT-005 and multi-currency.** An Owner's units aren't guaranteed to share one currency (a
+portfolio can mix a `USD` schedule and a `KES` schedule under the same Owner), so the "received in
+period" figure is grouped by each schedule's own currency and never summed across currencies — the
+Owner report shows one line per currency rather than one meaningless total. The Owner report's
+maintenance-cost figure (BDR-OWN-003, `WorkflowInstance.CostAmount`, which itself carries no
+currency) is labeled with the tenant's own default currency, derived from `tenant.country_code`
+the same way `billing_design.md`'s subscription currency is (`ZA`→ZAR, `KE`→KES, else USD).
+
 ---
 
 ## Module Placement

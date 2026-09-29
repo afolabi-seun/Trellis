@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Trellis.Api.Core.Dtos;
 using Trellis.Api.Core.Helpers;
 using Trellis.Api.Core.Middleware;
@@ -6,6 +7,7 @@ using Trellis.Api.Modules.Document.Application.Interfaces;
 using Trellis.Api.Modules.Notification.Application.Dtos;
 using Trellis.Api.Modules.Notification.Application.Interfaces;
 using Trellis.Api.Modules.PropertyAsset.Application.Interfaces;
+using Trellis.Api.Modules.RentLedger.Application.Dtos;
 using Trellis.Api.Modules.RentLedger.Application.Interfaces;
 using Trellis.Api.Modules.Reporting.Application.Dtos;
 using Trellis.Api.Modules.Reporting.Application.Interfaces;
@@ -64,16 +66,19 @@ public sealed class OwnerReportService(
 
             var tenantResult = await tenantService.GetByIdAsync(tenantId);
             var tenantName = tenantResult.Outcome == ServiceResultOutcome.Success ? tenantResult.Data!.TenantName : string.Empty;
+            var maintenanceCurrency = tenantResult.Outcome == ServiceResultOutcome.Success
+                ? CurrencyDefaults.ForCountry(tenantResult.Data!.CountryCode)
+                : "USD";
 
             var content = new OwnerReportContent(
                 tenantName, owner.Name, report.PeriodType.ToUpperSnakeCase(), periodStart, periodEnd,
-                propertyIds.Count, totalCost, openCount, compliantCount, expiringCount, rent);
+                propertyIds.Count, totalCost, maintenanceCurrency, openCount, compliantCount, expiringCount, rent);
 
             var pdfBytes = exportService.GenerateOwnerReportPdf(content);
 
             report.MarkReady(
-                propertyIds.Count, totalCost, openCount, compliantCount, expiringCount, pdfBytes,
-                rent?.CurrentCount, rent?.OverdueCount, rent?.ArrearsCount, rent?.ReceivedInPeriod, rent?.AsOf);
+                propertyIds.Count, totalCost, maintenanceCurrency, openCount, compliantCount, expiringCount, pdfBytes,
+                rent?.CurrentCount, rent?.OverdueCount, rent?.ArrearsCount, SerializeRent(rent?.ReceivedByCurrency), rent?.AsOf);
             await repository.SaveChangesAsync();
         }
         catch (Exception)
@@ -130,7 +135,7 @@ public sealed class OwnerReportService(
 
         var content = new OwnerReportContent(
             string.Empty, report.OwnerName, report.PeriodType.ToUpperSnakeCase(), report.PeriodStart, report.PeriodEnd,
-            report.PropertyCount, report.TotalMaintenanceCost, report.OpenMaintenanceCount,
+            report.PropertyCount, report.TotalMaintenanceCost, report.MaintenanceCurrency, report.OpenMaintenanceCount,
             report.CompliantDocumentCount, report.ExpiringDocumentCount, ToRentSection(report));
 
         return ServiceResult<byte[]>.Success(exportService.GenerateOwnerReportCsv(content));
@@ -173,15 +178,22 @@ public sealed class OwnerReportService(
         var summary = await rentScheduleService.GetOwnerRentSummaryAsync(unitAssetIds, periodStart, periodEnd, asOf);
         return summary is null
             ? null
-            : new OwnerReportRentSection(summary.CurrentCount, summary.OverdueCount, summary.ArrearsCount, summary.ReceivedInPeriod, asOf);
+            : new OwnerReportRentSection(summary.CurrentCount, summary.OverdueCount, summary.ArrearsCount, summary.ReceivedByCurrency, asOf);
     }
+
+    private static string? SerializeRent(IReadOnlyList<CurrencyAmount>? amounts) =>
+        amounts is null ? null : JsonSerializer.Serialize(amounts);
 
     private static OwnerReportRentSection? ToRentSection(OwnerReport report) =>
         report.RentCurrentCount is null
             ? null
             : new OwnerReportRentSection(
                 report.RentCurrentCount.Value, report.RentOverdueCount ?? 0, report.RentArrearsCount ?? 0,
-                report.RentReceivedAmount ?? 0m, report.RentAsOf ?? DateOnly.FromDateTime(report.ReadyAt?.UtcDateTime ?? DateTime.UtcNow));
+                DeserializeRent(report.RentReceivedByCurrencyJson),
+                report.RentAsOf ?? DateOnly.FromDateTime(report.ReadyAt?.UtcDateTime ?? DateTime.UtcNow));
+
+    private static IReadOnlyList<CurrencyAmount> DeserializeRent(string? json) =>
+        string.IsNullOrEmpty(json) ? [] : JsonSerializer.Deserialize<IReadOnlyList<CurrencyAmount>>(json) ?? [];
 
     private async Task<(int Compliant, int Expiring)> CountDocumentComplianceAsync(Guid ownerId, DateOnly asOfDate)
     {
@@ -210,6 +222,7 @@ public sealed class OwnerReportService(
         report.Status.ToUpperSnakeCase(),
         report.PropertyCount,
         report.TotalMaintenanceCost,
+        report.MaintenanceCurrency,
         report.OpenMaintenanceCount,
         report.CompliantDocumentCount,
         report.ExpiringDocumentCount,

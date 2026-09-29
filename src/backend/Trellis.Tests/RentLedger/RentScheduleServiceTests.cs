@@ -362,7 +362,7 @@ public sealed class RentScheduleServiceTests : IDisposable
 
         var result = await sut.GetOwnerRentSummaryAsync([], new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31), new DateOnly(2026, 2, 1));
 
-        result.Should().Be(new OwnerRentSummary(0, 0, 0, 0m));
+        result.Should().BeEquivalentTo(new OwnerRentSummary(0, 0, 0, []));
         await _scheduleRepository.DidNotReceiveWithAnyArgs().ListForUnitsAsync(default!);
     }
 
@@ -379,12 +379,29 @@ public sealed class RentScheduleServiceTests : IDisposable
         _scheduleRepository.ListForUnitsAsync(Arg.Any<IReadOnlyCollection<Guid>>()).Returns([current, overdue, arrearsLater, ended]);
         _paymentRepository.GetReceivedTotalsAsync(Arg.Any<IReadOnlyCollection<Guid>>())
             .Returns(new Dictionary<Guid, decimal> { [current.RentScheduleId] = 1000m });
-        _paymentRepository.GetReceivedInPeriodAsync(Arg.Any<IReadOnlyCollection<Guid>>(), new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31)).Returns(1000m);
+        _paymentRepository.GetReceivedInPeriodByCurrencyAsync(Arg.Any<IReadOnlyDictionary<Guid, string>>(), new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31))
+            .Returns(new Dictionary<string, decimal> { ["USD"] = 1000m });
         var sut = CreateSut();
 
         var result = await sut.GetOwnerRentSummaryAsync([Guid.NewGuid()], new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31), asOf);
 
         // Jan 8: 3 days past the 5th. Grace 5 → overdue; grace 1 → in arrears; the ended one is excluded.
-        result.Should().Be(new OwnerRentSummary(1, 1, 1, 1000m));
+        result.Should().BeEquivalentTo(new OwnerRentSummary(1, 1, 1, [new CurrencyAmount("USD", 1000m)]));
+    }
+
+    [Fact]
+    public async Task GetOwnerRentSummaryAsync_KeepsDifferentCurrenciesSeparate_NeverSummingThemTogether()
+    {
+        var start = new DateOnly(2026, 1, 1);
+        var usdSchedule = RentSchedule.Create(_tenantId, Guid.NewGuid(), null, 1000m, "USD", start, 5, 5, null);
+        var zarSchedule = RentSchedule.Create(_tenantId, Guid.NewGuid(), null, 15000m, "ZAR", start, 5, 5, null);
+        _scheduleRepository.ListForUnitsAsync(Arg.Any<IReadOnlyCollection<Guid>>()).Returns([usdSchedule, zarSchedule]);
+        _paymentRepository.GetReceivedInPeriodByCurrencyAsync(Arg.Any<IReadOnlyDictionary<Guid, string>>(), Arg.Any<DateOnly>(), Arg.Any<DateOnly>())
+            .Returns(new Dictionary<string, decimal> { ["USD"] = 1000m, ["ZAR"] = 15000m });
+        var sut = CreateSut();
+
+        var result = await sut.GetOwnerRentSummaryAsync([Guid.NewGuid()], start, start.AddMonths(1), start);
+
+        result!.ReceivedByCurrency.Should().BeEquivalentTo([new CurrencyAmount("USD", 1000m), new CurrencyAmount("ZAR", 15000m)]);
     }
 }

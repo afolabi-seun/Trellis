@@ -33,13 +33,14 @@ public sealed class OwnerReportConfiguration : IEntityTypeConfiguration<OwnerRep
 
         builder.Property(r => r.PropertyCount).HasColumnName("property_count");
         builder.Property(r => r.TotalMaintenanceCost).HasColumnName("total_maintenance_cost").HasColumnType("numeric(12,2)");
+        builder.Property(r => r.MaintenanceCurrency).HasColumnName("maintenance_currency").HasMaxLength(3);
         builder.Property(r => r.OpenMaintenanceCount).HasColumnName("open_maintenance_count");
         builder.Property(r => r.CompliantDocumentCount).HasColumnName("compliant_document_count");
         builder.Property(r => r.ExpiringDocumentCount).HasColumnName("expiring_document_count");
         builder.Property(r => r.RentCurrentCount).HasColumnName("rent_current_count");
         builder.Property(r => r.RentOverdueCount).HasColumnName("rent_overdue_count");
         builder.Property(r => r.RentArrearsCount).HasColumnName("rent_arrears_count");
-        builder.Property(r => r.RentReceivedAmount).HasColumnName("rent_received_amount").HasColumnType("numeric(12,2)");
+        builder.Property(r => r.RentReceivedByCurrencyJson).HasColumnName("rent_received_by_currency").HasColumnType("jsonb");
         builder.Property(r => r.RentAsOf).HasColumnName("rent_as_of");
         builder.Property(r => r.PdfContent).HasColumnName("pdf_content").HasColumnType("bytea");
         builder.Property(r => r.GeneratedBy).HasColumnName("generated_by");

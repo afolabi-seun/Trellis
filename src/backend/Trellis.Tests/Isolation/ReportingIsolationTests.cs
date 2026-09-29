@@ -40,13 +40,13 @@ public sealed class ReportingIsolationTests(PostgresIsolationFixture fixture) : 
         seed.CommandText = """
             insert into trellis_reporting.owner_report
                 (owner_report_id, tenant_id, owner_id, owner_name, period_type, period_start, period_end,
-                 status, property_count, total_maintenance_cost, open_maintenance_count,
+                 status, property_count, total_maintenance_cost, maintenance_currency, open_maintenance_count,
                  compliant_document_count, expiring_document_count, generated_by, created_at)
             values
                 (@ownerReportA, @tenantA, gen_random_uuid(), 'Owner A', 'MONTHLY', '2026-01-01', '2026-01-31',
-                 'READY', 1, 0, 0, 0, 0, gen_random_uuid(), now()),
+                 'READY', 1, 0, 'USD', 0, 0, 0, gen_random_uuid(), now()),
                 (@ownerReportB, @tenantB, gen_random_uuid(), 'Owner B', 'MONTHLY', '2026-01-01', '2026-01-31',
-                 'READY', 1, 0, 0, 0, 0, gen_random_uuid(), now());
+                 'READY', 1, 0, 'USD', 0, 0, 0, gen_random_uuid(), now());
 
             insert into trellis_reporting.report_share_link
                 (report_share_link_id, tenant_id, owner_report_id, token_hash, status, expires_at, created_by, created_at)

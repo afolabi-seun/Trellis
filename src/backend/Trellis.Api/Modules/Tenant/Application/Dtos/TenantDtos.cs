@@ -19,7 +19,8 @@ public sealed record TenantResponse(
     string Status,
     string SubscriptionTier,
     DateTimeOffset CreatedAt,
-    string Slug = "");
+    string Slug = "",
+    string DefaultCurrency = "USD");
 
 /// <summary>Internal resolution result — carries the TenantId, so it must never be returned from an anonymous endpoint (see <see cref="PublicTenantResponse"/>).</summary>
 public sealed record TenantPublicInfo(Guid TenantId, string Name, string Slug);

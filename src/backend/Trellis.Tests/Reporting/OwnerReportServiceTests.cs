@@ -1,3 +1,4 @@
+using System.Text.Json;
 using FluentAssertions;
 using NSubstitute;
 using Trellis.Api.Core.Dtos;
@@ -92,6 +93,7 @@ public sealed class OwnerReportServiceTests : IDisposable
         result.Outcome.Should().Be(ServiceResultOutcome.Success);
         result.Data!.PropertyCount.Should().Be(2);
         result.Data.TotalMaintenanceCost.Should().Be(450.00m);
+        result.Data.MaintenanceCurrency.Should().Be("USD");
         result.Data.OpenMaintenanceCount.Should().Be(2);
         result.Data.Status.Should().Be("READY");
         await _repository.Received(2).SaveChangesAsync();
@@ -114,7 +116,7 @@ public sealed class OwnerReportServiceTests : IDisposable
     public async Task DownloadPdfAsync_WhenReady_ReturnsStoredBytes()
     {
         var report = OwnerReport.Create(_tenantId, Guid.NewGuid(), "Jane Owner", OwnerReportPeriodType.Monthly, new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31), Guid.NewGuid());
-        report.MarkReady(1, 0, 0, 0, 0, [0x25, 0x50, 0x44, 0x46]);
+        report.MarkReady(1, 0, "USD", 0, 0, 0, [0x25, 0x50, 0x44, 0x46]);
         _repository.GetByIdAsync(Arg.Any<Guid>()).Returns(report);
         var sut = CreateSut();
 
@@ -128,7 +130,7 @@ public sealed class OwnerReportServiceTests : IDisposable
     public async Task DeliverByEmailAsync_WhenOwnerHasNoEmail_ReturnsBusinessRuleViolation()
     {
         var report = OwnerReport.Create(_tenantId, Guid.NewGuid(), "Jane Owner", OwnerReportPeriodType.Monthly, new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31), Guid.NewGuid());
-        report.MarkReady(1, 0, 0, 0, 0, [0x25]);
+        report.MarkReady(1, 0, "USD", 0, 0, 0, [0x25]);
         _repository.GetByIdAsync(Arg.Any<Guid>()).Returns(report);
         _ownerService.GetByIdAsync(report.OwnerId).Returns(ServiceResult<OwnerResponse>.Success(SampleOwner(email: null)));
         var sut = CreateSut();
@@ -143,7 +145,7 @@ public sealed class OwnerReportServiceTests : IDisposable
     public async Task DeliverByEmailAsync_WhenOwnerHasEmail_DispatchesNotificationAndRecordsAudit()
     {
         var report = OwnerReport.Create(_tenantId, Guid.NewGuid(), "Jane Owner", OwnerReportPeriodType.Monthly, new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31), Guid.NewGuid());
-        report.MarkReady(1, 0, 0, 0, 0, [0x25]);
+        report.MarkReady(1, 0, "USD", 0, 0, 0, [0x25]);
         _repository.GetByIdAsync(Arg.Any<Guid>()).Returns(report);
         _ownerService.GetByIdAsync(report.OwnerId).Returns(ServiceResult<OwnerResponse>.Success(SampleOwner()));
         var sut = CreateSut();
@@ -179,7 +181,7 @@ public sealed class OwnerReportServiceTests : IDisposable
     {
         var ownerId = ArrangeGenerationForOwner(out var unitIds);
         _rentScheduleService.GetOwnerRentSummaryAsync(Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<DateOnly>(), Arg.Any<DateOnly>(), Arg.Any<DateOnly>())
-            .Returns(new OwnerRentSummary(3, 1, 2, 4500.50m));
+            .Returns(new OwnerRentSummary(3, 1, 2, [new CurrencyAmount("USD", 4500.50m)]));
         var sut = CreateSut();
 
         var result = await sut.GenerateAsync(ownerId, OwnerReportPeriodType.Monthly, new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31), Guid.NewGuid());
@@ -188,7 +190,7 @@ public sealed class OwnerReportServiceTests : IDisposable
         result.Data.Rent!.CurrentCount.Should().Be(3);
         result.Data.Rent.OverdueCount.Should().Be(1);
         result.Data.Rent.ArrearsCount.Should().Be(2);
-        result.Data.Rent.ReceivedInPeriod.Should().Be(4500.50m);
+        result.Data.Rent.ReceivedByCurrency.Should().Equal(new CurrencyAmount("USD", 4500.50m));
         _exportService.Received(1).GenerateOwnerReportPdf(Arg.Is<OwnerReportContent>(c => c.Rent != null && c.Rent.ArrearsCount == 2));
         await _rentScheduleService.Received(1).GetOwnerRentSummaryAsync(
             Arg.Is<IReadOnlyList<Guid>>(ids => ids.SequenceEqual(unitIds)), new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31), Arg.Any<DateOnly>());
@@ -212,14 +214,17 @@ public sealed class OwnerReportServiceTests : IDisposable
     public async Task DownloadCsvAsync_ReproducesTheStoredRentSnapshot_NotALiveRequery()
     {
         var report = OwnerReport.Create(_tenantId, Guid.NewGuid(), "Jane Owner", OwnerReportPeriodType.Monthly, new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31), Guid.NewGuid());
-        report.MarkReady(1, 0, 0, 0, 0, [0x25], 3, 1, 2, 4500.50m, new DateOnly(2026, 2, 3));
+        var rentJson = JsonSerializer.Serialize<IReadOnlyList<CurrencyAmount>>([new CurrencyAmount("USD", 4500.50m)]);
+        report.MarkReady(1, 0, "USD", 0, 0, 0, [0x25], 3, 1, 2, rentJson, new DateOnly(2026, 2, 3));
         _repository.GetByIdAsync(Arg.Any<Guid>()).Returns(report);
         var sut = CreateSut();
 
         await sut.DownloadCsvAsync(report.OwnerReportId);
 
+        var expected = new List<CurrencyAmount> { new("USD", 4500.50m) };
         _exportService.Received(1).GenerateOwnerReportCsv(Arg.Is<OwnerReportContent>(c =>
-            c.Rent != null && c.Rent.CurrentCount == 3 && c.Rent.ArrearsCount == 2 && c.Rent.ReceivedInPeriod == 4500.50m && c.Rent.AsOf == new DateOnly(2026, 2, 3)));
+            c.Rent != null && c.Rent.CurrentCount == 3 && c.Rent.ArrearsCount == 2
+            && c.Rent.ReceivedByCurrency.SequenceEqual(expected) && c.Rent.AsOf == new DateOnly(2026, 2, 3)));
         await _rentScheduleService.DidNotReceiveWithAnyArgs().GetOwnerRentSummaryAsync(default!, default, default, default);
     }
 
@@ -227,7 +232,7 @@ public sealed class OwnerReportServiceTests : IDisposable
     public async Task DownloadCsvAsync_ForAReportGeneratedBeforeRentCollectionExisted_HasNoRentSection()
     {
         var report = OwnerReport.Create(_tenantId, Guid.NewGuid(), "Jane Owner", OwnerReportPeriodType.Monthly, new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31), Guid.NewGuid());
-        report.MarkReady(1, 0, 0, 0, 0, [0x25]);
+        report.MarkReady(1, 0, "USD", 0, 0, 0, [0x25]);
         _repository.GetByIdAsync(Arg.Any<Guid>()).Returns(report);
         var sut = CreateSut();
 

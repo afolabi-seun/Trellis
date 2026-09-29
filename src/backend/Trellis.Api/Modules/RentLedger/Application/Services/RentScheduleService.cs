@@ -244,7 +244,7 @@ public sealed class RentScheduleService(
 
         if (unitAssetIds.Count == 0)
         {
-            return new OwnerRentSummary(0, 0, 0, 0m);
+            return new OwnerRentSummary(0, 0, 0, []);
         }
 
         var schedules = await scheduleRepository.ListForUnitsAsync(unitAssetIds);
@@ -262,8 +262,10 @@ public sealed class RentScheduleService(
             }
         }
 
-        var received = await paymentRepository.GetReceivedInPeriodAsync(ids, periodStart, periodEnd);
-        return new OwnerRentSummary(current, overdue, arrears, received);
+        var currencies = schedules.ToDictionary(s => s.RentScheduleId, s => s.Currency);
+        var received = await paymentRepository.GetReceivedInPeriodByCurrencyAsync(currencies, periodStart, periodEnd);
+        var byCurrency = received.OrderBy(kv => kv.Key, StringComparer.Ordinal).Select(kv => new CurrencyAmount(kv.Key, kv.Value)).ToList();
+        return new OwnerRentSummary(current, overdue, arrears, byCurrency);
     }
 
     private static DateOnly Today => DateOnly.FromDateTime(DateTime.UtcNow);

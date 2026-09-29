@@ -183,7 +183,7 @@ trellis_billing.webhook_event       — every gateway webhook received, for idem
 | subscription_id | UUID | PK | |
 | tenant_id | UUID | NOT NULL, UNIQUE | One active subscription per tenant |
 | status | VARCHAR(20) | NOT NULL DEFAULT 'TRIALING' | TRIALING\|ACTIVE\|PAST_DUE\|SUSPENDED\|CANCELED |
-| currency | CHAR(3) | NOT NULL | ISO 4217 — derived from `tenant.country_code` at provisioning (ZAR, KES) |
+| currency | CHAR(3) | NOT NULL | ISO 4217 — derived from `tenant.country_code` at provisioning (ZAR, KES). The country→currency map itself lives in `Core/Helpers/CurrencyDefaults` (`TenantResponse.DefaultCurrency` and `rent_collection_design.md`'s Owner-report figures reuse it — one map, not one per module) |
 | billing_cycle_anchor_day | SMALLINT | NOT NULL | Day of month the cycle rolls over |
 | created_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | |
 

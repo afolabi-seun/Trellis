@@ -84,6 +84,12 @@ namespace Trellis.Api.Modules.Reporting.Infrastructure.Data.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("generated_by");
 
+                    b.Property<string>("MaintenanceCurrency")
+                        .IsRequired()
+                        .HasMaxLength(3)
+                        .HasColumnType("character varying(3)")
+                        .HasColumnName("maintenance_currency");
+
                     b.Property<int>("OpenMaintenanceCount")
                         .HasColumnType("integer")
                         .HasColumnName("open_maintenance_count");
@@ -140,9 +146,9 @@ namespace Trellis.Api.Modules.Reporting.Infrastructure.Data.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("rent_overdue_count");
 
-                    b.Property<decimal?>("RentReceivedAmount")
-                        .HasColumnType("numeric(12,2)")
-                        .HasColumnName("rent_received_amount");
+                    b.Property<string>("RentReceivedByCurrencyJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("rent_received_by_currency");
 
                     b.Property<string>("Status")
                         .IsRequired()

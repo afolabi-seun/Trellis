@@ -28,9 +28,12 @@ public enum OwnerReportPeriodType
 /// which nothing in Trellis records. Rent collection (BDR-RENT-005) adds a separate, nullable
 /// rent section: how many of the Owner's rent schedules are current, overdue, or in arrears as of
 /// generation, and the rent recorded as received (outside Trellis — Trellis never processes or
-/// holds funds) during the period. All five Rent* fields are NULL when the tenant isn't entitled
-/// to the Rent Collection add-on — "not tracked", never a misleading zero — and are stored as
-/// scalar snapshots (not re-queried) so a CSV re-download reproduces the figures the PDF showed.
+/// holds funds) during the period, broken down by currency (never summed across currencies) since a
+/// single Owner's units can be let in more than one. All Rent* fields are NULL when the tenant isn't
+/// entitled to the Rent Collection add-on — "not tracked", never a misleading zero — and are stored
+/// as scalar snapshots (not re-queried) so a CSV re-download reproduces the figures the PDF showed.
+/// MaintenanceCurrency labels TotalMaintenanceCost with the tenant's own default currency
+/// (WorkflowInstance.CostAmount itself carries no currency) and is always set.
 /// </summary>
 public sealed class OwnerReport : ITenantOwned
 {
@@ -44,13 +47,15 @@ public sealed class OwnerReport : ITenantOwned
     public OwnerReportStatus Status { get; private set; }
     public int PropertyCount { get; private set; }
     public decimal TotalMaintenanceCost { get; private set; }
+    public string MaintenanceCurrency { get; private set; } = null!;
     public int OpenMaintenanceCount { get; private set; }
     public int CompliantDocumentCount { get; private set; }
     public int ExpiringDocumentCount { get; private set; }
     public int? RentCurrentCount { get; private set; }
     public int? RentOverdueCount { get; private set; }
     public int? RentArrearsCount { get; private set; }
-    public decimal? RentReceivedAmount { get; private set; }
+    /// <summary>JSON-serialized `IReadOnlyList&lt;CurrencyAmount&gt;` — a plain scalar column, not a queryable structure, so RentLedger's own DTO shape is reused as-is rather than mapping to something Reporting-specific.</summary>
+    public string? RentReceivedByCurrencyJson { get; private set; }
     public DateOnly? RentAsOf { get; private set; }
     public byte[]? PdfContent { get; private set; }
     public Guid GeneratedBy { get; private set; }
@@ -72,15 +77,16 @@ public sealed class OwnerReport : ITenantOwned
             PeriodEnd = periodEnd,
             Status = OwnerReportStatus.Generating,
             GeneratedBy = generatedBy,
+            MaintenanceCurrency = "USD",
             CreatedAt = DateTimeOffset.UtcNow,
         };
 
     /// <summary>Immutable once Ready — a re-generation for the same Owner/period creates a new row, never overwrites this one.</summary>
     public void MarkReady(
-        int propertyCount, decimal totalMaintenanceCost, int openMaintenanceCount,
+        int propertyCount, decimal totalMaintenanceCost, string maintenanceCurrency, int openMaintenanceCount,
         int compliantDocumentCount, int expiringDocumentCount, byte[] pdfContent,
         int? rentCurrentCount = null, int? rentOverdueCount = null, int? rentArrearsCount = null,
-        decimal? rentReceivedAmount = null, DateOnly? rentAsOf = null)
+        string? rentReceivedByCurrencyJson = null, DateOnly? rentAsOf = null)
     {
         if (Status != OwnerReportStatus.Generating)
         {
@@ -89,13 +95,14 @@ public sealed class OwnerReport : ITenantOwned
 
         PropertyCount = propertyCount;
         TotalMaintenanceCost = totalMaintenanceCost;
+        MaintenanceCurrency = maintenanceCurrency;
         OpenMaintenanceCount = openMaintenanceCount;
         CompliantDocumentCount = compliantDocumentCount;
         ExpiringDocumentCount = expiringDocumentCount;
         RentCurrentCount = rentCurrentCount;
         RentOverdueCount = rentOverdueCount;
         RentArrearsCount = rentArrearsCount;
-        RentReceivedAmount = rentReceivedAmount;
+        RentReceivedByCurrencyJson = rentReceivedByCurrencyJson;
         RentAsOf = rentAsOf;
         PdfContent = pdfContent;
         Status = OwnerReportStatus.Ready;

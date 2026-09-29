@@ -22,7 +22,7 @@ public sealed class ReportShareLinkServiceTests
     private static OwnerReport CreateReadyReport(Guid tenantId)
     {
         var report = OwnerReport.Create(tenantId, Guid.NewGuid(), "Jane Owner", OwnerReportPeriodType.Monthly, new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31), Guid.NewGuid());
-        report.MarkReady(1, 0, 0, 0, 0, [0x25, 0x50, 0x44, 0x46]);
+        report.MarkReady(1, 0, "USD", 0, 0, 0, [0x25, 0x50, 0x44, 0x46]);
         return report;
     }
 

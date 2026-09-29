@@ -240,5 +240,6 @@ public sealed class TenantService(
         tenant.Status.ToString().ToUpperInvariant(),
         tenant.SubscriptionTier.ToString().ToUpperInvariant(),
         tenant.CreatedAt,
-        tenant.Slug);
+        tenant.Slug,
+        CurrencyDefaults.ForCountry(tenant.CountryCode));
 }

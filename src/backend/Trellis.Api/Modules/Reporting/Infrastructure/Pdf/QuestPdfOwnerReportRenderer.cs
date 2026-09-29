@@ -29,13 +29,10 @@ public sealed class QuestPdfOwnerReportRenderer : IReportExportService
     // that could silently do nothing under Debug/Development.
     static QuestPdfOwnerReportRenderer() => QuestPDF.Settings.License = LicenseType.Community;
 
-    // "C" formatted under CultureInfo.InvariantCulture renders the generic ¤ symbol, not $ — a
-    // real, visible bug caught in the live smoke-test PDF, not by any unit test (GenerateOwnerReportPdf's
-    // own test only asserts non-empty %PDF bytes, not rendered text). Trellis is US-focused
-    // throughout (Tenant's own CountryCode default, formatCurrency.ts's own USD default), so
-    // en-US is correct here specifically — every other ToString(...) call in this class stays on
-    // InvariantCulture, which is fine for plain numbers/dates.
-    private static readonly CultureInfo CurrencyCulture = CultureInfo.GetCultureInfo("en-US");
+    // Every currency-shaped figure goes through CurrencyFormatter now, which renders each amount in
+    // its own ISO 4217 code's real culture (see that class's own doc comment for why "always en-US"
+    // was a real bug). Every other ToString(...) call in this class stays on InvariantCulture, which
+    // is fine for plain numbers/dates.
 
     public byte[] GenerateOwnerReportPdf(OwnerReportContent content) =>
         QuestDocument.Create(container =>
@@ -67,7 +64,7 @@ public sealed class QuestPdfOwnerReportRenderer : IReportExportService
                         });
 
                         AddRow(table, "Properties", content.PropertyCount.ToString(CultureInfo.InvariantCulture));
-                        AddRow(table, "Total maintenance cost", content.TotalMaintenanceCost.ToString("C", CurrencyCulture));
+                        AddRow(table, $"Total maintenance cost ({content.MaintenanceCurrency})", CurrencyFormatter.Format(content.TotalMaintenanceCost, content.MaintenanceCurrency));
                         AddRow(table, "Open maintenance requests", content.OpenMaintenanceCount.ToString(CultureInfo.InvariantCulture));
                     });
 
@@ -100,7 +97,10 @@ public sealed class QuestPdfOwnerReportRenderer : IReportExportService
                             AddRow(table, "Rent schedules current", rent.CurrentCount.ToString(CultureInfo.InvariantCulture));
                             AddRow(table, "Rent schedules overdue", rent.OverdueCount.ToString(CultureInfo.InvariantCulture));
                             AddRow(table, "Rent schedules in arrears", rent.ArrearsCount.ToString(CultureInfo.InvariantCulture));
-                            AddRow(table, "Rent recorded as received in period", rent.ReceivedInPeriod.ToString("C", CurrencyCulture));
+                            foreach (var received in rent.ReceivedByCurrency)
+                            {
+                                AddRow(table, $"Rent recorded as received in period ({received.Currency})", CurrencyFormatter.Format(received.Amount, received.Currency));
+                            }
                         });
                     }
                 });
@@ -120,7 +120,7 @@ public sealed class QuestPdfOwnerReportRenderer : IReportExportService
             ["Owner", content.OwnerName],
             ["Period", $"{content.PeriodStart:yyyy-MM-dd} to {content.PeriodEnd:yyyy-MM-dd}"],
             ["Properties", content.PropertyCount.ToString(CultureInfo.InvariantCulture)],
-            ["Total maintenance cost", content.TotalMaintenanceCost.ToString("F2", CultureInfo.InvariantCulture)],
+            [$"Total maintenance cost ({content.MaintenanceCurrency})", content.TotalMaintenanceCost.ToString("F2", CultureInfo.InvariantCulture)],
             ["Open maintenance requests", content.OpenMaintenanceCount.ToString(CultureInfo.InvariantCulture)],
             ["Compliant documents", content.CompliantDocumentCount.ToString(CultureInfo.InvariantCulture)],
             ["Documents expiring soon", content.ExpiringDocumentCount.ToString(CultureInfo.InvariantCulture)],
@@ -131,7 +131,11 @@ public sealed class QuestPdfOwnerReportRenderer : IReportExportService
             rows.Add(["Rent schedules current", rent.CurrentCount.ToString(CultureInfo.InvariantCulture)]);
             rows.Add(["Rent schedules overdue", rent.OverdueCount.ToString(CultureInfo.InvariantCulture)]);
             rows.Add(["Rent schedules in arrears", rent.ArrearsCount.ToString(CultureInfo.InvariantCulture)]);
-            rows.Add(["Rent recorded as received in period", rent.ReceivedInPeriod.ToString("F2", CultureInfo.InvariantCulture)]);
+            foreach (var received in rent.ReceivedByCurrency)
+            {
+                rows.Add([$"Rent recorded as received in period ({received.Currency})", received.Amount.ToString("F2", CultureInfo.InvariantCulture)]);
+            }
+
             rows.Add(["Rent status as of", rent.AsOf.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)]);
         }
 

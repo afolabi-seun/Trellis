@@ -19,5 +19,7 @@ public sealed record RentPaymentRecordResponse(
     Guid RentPaymentRecordId, Guid RentScheduleId, decimal AmountReceived, DateOnly DateReceived, string? MethodReference,
     Guid RecordedByUserId, DateTimeOffset RecordedAt, bool IsVoided, DateTimeOffset? VoidedAt, string? VoidReason);
 
-/// <summary>BDR-RENT-005 — the Owner report's rent rollup across an Owner's units. ReceivedInPeriod sums recorded amounts as-is (no currency conversion — same single-currency assumption as the report's maintenance-cost figure).</summary>
-public sealed record OwnerRentSummary(int CurrentCount, int OverdueCount, int ArrearsCount, decimal ReceivedInPeriod);
+public sealed record CurrencyAmount(string Currency, decimal Amount);
+
+/// <summary>BDR-RENT-005 — the Owner report's rent rollup across an Owner's units. ReceivedByCurrency is grouped by each schedule's own currency and never summed across currencies — a KES schedule and a ZAR schedule under one Owner are reported as two separate figures, not one meaningless total.</summary>
+public sealed record OwnerRentSummary(int CurrentCount, int OverdueCount, int ArrearsCount, IReadOnlyList<CurrencyAmount> ReceivedByCurrency);
