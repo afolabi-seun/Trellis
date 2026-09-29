@@ -5965,6 +5965,11 @@ export interface components {
         ConfirmCardCaptureRequest: {
             reference?: string | null;
         };
+        CurrencyAmount: {
+            currency?: string | null;
+            /** Format: double */
+            amount?: number;
+        };
         DashboardSummaryResponse: {
             /** Format: int32 */
             openWorkOrders?: number;
@@ -6425,8 +6430,7 @@ export interface components {
             overdueCount?: number;
             /** Format: int32 */
             arrearsCount?: number;
-            /** Format: double */
-            receivedInPeriod?: number;
+            receivedByCurrency?: components["schemas"]["CurrencyAmount"][] | null;
             /** Format: date */
             asOf?: string;
         };
@@ -6446,6 +6450,7 @@ export interface components {
             propertyCount?: number;
             /** Format: double */
             totalMaintenanceCost?: number;
+            maintenanceCurrency?: string | null;
             /** Format: int32 */
             openMaintenanceCount?: number;
             /** Format: int32 */
@@ -6959,6 +6964,7 @@ export interface components {
             /** Format: date-time */
             createdAt?: string;
             slug?: string | null;
+            defaultCurrency?: string | null;
         };
         TenantResponseApiResponse: {
             readonly status?: string | null;

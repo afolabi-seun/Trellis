@@ -17,6 +17,13 @@ import {
   SEED_PASSWORD,
 } from "./support/dbSeed";
 
+const KES_TENANT_ID = "f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1";
+const KES_TENANT_NAME = `E2E Rent KES Tenant ${Date.now()}`;
+const KES_OWNER_ID = "f5f5f5f5-f5f5-f5f5-f5f5-f5f5f5f5f5f5";
+const KES_PROPERTY_ID = "f2f2f2f2-f2f2-f2f2-f2f2-f2f2f2f2f2f2";
+const KES_UNIT_ID = "f4f4f4f4-f4f4-f4f4-f4f4-f4f4f4f4f4f4";
+const KES_ADMIN_USERNAME = `e2e-rent-kes-admin-${Date.now()}@trellis-platform.test`;
+
 // Phase 10's exit criterion: a staff member records a rent payment against a schedule, an unpaid
 // entry past its grace period surfaces as an arrears flag, and both appear correctly in the Owner
 // portfolio report. The schedule is created through the real UI with a start date three months
@@ -59,6 +66,13 @@ test.beforeAll(async () => {
 
   await seedTenant(UNENTITLED_TENANT_ID, UNENTITLED_TENANT_NAME, "PROFESSIONAL");
   await seedTenantAdmin(UNENTITLED_ADMIN_USERNAME, UNENTITLED_TENANT_ID);
+
+  await seedTenant(KES_TENANT_ID, KES_TENANT_NAME, "PROFESSIONAL", undefined, "KE");
+  await seedTenantAdmin(KES_ADMIN_USERNAME, KES_TENANT_ID);
+  await seedModuleEntitlement(KES_TENANT_ID, "RENT_COLLECTION", "ACTIVE");
+  await seedOwner(KES_OWNER_ID, KES_TENANT_ID, "Kesi Owner", "kesi.owner@example.com");
+  await seedProperty(KES_PROPERTY_ID, KES_TENANT_ID, KES_OWNER_ID, "1 Nairobi Rd");
+  await seedUnitAsset(KES_UNIT_ID, KES_TENANT_ID, KES_PROPERTY_ID, "Unit K1");
 });
 
 test.afterAll(async () => {
@@ -74,6 +88,12 @@ test.afterAll(async () => {
   await deleteTenantByName(TENANT_NAME);
   await deleteBillingDataForTenant(UNENTITLED_TENANT_ID);
   await deleteTenantByName(UNENTITLED_TENANT_NAME);
+
+  await deleteRentLedgerDataForTenant(KES_TENANT_ID);
+  await deletePropertyAssetDataForTenant(KES_TENANT_ID);
+  await deleteBillingDataForTenant(KES_TENANT_ID);
+  await deleteAppUsers([KES_ADMIN_USERNAME]);
+  await deleteTenantByName(KES_TENANT_NAME);
 });
 
 async function login(page: import("@playwright/test").Page, username: string) {
@@ -187,7 +207,7 @@ test("BDR-RENT-005: the recorded payments and rent status appear in the Owner po
 
   expect(csv).toContain("Rent schedules current,1");
   expect(csv).toContain("Rent schedules in arrears,0");
-  expect(csv).toContain("Rent recorded as received in period,101000.00");
+  expect(csv).toContain("Rent recorded as received in period (USD),101000.00");
 });
 
 test("BDR-RENT-002: a mistaken record is voided, not edited — and the arrears flag returns", async ({
@@ -253,4 +273,26 @@ test("BDR-BIL-009: a tenant without the Rent Collection add-on sees an upsell in
 
   await page.goto("/admin/rent-arrears");
   await expect(page.getByText("Rent tracking isn't enabled for your plan")).toBeVisible();
+});
+
+test("a tenant on a KES market gets KES as the default currency, not a hard-coded USD", async ({
+  page,
+}) => {
+  await login(page, KES_ADMIN_USERNAME);
+  await page.getByRole("link", { name: "Rent Schedules", exact: true }).click();
+
+  await page.getByRole("button", { name: "New schedule" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByLabel("Currency")).toHaveValue("KES");
+
+  await dialog.getByRole("textbox", { name: "Property" }).click();
+  await page.getByRole("option", { name: "1 Nairobi Rd" }).click();
+  await dialog.getByRole("textbox", { name: "Unit" }).click();
+  await page.getByRole("option", { name: "Unit K1" }).click();
+  await dialog.getByLabel("Rent per period").fill("50000");
+  await dialog.getByLabel("Start date").fill(today);
+  await dialog.getByRole("button", { name: "Create schedule" }).click();
+  await expect(dialog).toBeHidden();
+
+  await expect(page.getByRole("cell", { name: "KES", exact: false }).first()).toBeVisible();
 });

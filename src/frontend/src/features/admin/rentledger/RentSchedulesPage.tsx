@@ -21,6 +21,7 @@ import { z } from "zod";
 import { TrellisApiError } from "../../../api/client";
 import { propertiesApi } from "../../../api/properties";
 import { rentSchedulesApi } from "../../../api/rentledger";
+import { useTenantSettings } from "../settings/useTenantSettings";
 import { unitsApi } from "../../../api/units";
 import { dangerAlertStyles, infoAlertStyles } from "../../../theme/dangerStyles";
 import { formatCurrency } from "../../../utils/formatCurrency";
@@ -53,6 +54,7 @@ type ScheduleFormValues = z.infer<typeof scheduleSchema>;
 export function RentSchedulesPage() {
   const queryClient = useQueryClient();
   const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
+  const settingsQuery = useTenantSettings();
 
   const schedulesQuery = useQuery({
     queryKey: ["rent", "schedules"],
@@ -74,6 +76,13 @@ export function RentSchedulesPage() {
     defaultValues: { currency: "USD", dueDayOfMonth: 1, gracePeriodDays: 5 },
   });
 
+  // Settings load asynchronously; default the currency field to the tenant's own once known.
+  const defaultCurrency = settingsQuery.data?.defaultCurrency ?? "USD";
+  const openModalWithDefaults = () => {
+    reset({ currency: defaultCurrency, dueDayOfMonth: 1, gracePeriodDays: 5 });
+    openModal();
+  };
+
   const selectedPropertyId = useWatch({ control, name: "propertyId" });
   const unitsQuery = useQuery({
     queryKey: ["propertyasset", "units", selectedPropertyId],
@@ -93,7 +102,7 @@ export function RentSchedulesPage() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["rent"] });
-      reset({ currency: "USD", dueDayOfMonth: 1, gracePeriodDays: 5 });
+      reset({ currency: defaultCurrency, dueDayOfMonth: 1, gracePeriodDays: 5 });
       closeModal();
     },
   });
@@ -134,7 +143,7 @@ export function RentSchedulesPage() {
           <Anchor component={Link} to="/admin/rent-arrears">
             Arrears
           </Anchor>
-          <Button onClick={openModal}>New schedule</Button>
+          <Button onClick={openModalWithDefaults}>New schedule</Button>
         </Group>
       </Group>
 

@@ -41,14 +41,15 @@ export async function seedTenant(
   tenantName: string,
   tier: string = "STARTER",
   slug: string = tenantSlugFor(tenantId),
+  countryCode: string = "US",
 ): Promise<void> {
   const client = new Client({ connectionString: CONNECTION_STRING });
   await client.connect();
   try {
     await client.query(
       `insert into trellis_tenant.tenant (tenant_id, tenant_name, slug, country_code, status, subscription_tier, created_at, updated_at)
-       values ($1, $2, $3, 'US', 'ACTIVE', $4, now(), now())`,
-      [tenantId, tenantName, slug, tier],
+       values ($1, $2, $3, $5, 'ACTIVE', $4, now(), now())`,
+      [tenantId, tenantName, slug, tier, countryCode],
     );
   } finally {
     await client.end();

@@ -21,6 +21,7 @@ import { Link } from "react-router-dom";
 import { z } from "zod";
 import { TrellisApiError } from "../../../api/client";
 import { vacancyListingsApi } from "../../../api/leasing";
+import { useTenantSettings } from "../settings/useTenantSettings";
 import { propertiesApi } from "../../../api/properties";
 import { unitsApi } from "../../../api/units";
 import { formatCurrency } from "../../../utils/formatCurrency";
@@ -54,6 +55,7 @@ const statusColor: Record<string, string> = {
 export function VacancyListingsPage() {
   const queryClient = useQueryClient();
   const [modalOpened, { open: openModal, close: closeModal }] = useDisclosure(false);
+  const settingsQuery = useTenantSettings();
 
   const listingsQuery = useQuery({
     queryKey: ["leasing", "listings"],
@@ -75,6 +77,14 @@ export function VacancyListingsPage() {
     defaultValues: { currency: "USD" },
   });
 
+  // Settings load asynchronously; default the currency field to the tenant's own once known, but
+  // only while the form is still untouched — never overwrite something the user already picked.
+  const defaultCurrency = settingsQuery.data?.defaultCurrency ?? "USD";
+  const openModalWithDefaults = () => {
+    reset({ currency: defaultCurrency });
+    openModal();
+  };
+
   const selectedPropertyId = useWatch({ control, name: "propertyId" });
   const unitsQuery = useQuery({
     queryKey: ["propertyasset", "units", selectedPropertyId],
@@ -93,7 +103,7 @@ export function VacancyListingsPage() {
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["leasing", "listings"] });
-      reset({ currency: "USD" });
+      reset({ currency: defaultCurrency });
       closeModal();
     },
   });
@@ -131,7 +141,7 @@ export function VacancyListingsPage() {
     <Stack gap="lg" p="lg">
       <Group justify="space-between">
         <Title order={2}>Vacancy listings</Title>
-        <Button onClick={openModal}>New listing</Button>
+        <Button onClick={openModalWithDefaults}>New listing</Button>
       </Group>
 
       {listingsQuery.isError && (
