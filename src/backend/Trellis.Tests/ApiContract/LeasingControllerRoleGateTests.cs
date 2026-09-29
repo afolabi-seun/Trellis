@@ -44,12 +44,17 @@ public sealed class LeasingControllerRoleGateTests : IClassFixture<CustomWebAppl
             ServiceResult<ApplicationResponse>.Success(
                 new ApplicationResponse(Guid.NewGuid(), Guid.NewGuid(), "a@example.com", "Ada", "LEASE_ENDED", null, DateTimeOffset.UtcNow)));
 
+        var screeningReportService = Substitute.For<IScreeningReportService>();
+        screeningReportService.ViewAsync(Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<string>()).Returns(
+            ServiceResult<ScreeningReportResponse>.Success(new ScreeningReportResponse("NOOP", "PASS", "{}", DateTimeOffset.UtcNow)));
+
         var scopedFactory = _factory.WithWebHostBuilder(builder =>
             builder.ConfigureTestServices(services =>
             {
                 services.AddScoped(_ => billingService);
                 services.AddScoped(_ => listingService);
                 services.AddScoped(_ => applicationService);
+                services.AddScoped(_ => screeningReportService);
             }));
         handle = new WebApplicationFactoryHandle(scopedFactory);
 
@@ -141,6 +146,31 @@ public sealed class LeasingControllerRoleGateTests : IClassFixture<CustomWebAppl
             $"/api/v1/applications/{Guid.NewGuid()}/end-lease", new EndLeaseRequest(new DateOnly(2026, 6, 30), null));
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
+    }
+
+    [Fact]
+    public async Task ViewScreeningReport_ForTenantAdmin_Returns200_WithANoStoreCacheHeader()
+    {
+        var client = CreateClient(Guid.NewGuid(), UserRole.TenantAdmin, entitled: true, out var handle);
+        await using var _ = handle;
+
+        var response = await client.PostAsJsonAsync(
+            $"/api/v1/applications/{Guid.NewGuid()}/screening-report", new ViewScreeningReportRequest("correct-password"));
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
+        response.Headers.CacheControl!.NoStore.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ViewScreeningReport_ForDepartmentStaff_Returns403_UnlikeEveryOtherStaffEndpointOnThisController()
+    {
+        var client = CreateClient(Guid.NewGuid(), UserRole.DepartmentStaff, entitled: true, out var handle);
+        await using var _ = handle;
+
+        var response = await client.PostAsJsonAsync(
+            $"/api/v1/applications/{Guid.NewGuid()}/screening-report", new ViewScreeningReportRequest("correct-password"));
+
+        response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
     }
 
     [Fact]

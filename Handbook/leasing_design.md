@@ -222,11 +222,32 @@ still `OCCUPIED` (a signed lease must be ended first).
 `screening_result.full_report_ciphertext` is the single most sensitive piece of data in the
 Trellis schema so far — a credit/background report is squarely POPIA-regulated personal
 information, and BDR-LSE-004's restriction ("never expose full screening report detail to any
-party other than the PM company") is a Must, not a Should, for that reason. Concretely: the
-full report is encrypted at rest, never included in any API response body (only
-`outcome_summary` is), and access to view it is a narrow, separately-audited action distinct
-from ordinary application review — this is worth its own line in `security_guide.md`'s
-Compliance table once this module ships, alongside the existing POPIA erasure/export mechanism.
+party other than the PM company") is a Must, not a Should, for that reason. Built for real:
+
+- **Encryption at rest.** `IScreeningProvider.RequestScreeningAsync` hands back plaintext
+  (`ScreeningOutcome.FullReportJson`) — the provider itself never touches keys.
+  `ApplicationService.RunScreeningAsync` encrypts it via `Core/Security/IEncryptionService`
+  (AES-256-GCM, `security_guide.md`'s Encryption Architecture table) before it ever reaches
+  `ScreeningResult.Create`, bound via associated data to `{tenantId}:{applicationId}` so a
+  ciphertext copied onto a different application's row fails to decrypt rather than silently
+  decrypting as the wrong report. `NoOpScreeningProvider` returns a small, clearly-labelled
+  synthetic report (`{"simulated":true,...}`) rather than `null`, so this whole path — including
+  the view below — is exercised end to end without a real vendor.
+- **Never in an ordinary response.** `ApplicationResponse` carries only `ScreeningOutcomeSummary`;
+  no field on it is shaped like report content at all (asserted by a reflection test, not just a
+  reviewer's promise).
+- **The one narrow, separately-audited view.** `POST applications/{id}/screening-report`
+  (TENANT_ADMIN only, `[EnableRateLimiting]` on the same policy as login) requires the caller to
+  re-enter their password (`IAuthService.ReauthenticateAsync` — a wrong password is itself
+  audited as `REAUTHENTICATION_FAILED` and denied with `TRL-E-AUT-1004`). On success, an
+  `application_event` (`SCREENING_REPORT_VIEWED`) and an `audit_record`
+  (`AuditTypes.Leasing.ScreeningReportViewed`) are written and durably saved *before* the report
+  is decrypted — a failure at that step means the report is never decrypted, never a race where
+  plaintext could escape and the audit write fail afterwards. The response carries
+  `Cache-Control: no-store` and is never logged.
+
+This is now its own line in `security_guide.md`'s Compliance table, alongside the existing POPIA
+erasure/export mechanism.
 
 ---
 

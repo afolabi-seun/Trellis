@@ -31,6 +31,7 @@ public static class ApplicationEventTypes
     public const string SignatureCompleted = "SIGNATURE_COMPLETED";
     public const string Leased = "LEASED";
     public const string LeaseEnded = "LEASE_ENDED";
+    public const string ScreeningReportViewed = "SCREENING_REPORT_VIEWED";
 }
 
 public sealed class ApplicationEvent : ITenantOwned

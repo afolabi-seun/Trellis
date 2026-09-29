@@ -3,6 +3,7 @@ using NSubstitute;
 using NSubstitute.ExceptionExtensions;
 using Trellis.Api.Core.Middleware;
 using Trellis.Api.Core.Results;
+using Trellis.Api.Core.Security;
 using Trellis.Api.Modules.Auth.Application.Dtos;
 using Trellis.Api.Modules.Auth.Application.Interfaces;
 using Trellis.Api.Modules.Document.Application.Dtos;
@@ -50,13 +51,14 @@ public sealed class ApplicationServiceTests : IDisposable
     private readonly ITenantSettingsService _tenantSettingsService = Substitute.For<ITenantSettingsService>();
     private readonly IUnitAssetService _unitAssetService = Substitute.For<IUnitAssetService>();
     private readonly IRentScheduleService _rentScheduleService = Substitute.For<IRentScheduleService>();
+    private readonly IEncryptionService _encryptionService = Substitute.For<IEncryptionService>();
 
     public void Dispose() => TenantContext.Current = null;
 
     private ApplicationService CreateSut() => new(
         _repository, _listingRepository, _screeningResultRepository, _eventRepository, _tokenRepository, _linkService,
         _screeningProvider, _eSignatureProvider, _tenantService, _authService, _tenantSettingsService, _notificationService,
-        _documentService, _unitAssetService, _rentScheduleService, _auditService);
+        _documentService, _unitAssetService, _rentScheduleService, _encryptionService, _auditService);
 
     private static ApplicationSubmitRequest ValidRequest(bool consent = true) =>
         new("Ada Applicant", "+27821234567", new DateOnly(1990, 1, 1), "1 Main Rd", "Acme", 5000m, consent);
@@ -100,6 +102,16 @@ public sealed class ApplicationServiceTests : IDisposable
     }
 
     [Fact]
+    public void ApplicationResponse_HasNoFieldShapedLikeTheFullScreeningReport_StructurallyGuaranteedNotJustByConvention()
+    {
+        // BDR-LSE-004: only ScreeningReportResponse (TENANT_ADMIN only, password-gated) ever
+        // carries report content — no property named anything report/ciphertext-shaped can exist
+        // on the ordinary response every staff role can read.
+        typeof(ApplicationResponse).GetProperties().Should().NotContain(
+            p => p.Name.Contains("Report", StringComparison.OrdinalIgnoreCase) || p.Name.Contains("Ciphertext", StringComparison.OrdinalIgnoreCase));
+    }
+
+    [Fact]
     public async Task SubmitAsync_ConsumesTheToken_MovesTheListingUnderApplication_AndRunsScreening()
     {
         var (token, listing) = ArrangeValidLink();
@@ -112,6 +124,24 @@ public sealed class ApplicationServiceTests : IDisposable
         listing.Status.Should().Be(VacancyListingStatus.UnderApplication);
         await _screeningResultRepository.Received(1).AddAsync(Arg.Is<ScreeningResult>(r => r.Provider == "NOOP" && r.OutcomeSummary == ScreeningOutcomeSummary.Pass));
         await _auditService.Received(1).RecordAsync(_tenantId, Arg.Any<Guid>(), Arg.Any<Trellis.Api.Modules.Reporting.Domain.Entities.AuditActorType>(), "APPLICATION_SUBMITTED", Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task SubmitAsync_WhenScreeningReturnsAReport_EncryptsItBeforeStoring_BoundToThisApplicationsTenant()
+    {
+        ArrangeValidLink();
+        _screeningProvider.RequestScreeningAsync(Arg.Any<ApplicantDetails>())
+            .Returns(new ScreeningOutcome("NOOP", ScreeningOutcomeSummary.Pass, "{\"simulated\":true}"));
+        _encryptionService.EncryptAsync("{\"simulated\":true}", Arg.Any<string>()).Returns("k1:ciphertext");
+        ScreeningResult? saved = null;
+        await _screeningResultRepository.AddAsync(Arg.Do<ScreeningResult>(r => saved = r));
+        var sut = CreateSut();
+
+        await sut.SubmitAsync(RawToken, ValidRequest());
+
+        saved!.FullReportCiphertext.Should().Be("k1:ciphertext");
+        await _encryptionService.Received(1).EncryptAsync(
+            "{\"simulated\":true}", Arg.Is<string>(aad => aad.StartsWith(_tenantId + ":", StringComparison.Ordinal)));
     }
 
     [Fact]

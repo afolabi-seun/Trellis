@@ -3,6 +3,7 @@ using Trellis.Api.Core.Dtos;
 using Trellis.Api.Core.Helpers;
 using Trellis.Api.Core.Middleware;
 using Trellis.Api.Core.Results;
+using Trellis.Api.Core.Security;
 using Trellis.Api.Modules.Auth.Application.Interfaces;
 using Trellis.Api.Modules.Document.Application.Interfaces;
 using Trellis.Api.Modules.Leasing.Application.Dtos;
@@ -39,6 +40,7 @@ public sealed class ApplicationService(
     IDocumentService documentService,
     IUnitAssetService unitAssetService,
     IRentScheduleService rentScheduleService,
+    IEncryptionService encryptionService,
     IAuditService auditService) : IApplicationService
 {
     public async Task<ServiceResult<ApplicationSubmitResponse>> SubmitAsync(string rawLinkToken, ApplicationSubmitRequest request)
@@ -319,8 +321,15 @@ public sealed class ApplicationService(
 
         application.BeginScreening();
         await AddEventAsync(application, ApplicationEventTypes.ScreeningRequested, ApplicationEventActorType.System, null, null);
+
+        // The provider hands back plaintext (ScreeningOutcome.FullReportJson) — it never touches
+        // keys. Encrypted here, bound to this record via AAD, so a ciphertext copied onto another
+        // application's row would fail to decrypt rather than silently decrypt as the wrong report.
+        var ciphertext = outcome.FullReportJson is null
+            ? null
+            : await encryptionService.EncryptAsync(outcome.FullReportJson, $"{application.TenantId}:{application.ApplicationId}");
         await screeningResultRepository.AddAsync(ScreeningResult.Create(
-            application.TenantId, application.ApplicationId, outcome.Provider, outcome.OutcomeSummary, outcome.FullReportCiphertext));
+            application.TenantId, application.ApplicationId, outcome.Provider, outcome.OutcomeSummary, ciphertext));
         await AddEventAsync(application, ApplicationEventTypes.ScreeningReceived, ApplicationEventActorType.System, null,
             $"{{\"provider\":\"{outcome.Provider}\",\"outcomeSummary\":\"{outcome.OutcomeSummary.ToUpperSnakeCase()}\"}}");
         await repository.SaveChangesAsync();

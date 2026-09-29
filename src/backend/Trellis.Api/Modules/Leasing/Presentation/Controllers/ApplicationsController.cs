@@ -1,8 +1,10 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.RateLimiting;
 using Trellis.Api.Core.Dtos;
 using Trellis.Api.Core.Results;
+using Trellis.Api.Modules.Auth;
 using Trellis.Api.Modules.Billing.Presentation.Filters;
 using Trellis.Api.Modules.Leasing.Application.Dtos;
 using Trellis.Api.Modules.Leasing.Application.Interfaces;
@@ -11,15 +13,17 @@ namespace Trellis.Api.Modules.Leasing.Presentation.Controllers;
 
 /// <summary>
 /// BDR-LSE-004 — staff review of submitted applications. TENANT_ADMIN + DEPARTMENT_STAFF
-/// (user-confirmed). Only the coarse screening outcome summary ever appears in any response here;
-/// the full report ciphertext is never returned by any endpoint.
+/// (user-confirmed). Only the coarse screening outcome summary ever appears in any ordinary
+/// response here; the one exception is the password-gated screening-report endpoint below,
+/// TENANT_ADMIN only.
 /// </summary>
 [ApiController]
 [Route("api/v1/applications")]
 [ApiExplorerSettings(GroupName = "leasing")]
 [Authorize(Roles = "TENANT_ADMIN,DEPARTMENT_STAFF")]
 [RequiresModuleEntitlement("LEASING")]
-public sealed class ApplicationsController(IApplicationService applicationService) : ControllerBase
+public sealed class ApplicationsController(
+    IApplicationService applicationService, IScreeningReportService screeningReportService) : ControllerBase
 {
     [HttpGet]
     [ProducesResponseType(typeof(ApiResponse<PagedResponse<ApplicationResponse>>), StatusCodes.Status200OK)]
@@ -56,6 +60,17 @@ public sealed class ApplicationsController(IApplicationService applicationServic
     [ProducesResponseType(typeof(ApiResponse<ApplicationResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> EndLease(Guid id, [FromBody] EndLeaseRequest request) =>
         (await applicationService.EndLeaseAsync(id, request, CurrentUserId())).ToActionResult(HttpContext);
+
+    /// <summary>BDR-LSE-004's one exception — TENANT_ADMIN only, password re-entry, rate-limited the same as any other authentication-adjacent endpoint (security_guide.md's checklist). Never cached: the response body is the single most sensitive payload this API returns.</summary>
+    [HttpPost("{id:guid}/screening-report")]
+    [Authorize(Roles = "TENANT_ADMIN")]
+    [EnableRateLimiting(AuthModuleExtensions.AuthSensitiveRateLimitPolicy)]
+    [ProducesResponseType(typeof(ApiResponse<ScreeningReportResponse>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> ViewScreeningReport(Guid id, [FromBody] ViewScreeningReportRequest request)
+    {
+        Response.Headers.CacheControl = "no-store";
+        return (await screeningReportService.ViewAsync(id, CurrentUserId(), request.CurrentPassword)).ToActionResult(HttpContext);
+    }
 
     private Guid CurrentUserId() => Guid.Parse(User.FindFirstValue("sub")!);
 }

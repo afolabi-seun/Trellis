@@ -43,6 +43,15 @@ public interface IAuthService
     /// <summary>Requires re-authentication; invalidates every previously issued code.</summary>
     Task<ServiceResult<RecoveryCodesRegenerateResponse>> RegenerateRecoveryCodesAsync(Guid userId, string currentPassword);
 
+    /// <summary>
+    /// Password re-entry for a narrow, separately-audited action (e.g. viewing a decrypted
+    /// screening report) that ordinary JWT possession isn't enough to authorize — the same
+    /// Argon2id check RegenerateRecoveryCodesAsync uses. A wrong password is audited as a failed
+    /// attempt (AuditTypes.Auth.ReauthenticationFailed) and returns Forbidden(Auth.ReauthenticationFailed);
+    /// success is not itself audited — the caller audits the specific action it's gating.
+    /// </summary>
+    Task<ServiceResult<bool>> ReauthenticateAsync(Guid userId, string currentPassword);
+
     /// <summary>Always returns success regardless of whether the account exists — existence-non-disclosure (security_guide.md).</summary>
     Task RequestPasswordResetAsync(string username, string? requestedIp);
 

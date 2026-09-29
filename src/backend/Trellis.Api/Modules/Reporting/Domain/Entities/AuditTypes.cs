@@ -39,6 +39,9 @@ public static class AuditTypes
         public const string SessionRevoked = "SESSION_REVOKED";
         public const string MfaRecoveryCodeUsed = "MFA_RECOVERY_CODE_USED";
         public const string MfaRecoveryCodesRegenerated = "MFA_RECOVERY_CODES_REGENERATED";
+
+        /// <summary>IAuthService.ReauthenticateAsync's own failure path — a wrong password entered for a narrow re-auth-gated action (e.g. viewing a decrypted screening report), not a full login attempt (that's AuthLockout's own territory).</summary>
+        public const string ReauthenticationFailed = "REAUTHENTICATION_FAILED";
     }
 
     /// <summary>BDR-WF-004 — every routing/approval decision is audited, not just visible via WorkflowStepInstance's own history columns.</summary>
@@ -114,6 +117,9 @@ public static class AuditTypes
         public const string LeaseSentForSignature = "LEASE_SENT_FOR_SIGNATURE";
         public const string LeaseExecuted = "LEASE_EXECUTED";
         public const string LeaseEnded = "LEASE_ENDED";
+
+        /// <summary>BDR-LSE-004's "never expose full report detail" restriction — the one narrow, separately-audited exception, so viewing the decrypted report is always attributable even though nothing about the report content itself is ever written here (detail_json stays IDs-only, security_guide.md).</summary>
+        public const string ScreeningReportViewed = "SCREENING_REPORT_VIEWED";
     }
 
     /// <summary>BDR-RENT-002/004 — every recorded (not processed) rent event. Rent payments are staff-entered records of an external event, so who recorded or voided one is part of the trail.</summary>

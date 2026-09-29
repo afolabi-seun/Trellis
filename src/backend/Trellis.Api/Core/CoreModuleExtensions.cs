@@ -7,6 +7,7 @@ using Trellis.Api.Core.Data;
 using Trellis.Api.Core.Files;
 using Trellis.Api.Core.Helpers;
 using Trellis.Api.Core.Secrets;
+using Trellis.Api.Core.Security;
 
 namespace Trellis.Api.Core;
 
@@ -48,6 +49,12 @@ public static class CoreModuleExtensions
             .AddInterceptors(sp.GetRequiredService<TenantScopeConnectionInterceptor>()));
 
         services.AddSingleton<ISecretProvider, EnvironmentSecretProvider>();
+
+        services.AddOptions<EncryptionOptions>()
+            .Bind(config.GetSection("Encryption"))
+            .ValidateDataAnnotations()
+            .ValidateOnStart();
+        services.AddScoped<IEncryptionService, AesGcmEncryptionService>();
 
         services.AddScoped<IIdempotencyStore, PostgresIdempotencyStore>();
         services.AddScoped<IdempotencyExecutor>();

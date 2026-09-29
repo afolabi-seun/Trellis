@@ -212,8 +212,8 @@ public sealed class AuthService(
 
     public async Task<ServiceResult<RecoveryCodesRegenerateResponse>> RegenerateRecoveryCodesAsync(Guid userId, string currentPassword)
     {
-        var user = await userRepository.GetByIdAsync(userId);
-        if (user is null || user.PasswordHash is null || !passwordHasher.Verify(currentPassword, user.PasswordHash))
+        var user = await VerifyPasswordAsync(userId, currentPassword);
+        if (user is null)
         {
             return ServiceResult<RecoveryCodesRegenerateResponse>.Forbidden(ErrorCodeRegistry.Auth.ReauthenticationFailed);
         }
@@ -225,6 +225,28 @@ public sealed class AuthService(
         await notificationService.SendAsync(user.TenantId, "MFA_RECOVERY_CODES_REGENERATED", user.Username, new { });
 
         return ServiceResult<RecoveryCodesRegenerateResponse>.Success(new RecoveryCodesRegenerateResponse(codes));
+    }
+
+    public async Task<ServiceResult<bool>> ReauthenticateAsync(Guid userId, string currentPassword) =>
+        await VerifyPasswordAsync(userId, currentPassword) is not null
+            ? ServiceResult<bool>.Success(true)
+            : ServiceResult<bool>.Forbidden(ErrorCodeRegistry.Auth.ReauthenticationFailed);
+
+    /// <summary>Argon2id check shared by every re-auth-gated action; a failed attempt is audited here so no caller can forget to.</summary>
+    private async Task<AppUser?> VerifyPasswordAsync(Guid userId, string currentPassword)
+    {
+        var user = await userRepository.GetByIdAsync(userId);
+        if (user is null || user.PasswordHash is null || !passwordHasher.Verify(currentPassword, user.PasswordHash))
+        {
+            if (user is not null)
+            {
+                await auditService.RecordAsync(user.TenantId, user.UserId, AuditActorType.HumanUser, AuditTypes.Auth.ReauthenticationFailed);
+            }
+
+            return null;
+        }
+
+        return user;
     }
 
     public async Task RequestPasswordResetAsync(string username, string? requestedIp)

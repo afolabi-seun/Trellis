@@ -37,3 +37,8 @@ public sealed record ApplicationResponse(
 public sealed record ApplicationEventResponse(Guid ApplicationEventId, string EventType, string ActorType, string? DetailJson, DateTimeOffset CreatedAt);
 
 public sealed record EndLeaseRequest(DateOnly EffectiveDate, string? Reason);
+
+public sealed record ViewScreeningReportRequest(string CurrentPassword);
+
+/// <summary>BDR-LSE-004's one narrow exception to "never expose full report detail" — TENANT_ADMIN only, password re-entry required, every view audited. ReportJson is the provider's own plaintext report shape (NoOpScreeningProvider's own synthetic shape today).</summary>
+public sealed record ScreeningReportResponse(string Provider, string OutcomeSummary, string ReportJson, DateTimeOffset ReceivedAt);

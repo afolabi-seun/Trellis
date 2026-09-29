@@ -35,6 +35,7 @@ public static class LeasingModuleExtensions
         services.AddScoped<IApplicationLinkService, ApplicationLinkService>();
         services.AddScoped<IApplicationService, ApplicationService>();
         services.AddScoped<ILeasingWebhookService, LeasingWebhookService>();
+        services.AddScoped<IScreeningReportService, ScreeningReportService>();
 
         // No real screening bureau or e-signature vendor is fixed for this phase (leasing_design.md
         // deliberately doesn't commit to one — a business/legal decision). Swap each of these two

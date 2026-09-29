@@ -549,6 +549,7 @@ Never log secret values.
 | Database at rest | AES-256 | Managed by the Postgres hosting provider |
 | Password hashes | Argon2id | Per-password salt, OWASP Password Storage Cheat Sheet baseline parameters: 19 MiB memory, 2 iterations, degree of parallelism 1 — a checkable fact, not "standard conventions" left to whichever library default happens to apply |
 | MFA TOTP secrets | AES-256-GCM | Single platform-level key from `ISecretProvider`, rotated annually — per-tenant TOTP key isolation deferred alongside per-tenant PII keys |
+| Screening reports (`screening_result.full_report_ciphertext`) | AES-256-GCM, per-record associated data (`{tenantId}:{applicationId}`) | `Core/Security/IEncryptionService` — a key id prefixed onto the envelope (`k{id}:...`) so rotating `EncryptionOptions.CurrentKeyId` to a new `DataEncryptionKey_{id}_Base64` secret never breaks decryption of ciphertext already written under an older key; the AAD binding means a ciphertext copied onto a different application's row fails to decrypt rather than silently decrypting as the wrong report |
 | PII columns (owner contact details, vendor contact details) | Deferred to platform-level DB-at-rest encryption for Phase 1 | Revisit once cryptographic isolation (above) is scoped |
 
 No internal mTLS or per-service TLS section, unlike the reference — there is no internal
@@ -568,10 +569,17 @@ network segment to secure.
 
 **Screening data (POPIA and equivalent regional regimes)**: `leasing_design.md`'s
 `screening_result.full_report_ciphertext` is the single most sensitive column in the schema —
-a credit/background report is squarely regulated personal information. It's encrypted at rest,
-never included in any API response (only a coarse `outcome_summary` is), and read access to the
-full report is a narrow, separately-audited action distinct from ordinary application review
-(BDR-LSE-004, Must). Treat this column with at least the same care as the erasure/export
+a credit/background report is squarely regulated personal information. It's encrypted at rest
+(`Core/Security/IEncryptionService`, Encryption Architecture table above), never included in any
+ordinary API response (only a coarse `outcome_summary` is — `ApplicationResponse` has no field
+shaped like a report at all), and read access to the full report is a narrow, separately-audited
+action distinct from ordinary application review (BDR-LSE-004, Must):
+`POST applications/{id}/screening-report`, TENANT_ADMIN only, gated by a password re-entry check
+(`IAuthService.ReauthenticateAsync`) and rate-limited on the same policy as login. The view is
+written to `application_event` and audited (`SCREENING_REPORT_VIEWED`) *before* the report is
+decrypted — a failure recording the view means the report is never decrypted, not a race where
+the plaintext could escape and the audit write fail afterwards. The response carries
+`Cache-Control: no-store`. Treat this column with at least the same care as the erasure/export
 mechanism below — an erasure request against an `application` row should cascade to its
 `screening_result`, not leave the most sensitive part behind.
 
