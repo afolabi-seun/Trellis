@@ -173,6 +173,9 @@ public static class ErrorCodeRegistry
 
         /// <summary>TRL-E-BIL-10003 — IPaymentGateway.ChargeAsync returned a decline/error result.</summary>
         public const string ChargeFailed = "TRL-E-BIL-10003";
+
+        /// <summary>TRL-E-BIL-10004 — IPaymentGateway.VerifyTransactionAsync couldn't confirm the card capture (expired/invalid reference, or the card itself was declined).</summary>
+        public const string CardVerificationFailed = "TRL-E-BIL-10004";
     }
 
     /// <summary>

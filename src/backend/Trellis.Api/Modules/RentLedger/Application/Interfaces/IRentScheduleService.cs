@@ -25,6 +25,14 @@ public interface IRentScheduleService
     // Cross-module
 
     /// <summary>
+    /// The dashboard tile's count — same InArrears computation as ListArrearsAsync, without
+    /// building the full response list. Null when the current tenant isn't entitled to
+    /// RENT_COLLECTION (mirrors GetOwnerRentSummaryAsync's own null-not-zero convention, so the
+    /// tile is omitted rather than showing a misleading zero). Requires TenantContext.Current.
+    /// </summary>
+    Task<int?> CountInArrearsAsync();
+
+    /// <summary>
     /// BDR-RENT-001 — called by LeasingWebhookService on lease execution. Idempotent get-or-create by
     /// leaseApplicationId (a webhook retry never makes a second schedule); a no-op when the tenant
     /// isn't entitled to RENT_COLLECTION; ends any prior ACTIVE schedule on the unit (the previous

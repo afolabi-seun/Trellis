@@ -43,12 +43,23 @@ public static class BillingModuleExtensions
         services.AddScoped<IPaystackSignatureValidator, PaystackSignatureValidator>();
 
         // No real Paystack sandbox charge has been made yet (user-confirmed scope for this
-        // phase) — swap this for PaystackGateway (resolving its secret key via
-        // ISecretProvider.GetSecretAsync("PaystackSecretKey") per call, not at construction) once
-        // real test credentials exist. Registered here, not Core — only Billing needs
-        // IPaymentGateway today (IFileScanner/IFileStorage only moved to Core once a second
-        // module needed them).
-        services.AddScoped<IPaymentGateway, NoOpPaymentGateway>();
+        // phase), so NoOp stays the default in every environment until a real Paystack account
+        // exists — Modules:Billing:PaymentGateway = "Paystack" opts into the real HTTP
+        // integration (PaystackGateway's own doc comment: unverified against a live sandbox).
+        // Registered here, not Core — only Billing needs IPaymentGateway today
+        // (IFileScanner/IFileStorage only moved to Core once a second module needed them).
+        if (string.Equals(config["Modules:Billing:PaymentGateway"], "Paystack", StringComparison.OrdinalIgnoreCase))
+        {
+            services.AddHttpClient<IPaymentGateway, PaystackGateway>(client =>
+            {
+                client.BaseAddress = new Uri("https://api.paystack.co/");
+                client.Timeout = TimeSpan.FromSeconds(10);
+            });
+        }
+        else
+        {
+            services.AddScoped<IPaymentGateway, NoOpPaymentGateway>();
+        }
 
         services.AddHostedService<UsageSnapshotBackgroundService>();
         services.AddHostedService<DunningRetryBackgroundService>();

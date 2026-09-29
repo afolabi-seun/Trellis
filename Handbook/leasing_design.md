@@ -192,7 +192,13 @@ On completed signature (via webhook, verified the same way the Paystack webhook 
 as a new `Document` version (BDR-DOC-002) against the Property/Unit/Asset, and
 `BDR-LSE-006`'s automatic status transition fires: `vacancy_listing.status → LEASED`,
 `unit_asset.status → OCCUPIED`. Provider choice (DocuSign, Adobe Sign, or a more regionally
-common alternative) is likewise left open behind this interface.
+common alternative) is left open behind `IESignatureProvider` (still `NoOpESignatureProvider` —
+no vendor account exists). The webhook's signature check itself is built for real regardless:
+`HmacESignatureSignatureValidator` (HMAC-SHA256 of the raw body, constant-time compare, secret
+`ESignatureWebhookSecret` via `ISecretProvider`, fails closed — a missing secret makes every
+signature invalid, never valid) replaces the earlier always-valid `NoOpESignatureSignatureValidator`
+stub, exact `PaystackSignatureValidator` precedent: the cryptography needs no vendor credentials to
+be correct, only the envelope contents on the other side of it do.
 
 ---
 

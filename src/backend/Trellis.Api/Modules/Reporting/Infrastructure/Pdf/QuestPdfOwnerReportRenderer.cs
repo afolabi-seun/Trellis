@@ -142,14 +142,25 @@ public sealed class QuestPdfOwnerReportRenderer : IReportExportService
         return CsvWriter.Write(["Metric", "Value"], rows);
     }
 
-    public byte[] GenerateDashboardCsv(DashboardSummaryResponse summary) => CsvWriter.Write(
-        ["Metric", "Value"],
-        [
-            ["Open work orders", summary.OpenWorkOrders.ToString(CultureInfo.InvariantCulture)],
-            ["Expiring documents", summary.ExpiringDocuments.ToString(CultureInfo.InvariantCulture)],
-            ["Upcoming inspections", summary.UpcomingInspections.ToString(CultureInfo.InvariantCulture)],
-            ["Bottlenecked steps", summary.BottleneckedSteps.ToString(CultureInfo.InvariantCulture)],
-        ]);
+    public byte[] GenerateDashboardCsv(DashboardSummaryResponse summary)
+    {
+        var rows = new List<IReadOnlyList<string>>
+        {
+            new[] { "Open work orders", summary.OpenWorkOrders.ToString(CultureInfo.InvariantCulture) },
+            new[] { "Expiring documents", summary.ExpiringDocuments.ToString(CultureInfo.InvariantCulture) },
+            new[] { "Upcoming inspections", summary.UpcomingInspections.ToString(CultureInfo.InvariantCulture) },
+            new[] { "Bottlenecked steps", summary.BottleneckedSteps.ToString(CultureInfo.InvariantCulture) },
+        };
+
+        // Omitted, not a zero row, when the tenant isn't entitled to RENT_COLLECTION — matches the
+        // tile itself being omitted rather than showing a misleading zero.
+        if (summary.ArrearsSchedules is { } arrearsSchedules)
+        {
+            rows.Add(new[] { "Rent schedules in arrears", arrearsSchedules.ToString(CultureInfo.InvariantCulture) });
+        }
+
+        return CsvWriter.Write(["Metric", "Value"], rows);
+    }
 
     private static void AddRow(TableDescriptor table, string label, string value)
     {

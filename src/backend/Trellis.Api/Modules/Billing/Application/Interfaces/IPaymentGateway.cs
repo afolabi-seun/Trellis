@@ -4,6 +4,8 @@ public sealed record ChargeResult(bool Success, string ProviderReference, string
 
 public sealed record TokenizeResult(string AuthorizationUrl, string AccessCode, string Reference);
 
+public sealed record VerifyResult(bool Success, string AuthorizationCode, string CardLast4, string CardBrand);
+
 /// <summary>
 /// billing_design.md's provider seam — Paystack is this phase's chosen vendor (unlike Ai's
 /// still-undecided IAiProvider), so this interface exists to make a FUTURE alternate vendor (e.g.
@@ -16,4 +18,12 @@ public interface IPaymentGateway
     Task<ChargeResult> ChargeAsync(string authorizationCode, decimal amount, string currency, string reference);
 
     Task<TokenizeResult> InitializeCardCaptureAsync(Guid tenantId, string email);
+
+    /// <summary>
+    /// Paystack's own "verify the transaction to retrieve the authorization_code" step — the real
+    /// counterpart to InitializeCardCaptureAsync, called once the applicant returns from the
+    /// hosted card page. Success is a business outcome (a card can genuinely fail to verify), not
+    /// a gateway fault, so this never throws for that case.
+    /// </summary>
+    Task<VerifyResult> VerifyTransactionAsync(string reference);
 }

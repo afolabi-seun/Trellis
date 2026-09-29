@@ -1,3 +1,4 @@
+using Trellis.Api.Core.Helpers;
 using Trellis.Api.Core.Results;
 using Trellis.Api.Modules.Billing.Application.Dtos;
 using Trellis.Api.Modules.Billing.Application.Interfaces;
@@ -30,17 +31,22 @@ public sealed class PaymentMethodService(
     public async Task<ServiceResult<PaymentMethodResponse>> ConfirmCardCaptureAsync(Guid tenantId, ConfirmCardCaptureRequest request)
     {
         // Paystack's real flow verifies the transaction (GET /transaction/verify/{reference}) to
-        // retrieve the resulting authorization_code — a call IPaymentGateway doesn't expose yet
-        // since PaystackGateway's real HTTP implementation is deferred this phase (see its own
-        // doc comment). The NoOp stub's own reference doubles as the authorization code here;
-        // this line is the one spot that changes once a real verify call exists.
+        // retrieve the resulting authorization_code — NoOpPaymentGateway's own VerifyTransactionAsync
+        // mirrors its prior hardcoded "4242"/"VISA" stand-in, so this call is a no-op behavior
+        // change for every environment still running NoOp.
+        var verification = await paymentGateway.VerifyTransactionAsync(request.Reference);
+        if (!verification.Success)
+        {
+            return ServiceResult<PaymentMethodResponse>.BusinessRuleViolation(ErrorCodeRegistry.Billing.CardVerificationFailed);
+        }
+
         var existing = await repository.ListForTenantAsync(tenantId);
         foreach (var old in existing.Where(m => m.IsDefault))
         {
             old.MarkNotDefault();
         }
 
-        var method = PaymentMethod.Create(tenantId, "PAYSTACK", request.Reference, "4242", "VISA");
+        var method = PaymentMethod.Create(tenantId, "PAYSTACK", verification.AuthorizationCode, verification.CardLast4, verification.CardBrand);
         await repository.AddAsync(method);
         await repository.SaveChangesAsync();
 

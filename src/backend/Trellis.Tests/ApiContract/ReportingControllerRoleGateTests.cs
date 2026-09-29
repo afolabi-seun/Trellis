@@ -28,7 +28,7 @@ public sealed class ReportingControllerRoleGateTests : IClassFixture<CustomWebAp
     public async Task GetDashboard_ForDepartmentStaff_Returns200()
     {
         var dashboardService = Substitute.For<IDashboardService>();
-        dashboardService.GetSummaryAsync().Returns(ServiceResult<DashboardSummaryResponse>.Success(new DashboardSummaryResponse(0, 0, 0, 0)));
+        dashboardService.GetSummaryAsync().Returns(ServiceResult<DashboardSummaryResponse>.Success(new DashboardSummaryResponse(0, 0, 0, 0, null)));
 
         await using var scopedFactory = _factory.WithWebHostBuilder(builder =>
             builder.ConfigureTestServices(services => services.AddScoped(_ => dashboardService)));

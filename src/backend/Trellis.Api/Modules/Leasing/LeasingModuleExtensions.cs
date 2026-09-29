@@ -37,13 +37,16 @@ public static class LeasingModuleExtensions
         services.AddScoped<ILeasingWebhookService, LeasingWebhookService>();
 
         // No real screening bureau or e-signature vendor is fixed for this phase (leasing_design.md
-        // deliberately doesn't commit to one — a business/legal decision). Swap each of these three
-        // registrations for a real implementation (resolving credentials via ISecretProvider per
-        // call, not at construction) once real credentials and provider contracts exist — same
-        // convention as BillingModuleExtensions's NoOpPaymentGateway registration.
+        // deliberately doesn't commit to one — a business/legal decision). Swap each of these two
+        // provider registrations for a real implementation (resolving credentials via
+        // ISecretProvider per call, not at construction) once real credentials and provider
+        // contracts exist — same convention as BillingModuleExtensions's NoOpPaymentGateway
+        // registration. The signature validator is the one piece built for real regardless: pure
+        // cryptography needs no vendor account to be correct, exact PaystackSignatureValidator
+        // precedent.
         services.AddScoped<IScreeningProvider, NoOpScreeningProvider>();
         services.AddScoped<IESignatureProvider, NoOpESignatureProvider>();
-        services.AddScoped<IESignatureSignatureValidator, NoOpESignatureSignatureValidator>();
+        services.AddScoped<IESignatureSignatureValidator, HmacESignatureSignatureValidator>();
 
         return services;
     }

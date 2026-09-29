@@ -259,6 +259,7 @@ public interface IPaymentGateway
 {
     Task<ChargeResult> ChargeAsync(string authorizationCode, decimal amount, string currency, string reference);
     Task<TokenizeResult> InitializeCardCaptureAsync(Guid tenantId, string email);
+    Task<VerifyResult> VerifyTransactionAsync(string reference);
 }
 
 // Paystack-specific implementation — the only class that knows about Paystack's API shape
@@ -271,10 +272,23 @@ scheduling) depends on this interface, never on Paystack's SDK directly. Swappin
 Flutterwave later, if a market Paystack doesn't cover well shows up, means one new
 implementation class, not a Billing module rewrite.
 
+`PaystackGateway` is written for real (typed `HttpClient`, `ResiliencePolicies.ExternalProviderPolicy`
+retries, secret `PaystackSecretKey` via `ISecretProvider` per call) but is **not verified against a
+live Paystack sandbox** — no real test-mode credentials exist yet, so `NoOpPaymentGateway` stays the
+default registration (`Modules:Billing:PaymentGateway` = `NoOp` | `Paystack` in
+`BillingModuleExtensions`) in every environment until a real Paystack account exists. A network fault
+is retried and, if still failing, reported back as a failed `ChargeResult`/`VerifyResult` rather than
+thrown — `DunningRetryBackgroundService`'s loop over many tenants has no per-tenant try/catch, so one
+tenant's Paystack outage must never abort the whole run; `InitializeCardCaptureAsync` is the
+exception, since it has no "failed" shape to return today and surfaces a gateway fault as a genuine
+500 instead.
+
 Card capture happens via Paystack's own hosted flow (Inline/Popup) — Trellis's frontend never
 handles a raw card number at any point, satisfying BDR-BIL-005 at the UI layer too, not just
 the database layer. Paystack returns a reusable `authorization_code` after the first
-successful charge, which is what gets stored in `payment_method`.
+successful charge, retrieved by `VerifyTransactionAsync` (Paystack's own `GET
+transaction/verify/{reference}`) once the applicant returns from the hosted page — this is what
+gets stored in `payment_method`.
 
 ### Inbound Webhook Handling
 

@@ -182,6 +182,19 @@ public sealed class RentScheduleService(
         return ServiceResult<IReadOnlyList<RentScheduleResponse>>.Success(responses);
     }
 
+    public async Task<int?> CountInArrearsAsync()
+    {
+        if (!await moduleEntitlementService.IsEntitledAsync(TenantContext.Current!.TenantId, ModuleKey))
+        {
+            return null;
+        }
+
+        var active = await scheduleRepository.ListActiveForTenantAsync();
+        var totals = await paymentRepository.GetReceivedTotalsAsync(active.Select(s => s.RentScheduleId).ToList());
+
+        return active.Count(s => s.Evaluate(totals.GetValueOrDefault(s.RentScheduleId), Today).Status == RentStatus.InArrears);
+    }
+
     public async Task<ServiceResult<bool>> EnsureScheduleForLeaseAsync(
         Guid tenantId, Guid unitAssetId, Guid leaseApplicationId, decimal rentAmount, string currency, DateOnly availableFrom, Guid? actorUserId)
     {

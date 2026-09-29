@@ -18,7 +18,7 @@ public sealed class ReportExportServiceTests
         "Acme Property Management", "Jane Owner", "MONTHLY", new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31),
         3, 450.00m, "USD", 2, 8, 1);
 
-    private static readonly DashboardSummaryResponse SampleSummary = new(4, 2, 3, 1);
+    private static readonly DashboardSummaryResponse SampleSummary = new(4, 2, 3, 1, 6);
 
     private readonly QuestPdfOwnerReportRenderer _sut = new();
 
@@ -104,7 +104,7 @@ public sealed class ReportExportServiceTests
     }
 
     [Fact]
-    public void GenerateDashboardCsv_ProducesExactHeaderAndRows()
+    public void GenerateDashboardCsv_ProducesExactHeaderAndRows_IncludingArrearsWhenPresent()
     {
         var bytes = _sut.GenerateDashboardCsv(SampleSummary);
         var text = System.Text.Encoding.UTF8.GetString(bytes);
@@ -115,6 +115,18 @@ public sealed class ReportExportServiceTests
         lines[2].Should().Be("Expiring documents,2");
         lines[3].Should().Be("Upcoming inspections,3");
         lines[4].Should().Be("Bottlenecked steps,1");
+        lines[5].Should().Be("Rent schedules in arrears,6");
+        lines.Should().HaveCount(6);
+    }
+
+    [Fact]
+    public void GenerateDashboardCsv_WhenNotEntitledToRentCollection_OmitsTheArrearsRow_RatherThanShowingZero()
+    {
+        var bytes = _sut.GenerateDashboardCsv(SampleSummary with { ArrearsSchedules = null });
+        var text = System.Text.Encoding.UTF8.GetString(bytes);
+        var lines = text.Split("\r\n", StringSplitOptions.RemoveEmptyEntries);
+
         lines.Should().HaveCount(5);
+        lines.Should().NotContain(l => l.StartsWith("Rent schedules in arrears", StringComparison.Ordinal));
     }
 }

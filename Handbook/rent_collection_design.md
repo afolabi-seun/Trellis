@@ -132,6 +132,13 @@ expiry alerts already use (`data_model.md`), rather than introducing a second no
 pathway for what's structurally the same kind of event: a scheduled check finding something that
 needs a human's attention.
 
+The same InArrears computation also backs BDR-RPT-001's dashboard: `IRentScheduleService
+.CountInArrearsAsync()` counts the tenant's InArrears schedules without materializing the full
+`ListArrearsAsync()` response list, and returns `null` — not zero — when the tenant isn't
+entitled to RENT_COLLECTION, so `DashboardSummaryResponse.ArrearsSchedules` and its tile are
+omitted rather than showing a misleading zero, the same null-not-zero convention
+`GetOwnerRentSummaryAsync` already uses for the Owner report above.
+
 ---
 
 ## What This Deliberately Does Not Do

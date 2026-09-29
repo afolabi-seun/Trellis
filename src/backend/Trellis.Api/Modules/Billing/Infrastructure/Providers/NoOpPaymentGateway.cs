@@ -20,4 +20,7 @@ public sealed class NoOpPaymentGateway : IPaymentGateway
         var reference = $"noop-{Guid.NewGuid():N}";
         return Task.FromResult(new TokenizeResult($"https://paystack.test/pay/{reference}", $"access-{reference}", reference));
     }
+
+    public Task<VerifyResult> VerifyTransactionAsync(string reference) =>
+        Task.FromResult(new VerifyResult(true, reference, "4242", "VISA"));
 }

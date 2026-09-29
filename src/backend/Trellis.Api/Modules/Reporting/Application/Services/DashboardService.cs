@@ -2,6 +2,7 @@ using Microsoft.Extensions.Options;
 using Trellis.Api.Core.Results;
 using Trellis.Api.Modules.Document.Application.Interfaces;
 using Trellis.Api.Modules.Inspection.Application.Interfaces;
+using Trellis.Api.Modules.RentLedger.Application.Interfaces;
 using Trellis.Api.Modules.Reporting.Application.Dtos;
 using Trellis.Api.Modules.Reporting.Application.Interfaces;
 using Trellis.Api.Modules.Reporting.Configuration;
@@ -10,17 +11,20 @@ using Trellis.Api.Modules.Workflow.Application.Interfaces;
 namespace Trellis.Api.Modules.Reporting.Application.Services;
 
 /// <summary>
-/// BDR-RPT-001 — composes 3 cross-module Application Services, the same "own service exposes
+/// BDR-RPT-001 — composes 4 cross-module Application Services, the same "own service exposes
 /// what it owns" convention every cross-module read in this codebase uses (confirmed: zero
 /// exceptions anywhere to "cross-module reads go through the other module's own Application
 /// Service via plain constructor DI"). Live-computed on every request, no caching/materialization
 /// layer — matching Billing's own GetPlatformRevenueSummaryAsync precedent, the only other
-/// "aggregate report" in this codebase.
+/// "aggregate report" in this codebase. RentLedger's own count is safe to depend on here despite
+/// registering after Reporting (Program.cs's own comment on OwnerReportService already proves
+/// this: DI resolves lazily against the fully-built container).
 /// </summary>
 public sealed class DashboardService(
     IWorkflowInstanceService workflowInstanceService,
     IDocumentService documentService,
     IInspectionService inspectionService,
+    IRentScheduleService rentScheduleService,
     IOptions<ReportingOptions> options) : IDashboardService
 {
     /// <summary>Not a ReportingOptions field — this is a dashboard-tile lookahead, not a business-rule threshold; Document's own ExpiryAlertLookaheadDays (30) is the closest existing precedent value.</summary>
@@ -32,8 +36,9 @@ public sealed class DashboardService(
         var expiringDocuments = await documentService.CountExpiringAsync(DashboardLookaheadDays);
         var upcomingInspections = await inspectionService.CountUpcomingAsync(DashboardLookaheadDays);
         var bottleneckedSteps = await workflowInstanceService.CountBottlenecksAsync(options.Value.WorkflowBottleneckThresholdDays);
+        var arrearsSchedules = await rentScheduleService.CountInArrearsAsync();
 
         return ServiceResult<DashboardSummaryResponse>.Success(
-            new DashboardSummaryResponse(openWorkOrders, expiringDocuments, upcomingInspections, bottleneckedSteps));
+            new DashboardSummaryResponse(openWorkOrders, expiringDocuments, upcomingInspections, bottleneckedSteps, arrearsSchedules));
     }
 }

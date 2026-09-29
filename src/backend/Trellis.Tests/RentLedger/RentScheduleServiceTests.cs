@@ -228,6 +228,34 @@ public sealed class RentScheduleServiceTests : IDisposable
         result.Data.Should().OnlyContain(r => r.RentStatus == "IN_ARREARS" && r.PeriodsInArrears > 0);
     }
 
+    [Fact]
+    public async Task CountInArrearsAsync_CountsOnlyInArrearsSchedules()
+    {
+        var older = ActiveSchedule(start: DateOnly.FromDateTime(DateTime.UtcNow).AddMonths(-8));
+        var newer = ActiveSchedule(start: DateOnly.FromDateTime(DateTime.UtcNow).AddMonths(-3));
+        var paidUp = ActiveSchedule(start: DateOnly.FromDateTime(DateTime.UtcNow).AddMonths(-6));
+        _scheduleRepository.ListActiveForTenantAsync().Returns([newer, paidUp, older]);
+        _paymentRepository.GetReceivedTotalsAsync(Arg.Any<IReadOnlyCollection<Guid>>())
+            .Returns(new Dictionary<Guid, decimal> { [paidUp.RentScheduleId] = 100_000m });
+        var sut = CreateSut();
+
+        var result = await sut.CountInArrearsAsync();
+
+        result.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task CountInArrearsAsync_WhenNotEntitledToRentCollection_ReturnsNull_NotZero()
+    {
+        _entitlements.IsEntitledAsync(_tenantId, "RENT_COLLECTION").Returns(false);
+        var sut = CreateSut();
+
+        var result = await sut.CountInArrearsAsync();
+
+        result.Should().BeNull();
+        await _scheduleRepository.DidNotReceiveWithAnyArgs().ListActiveForTenantAsync();
+    }
+
     // ---- Lease-execution hook ----
 
     [Fact]
