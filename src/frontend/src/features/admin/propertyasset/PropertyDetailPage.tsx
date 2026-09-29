@@ -32,6 +32,7 @@ const unitSchema = z.object({
 type UnitFormValues = z.infer<typeof unitSchema>;
 
 const statusColor: Record<string, string> = { ACTIVE: "success.8", ARCHIVED: "gray.8" };
+const occupancyColor: Record<string, string> = { VACANT: "blue.8", OCCUPIED: "gray.8" };
 
 /** The third step of the exit-criterion flow (roadmap.md's Phase 2 row) — units/assets are managed from within their parent property, matching BDR-AST-001's Owner -> Property -> Unit/Asset hierarchy. */
 export function PropertyDetailPage() {
@@ -128,6 +129,7 @@ export function PropertyDetailPage() {
             <Table.Th>Label</Table.Th>
             <Table.Th>Size (sq ft)</Table.Th>
             <Table.Th>Status</Table.Th>
+            <Table.Th>Occupancy</Table.Th>
             <Table.Th />
           </Table.Tr>
         </Table.Thead>
@@ -138,6 +140,11 @@ export function PropertyDetailPage() {
               <Table.Td>{unit.sizeSqft ?? "—"}</Table.Td>
               <Table.Td>
                 <Badge color={statusColor[unit.status ?? ""] ?? "gray.8"}>{unit.status}</Badge>
+              </Table.Td>
+              <Table.Td>
+                <Badge color={occupancyColor[unit.occupancyStatus ?? ""] ?? "gray.8"}>
+                  {unit.occupancyStatus}
+                </Badge>
               </Table.Td>
               <Table.Td>
                 {unit.status !== "ARCHIVED" && (

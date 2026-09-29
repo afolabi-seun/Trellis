@@ -18,6 +18,7 @@ type PublicVacancyListingDetailResponse =
 type ApplicationLinkContextResponse = components["schemas"]["ApplicationLinkContextResponse"];
 type ApplicationSubmitRequest = components["schemas"]["ApplicationSubmitRequest"];
 type ApplicationSubmitResponse = components["schemas"]["ApplicationSubmitResponse"];
+type EndLeaseRequest = components["schemas"]["EndLeaseRequest"];
 
 /** BDR-LSE-001 — staff listing management. TENANT_ADMIN + DEPARTMENT_STAFF, gated by the LEASING module entitlement. */
 export const vacancyListingsApi = {
@@ -84,6 +85,13 @@ export const applicationsApi = {
     apiFetch<ApplicationResponse>(`/api/v1/applications/${id}/send-for-signature`, {
       method: "POST",
       body: { draftDocumentId },
+    }),
+
+  /** A staff-initiated move-out on a LEASED application — ends its rent schedule (if any) and frees the unit to be re-listed. */
+  endLease: (id: string, request: EndLeaseRequest) =>
+    apiFetch<ApplicationResponse>(`/api/v1/applications/${id}/end-lease`, {
+      method: "POST",
+      body: request,
     }),
 };
 

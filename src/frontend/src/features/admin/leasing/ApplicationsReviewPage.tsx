@@ -8,6 +8,7 @@ import {
   Stack,
   Table,
   Text,
+  TextInput,
   Timeline,
   Title,
 } from "@mantine/core";
@@ -30,6 +31,7 @@ const statusColor: Record<string, string> = {
   APPROVED: "success.8",
   DECLINED: "gray.8",
   LEASED: "success.8",
+  LEASE_ENDED: "gray.8",
 };
 
 const outcomeColor: Record<string, string> = {
@@ -60,6 +62,9 @@ export function ApplicationsReviewPage() {
   const [signFor, setSignFor] = useState<string | null>(null);
   const [draftDocumentId, setDraftDocumentId] = useState<string | null>(null);
   const [signModalOpened, { open: openSignModal, close: closeSignModal }] = useDisclosure(false);
+  const [endLeaseFor, setEndLeaseFor] = useState<string | null>(null);
+  const [effectiveDate, setEffectiveDate] = useState("");
+  const [endLeaseReason, setEndLeaseReason] = useState("");
 
   const listingsQuery = useQuery({
     queryKey: ["leasing", "listings"],
@@ -99,6 +104,24 @@ export function ApplicationsReviewPage() {
       refresh();
       closeSignModal();
       setDraftDocumentId(null);
+    },
+  });
+  const endLeaseMutation = useMutation({
+    mutationFn: ({
+      id,
+      effectiveDate,
+      reason,
+    }: {
+      id: string;
+      effectiveDate: string;
+      reason: string;
+    }) => applicationsApi.endLease(id, { effectiveDate, reason: reason || null }),
+    onSuccess: () => {
+      refresh();
+      queryClient.invalidateQueries({ queryKey: ["propertyasset", "units"] });
+      setEndLeaseFor(null);
+      setEffectiveDate("");
+      setEndLeaseReason("");
     },
   });
 
@@ -222,6 +245,16 @@ export function ApplicationsReviewPage() {
                           Send for signature
                         </Button>
                       )}
+                      {application.status === "LEASED" && (
+                        <Button
+                          size="xs"
+                          variant="subtle"
+                          styles={dangerButtonStyles}
+                          onClick={() => setEndLeaseFor(id)}
+                        >
+                          End lease
+                        </Button>
+                      )}
                     </Group>
                   </Table.Td>
                 </Table.Tr>
@@ -276,6 +309,40 @@ export function ApplicationsReviewPage() {
             onClick={() => signMutation.mutate({ id: signFor!, documentId: draftDocumentId! })}
           >
             Send for signature
+          </Button>
+        </Stack>
+      </Modal>
+
+      <Modal opened={endLeaseFor !== null} onClose={() => setEndLeaseFor(null)} title="End lease">
+        <Stack gap="md">
+          <Text size="sm">
+            This ends the lease and frees the unit to be re-listed. It cannot be undone.
+          </Text>
+          {endLeaseMutation.isError && (
+            <Alert color="red" title="Could not end lease" styles={dangerAlertStyles}>
+              {errorMessage(endLeaseMutation.error)}
+            </Alert>
+          )}
+          <TextInput
+            label="Effective date"
+            type="date"
+            value={effectiveDate}
+            onChange={(event) => setEffectiveDate(event.currentTarget.value)}
+          />
+          <TextInput
+            label="Reason (optional)"
+            value={endLeaseReason}
+            onChange={(event) => setEndLeaseReason(event.currentTarget.value)}
+          />
+          <Button
+            styles={dangerButtonStyles}
+            disabled={!effectiveDate}
+            loading={endLeaseMutation.isPending}
+            onClick={() =>
+              endLeaseMutation.mutate({ id: endLeaseFor!, effectiveDate, reason: endLeaseReason })
+            }
+          >
+            End lease
           </Button>
         </Stack>
       </Modal>

@@ -561,6 +561,51 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/applications/{id}/end-lease": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["EndLeaseRequest"];
+                    "text/json": components["schemas"]["EndLeaseRequest"];
+                    "application/*+json": components["schemas"]["EndLeaseRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["ApplicationResponseApiResponse"];
+                        "application/json": components["schemas"]["ApplicationResponseApiResponse"];
+                        "text/json": components["schemas"]["ApplicationResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/auth/login": {
         parameters: {
             query?: never;
@@ -6078,6 +6123,11 @@ export interface components {
             scanStatus?: string | null;
             /** Format: date-time */
             createdAt?: string;
+        };
+        EndLeaseRequest: {
+            /** Format: date */
+            effectiveDate?: string;
+            reason?: string | null;
         };
         ExtractedFieldDto: {
             fieldName?: string | null;

@@ -251,6 +251,57 @@ test("BDR-LSE-004/005: staff review the application, approve it, and a completed
   await expect(page.getByRole("link", { name: UNIT_LABEL })).toHaveCount(0);
 });
 
+test("BDR-LSE: staff end a lease, freeing the unit and its rent schedule so the unit can be re-listed", async ({
+  page,
+}) => {
+  await login(page, TENANT_ADMIN_USERNAME);
+
+  await page.getByRole("link", { name: "Applications", exact: true }).click();
+  await page.getByRole("textbox", { name: "Listing" }).click();
+  await page.getByRole("option", { name: new RegExp(LISTING_DESCRIPTION) }).click();
+
+  const row = page.getByRole("row", { name: "Pat Applicant" });
+  await expect(row.getByText("LEASED", { exact: true })).toBeVisible();
+
+  await row.getByRole("button", { name: "End lease" }).click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog.getByText("This ends the lease")).toBeVisible();
+  await dialog.getByLabel("Effective date").fill("2026-06-30");
+  await dialog.getByLabel("Reason (optional)").fill("Tenant relocated");
+  await dialog.getByRole("button", { name: "End lease" }).click();
+  await expect(dialog).toBeHidden();
+
+  await expect(row.getByText("LEASE_ENDED", { exact: true })).toBeVisible();
+  await expect(row.getByRole("button", { name: "End lease" })).toHaveCount(0);
+  await expectNoAxeViolations(page);
+
+  expect(await getUnitOccupancyStatus(UNIT_ID)).toBe("VACANT");
+  const schedules = await getRentSchedulesForUnit(UNIT_ID);
+  expect(schedules.at(-1)).toMatchObject({ status: "ENDED", hasLeaseApplication: true });
+
+  // The occupancy column on the property page reflects the vacated unit.
+  await page.getByRole("link", { name: "Properties", exact: true }).click();
+  await page.getByRole("link", { name: PROPERTY_ADDRESS }).click();
+  await expect(
+    page.getByRole("row", { name: UNIT_LABEL }).getByText("VACANT", { exact: true }),
+  ).toBeVisible();
+
+  // The now-vacant unit can be re-listed.
+  await page.getByRole("link", { name: "Vacancy Listings", exact: true }).click();
+  await page.getByRole("button", { name: "New listing" }).click();
+  const listingDialog = page.getByRole("dialog");
+  await listingDialog.getByRole("textbox", { name: "Property" }).click();
+  await page.getByRole("option", { name: PROPERTY_ADDRESS }).click();
+  await listingDialog.getByRole("textbox", { name: "Unit" }).click();
+  await page.getByRole("option", { name: UNIT_LABEL }).click();
+  await listingDialog.getByLabel("Monthly rent").fill("1700");
+  await listingDialog.getByLabel("Available from").fill("2026-07-01");
+  await listingDialog.getByLabel("Description").fill("Re-listed after move-out");
+  await listingDialog.getByRole("button", { name: "Create listing" }).click();
+  await expect(listingDialog).toBeHidden();
+  await expect(page.getByRole("link", { name: "Re-listed after move-out" })).toBeVisible();
+});
+
 test("BDR-BIL-009: a tenant without the Leasing add-on sees an upsell instead of the module", async ({
   page,
 }) => {
