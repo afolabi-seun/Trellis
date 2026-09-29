@@ -3,14 +3,18 @@ import { expect, test } from "@playwright/test";
 import {
   deleteAppUsers,
   deletePropertyAssetDataForTenant,
+  deleteRentLedgerDataForTenant,
   deleteReportingDataForTenant,
   deleteTenantByName,
   deleteWorkflowDataForTenant,
   seedDepartmentStaff,
+  seedModuleEntitlement,
   seedOwner,
   seedProperty,
+  seedRentSchedule,
   seedTenant,
   seedTenantAdmin,
+  seedUnitAsset,
   seedWorkflowInstance,
   SEED_PASSWORD,
 } from "./support/dbSeed";
@@ -31,6 +35,8 @@ const OWNER_ID = "9b9b9b9b-9b9b-9b9b-9b9b-9b9b9b9b9b9b";
 const PROPERTY_ID = "9c9c9c9c-9c9c-9c9c-9c9c-9c9c9c9c9c9c";
 const WORKFLOW_INSTANCE_ID = "9d9d9d9d-9d9d-9d9d-9d9d-9d9d9d9d9d9d";
 const DEPARTMENT_ID = "9e9e9e9e-9e9e-9e9e-9e9e-9e9e9e9e9e9e";
+const UNIT_ID = "9f9f9f9f-8a8a-8a8a-8a8a-9f9f9f9f9f9f";
+const RENT_SCHEDULE_ID = "8a8a8a8a-9c9c-9c9c-9c9c-8a8a8a8a8a8a";
 const TENANT_ADMIN_USERNAME = `e2e-reporting-admin-${Date.now()}@trellis-platform.test`;
 const DEPARTMENT_STAFF_USERNAME = `e2e-reporting-staff-${Date.now()}@trellis-platform.test`;
 
@@ -41,9 +47,16 @@ test.beforeAll(async () => {
   await seedOwner(OWNER_ID, TENANT_ID, "Jane Owner", "jane.owner@example.com");
   await seedProperty(PROPERTY_ID, TENANT_ID, OWNER_ID, "123 Main St");
   await seedWorkflowInstance(WORKFLOW_INSTANCE_ID, TENANT_ID);
+  // BDR-RPT-001's fifth tile: the dashboard's arrears count is only shown when the tenant is
+  // entitled to RENT_COLLECTION — a long-overdue schedule with no payments proves it's real, not
+  // a stub zero.
+  await seedUnitAsset(UNIT_ID, TENANT_ID, PROPERTY_ID, "Unit R1");
+  await seedModuleEntitlement(TENANT_ID, "RENT_COLLECTION", "ACTIVE");
+  await seedRentSchedule(RENT_SCHEDULE_ID, TENANT_ID, UNIT_ID, 900);
 });
 
 test.afterAll(async () => {
+  await deleteRentLedgerDataForTenant(TENANT_ID);
   await deleteReportingDataForTenant(TENANT_ID);
   await deleteWorkflowDataForTenant(TENANT_ID);
   await deletePropertyAssetDataForTenant(TENANT_ID);
@@ -70,6 +83,10 @@ test("BDR-RPT-001: a Tenant Admin views the dashboard and sees counts reflecting
   await expect(page.getByText("Open work orders")).toBeVisible();
   const openWorkOrdersTile = page.getByText("Open work orders").locator("..");
   await expect(openWorkOrdersTile.getByText("1", { exact: true })).toBeVisible();
+
+  await expect(page.getByText("Rent schedules in arrears")).toBeVisible();
+  const arrearsTile = page.getByText("Rent schedules in arrears").locator("..");
+  await expect(arrearsTile.getByText("1", { exact: true })).toBeVisible();
 });
 
 test("BDR-OWN-002/BDR-SEC-003: a Tenant Admin generates an Owner report, downloads its CSV, and the share link resolves anonymously then 404s once revoked", async ({

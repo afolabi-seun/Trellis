@@ -1,4 +1,4 @@
-import { randomUUID } from "node:crypto";
+import { createHmac, randomUUID } from "node:crypto";
 import AxeBuilder from "@axe-core/playwright";
 import { expect, test } from "@playwright/test";
 import {
@@ -47,6 +47,9 @@ const DEPARTMENT_STAFF_USERNAME = `e2e-leasing-staff-${Date.now()}@trellis-platf
 const UNENTITLED_ADMIN_USERNAME = `e2e-leasing-unentitled-${Date.now()}@trellis-platform.test`;
 const APPLICANT_EMAIL = "applicant@example.com";
 const RAW_TOKEN = `e2e-leasing-token-${Date.now()}`;
+// Matches ESignatureWebhookSecret in the running API's own .env — HmacESignatureSignatureValidator
+// fails closed on any mismatch, so this must be the real dev-only value, not a placeholder header.
+const ESIGNATURE_WEBHOOK_SECRET = "esig_test_dev_only_placeholder_not_a_real_secret";
 const PROPERTY_ADDRESS = "42 Leasing Lane";
 const UNIT_LABEL = "Unit 7A";
 const LISTING_DESCRIPTION = "Sunny two-bedroom near the park";
@@ -217,9 +220,13 @@ test("BDR-LSE-004/005: staff review the application, approve it, and a completed
   await expect(dialog).toBeHidden();
 
   const envelopeId = await getEnvelopeIdForTenant(TENANT_ID);
+  const webhookBody = JSON.stringify({ event: "envelope.completed", envelopeId });
+  const webhookSignature = createHmac("sha256", ESIGNATURE_WEBHOOK_SECRET)
+    .update(webhookBody)
+    .digest("hex");
   const webhook = await page.request.post(`${API_URL}/webhooks/esignature`, {
-    headers: { "x-esignature-signature": "e2e", "content-type": "application/json" },
-    data: { event: "envelope.completed", envelopeId },
+    headers: { "x-esignature-signature": webhookSignature, "content-type": "application/json" },
+    data: webhookBody,
   });
   expect(webhook.status()).toBe(200);
 

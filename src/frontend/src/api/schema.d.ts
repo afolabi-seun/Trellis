@@ -6024,6 +6024,8 @@ export interface components {
             upcomingInspections?: number;
             /** Format: int32 */
             bottleneckedSteps?: number;
+            /** Format: int32 */
+            arrearsSchedules?: number | null;
         };
         DashboardSummaryResponseApiResponse: {
             readonly status?: string | null;

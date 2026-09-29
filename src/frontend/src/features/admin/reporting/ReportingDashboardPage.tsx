@@ -83,6 +83,16 @@ export function ReportingDashboardPage() {
             {summary?.bottleneckedSteps ?? "—"}
           </Text>
         </Stack>
+        {summary?.arrearsSchedules != null && (
+          <Stack gap={0}>
+            <Text c="gray.7" size="sm">
+              Rent schedules in arrears
+            </Text>
+            <Text fw={700} size="xl">
+              {summary.arrearsSchedules}
+            </Text>
+          </Stack>
+        )}
       </Group>
     </Stack>
   );
