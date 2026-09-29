@@ -10,6 +10,7 @@ public enum ApplicationStatus
     Approved,
     Declined,
     Leased,
+    LeaseEnded,
 }
 
 /// <summary>
@@ -51,6 +52,10 @@ public sealed class Application : ITenantOwned
 
     public ApplicationStatus Status { get; private set; }
     public DateTimeOffset SubmittedAt { get; private set; }
+
+    /// <summary>Set only by MarkLeaseEnded — when a lease that was executed here was later ended.</summary>
+    public DateOnly? LeaseEndedDate { get; private set; }
+    public string? LeaseEndedReason { get; private set; }
 
     private Application() { }
 
@@ -129,5 +134,18 @@ public sealed class Application : ITenantOwned
         }
 
         Status = ApplicationStatus.Leased;
+    }
+
+    /// <summary>A staff-initiated move-out. Leased only — there is no lease entity in this schema (this row doubles as the lease record), so ending it here is what frees the unit to be re-listed.</summary>
+    public void MarkLeaseEnded(DateOnly effectiveDate, string? reason)
+    {
+        if (Status != ApplicationStatus.Leased)
+        {
+            throw new InvalidStatusTransitionException(nameof(Application), Status.ToString(), ApplicationStatus.LeaseEnded.ToString());
+        }
+
+        Status = ApplicationStatus.LeaseEnded;
+        LeaseEndedDate = effectiveDate;
+        LeaseEndedReason = reason;
     }
 }

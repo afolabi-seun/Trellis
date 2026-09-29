@@ -85,6 +85,8 @@ trellis_rentledger.rent_payment_record    — one recorded (not processed) payme
 
 **Uniqueness (partial indexes):** at most one `ACTIVE` schedule per `unit_asset_id`, and at most one schedule per `lease_application_id` (which makes the lease-execution webhook's retry idempotent). A new lease on a unit with a still-`ACTIVE` schedule ends the prior one rather than failing — a signed lease is never blocked. A schedule created from a lease takes `due_day_of_month = min(available_from.day, 28)`; it is editable afterwards.
 
+**Ending a schedule** happens two ways: staff end one directly (`POST rent-schedules/{id}/end`), or Leasing ends the schedule tied to a lease it is ending (`IRentScheduleService.EndForLeaseAsync(tenantId, leaseApplicationId, actor)` — a tolerated no-op when Rent Collection isn't entitled, or when no schedule exists for that lease, since ending a lease must never be blocked by rent tracking being absent).
+
 ### trellis_rentledger.rent_payment_record
 
 | Column | Type | Constraints | Description |

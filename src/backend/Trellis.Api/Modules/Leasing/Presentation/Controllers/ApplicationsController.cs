@@ -51,5 +51,11 @@ public sealed class ApplicationsController(IApplicationService applicationServic
     public async Task<IActionResult> SendForSignature(Guid id, [FromBody] SendForSignatureRequest request) =>
         (await applicationService.SendForSignatureAsync(id, request.DraftDocumentId, CurrentUserId())).ToActionResult(HttpContext);
 
+    /// <summary>A staff-initiated move-out on a Leased application — ends its rent schedule (if any) and frees the unit to be re-listed.</summary>
+    [HttpPost("{id:guid}/end-lease")]
+    [ProducesResponseType(typeof(ApiResponse<ApplicationResponse>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> EndLease(Guid id, [FromBody] EndLeaseRequest request) =>
+        (await applicationService.EndLeaseAsync(id, request, CurrentUserId())).ToActionResult(HttpContext);
+
     private Guid CurrentUserId() => Guid.Parse(User.FindFirstValue("sub")!);
 }

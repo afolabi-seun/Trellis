@@ -113,6 +113,7 @@ public static class AuditTypes
         public const string ApplicationDeclined = "APPLICATION_DECLINED";
         public const string LeaseSentForSignature = "LEASE_SENT_FOR_SIGNATURE";
         public const string LeaseExecuted = "LEASE_EXECUTED";
+        public const string LeaseEnded = "LEASE_ENDED";
     }
 
     /// <summary>BDR-RENT-002/004 — every recorded (not processed) rent event. Rent payments are staff-entered records of an external event, so who recorded or voided one is part of the trail.</summary>

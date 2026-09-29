@@ -1,5 +1,6 @@
 using System.Net;
 using System.Net.Http.Headers;
+using System.Net.Http.Json;
 using FluentAssertions;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.AspNetCore.TestHost;
@@ -39,6 +40,9 @@ public sealed class LeasingControllerRoleGateTests : IClassFixture<CustomWebAppl
         var applicationService = Substitute.For<IApplicationService>();
         applicationService.ListByListingAsync(Arg.Any<Guid>(), Arg.Any<string?>(), Arg.Any<int>()).Returns(
             ServiceResult<PagedResponse<ApplicationResponse>>.Success(new PagedResponse<ApplicationResponse>([], null, false, 0)));
+        applicationService.EndLeaseAsync(Arg.Any<Guid>(), Arg.Any<EndLeaseRequest>(), Arg.Any<Guid>()).Returns(
+            ServiceResult<ApplicationResponse>.Success(
+                new ApplicationResponse(Guid.NewGuid(), Guid.NewGuid(), "a@example.com", "Ada", "LEASE_ENDED", null, DateTimeOffset.UtcNow)));
 
         var scopedFactory = _factory.WithWebHostBuilder(builder =>
             builder.ConfigureTestServices(services =>
@@ -123,6 +127,20 @@ public sealed class LeasingControllerRoleGateTests : IClassFixture<CustomWebAppl
 
         response.StatusCode.Should().Be(HttpStatusCode.Forbidden);
         body.Should().Contain("TRL-E-BIL-10000");
+    }
+
+    [Theory]
+    [InlineData(UserRole.TenantAdmin)]
+    [InlineData(UserRole.DepartmentStaff)]
+    public async Task EndLease_ForEitherStaffRole_WithTheModuleEntitled_Returns200(UserRole role)
+    {
+        var client = CreateClient(Guid.NewGuid(), role, entitled: true, out var handle);
+        await using var _ = handle;
+
+        var response = await client.PostAsJsonAsync(
+            $"/api/v1/applications/{Guid.NewGuid()}/end-lease", new EndLeaseRequest(new DateOnly(2026, 6, 30), null));
+
+        response.StatusCode.Should().Be(HttpStatusCode.OK);
     }
 
     [Fact]

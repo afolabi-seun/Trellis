@@ -34,6 +34,14 @@ public interface IRentScheduleService
         Guid tenantId, Guid unitAssetId, Guid leaseApplicationId, decimal rentAmount, string currency, DateOnly availableFrom, Guid? actorUserId);
 
     /// <summary>
+    /// BDR-RENT-001's counterpart on the way out: called when Leasing ends a lease. A no-op (Success)
+    /// when the tenant isn't entitled, or when the schedule is missing or already ended — the caller
+    /// (freeing the unit to be re-listed) must never be blocked by rent tracking being absent or
+    /// already tidy. Explicit tenantId — safe under an ambient staff request or SystemContext alike.
+    /// </summary>
+    Task<ServiceResult<bool>> EndForLeaseAsync(Guid tenantId, Guid leaseApplicationId, Guid? actorUserId);
+
+    /// <summary>
     /// BDR-RENT-005 — the Owner report's rollup across the given units. Null when the current tenant
     /// isn't entitled to RENT_COLLECTION (the report then omits rent rather than showing a
     /// misleading zero). Requires the caller's TenantContext.Current (Scoped()).

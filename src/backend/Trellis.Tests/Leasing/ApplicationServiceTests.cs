@@ -16,6 +16,9 @@ using Trellis.Api.Modules.Leasing.Infrastructure.Security;
 using Trellis.Api.Modules.Notification.Application.Dtos;
 using Trellis.Api.Modules.Notification.Application.Interfaces;
 using Trellis.Api.Modules.Notification.Domain.Entities;
+using Trellis.Api.Modules.PropertyAsset.Application.Dtos;
+using Trellis.Api.Modules.PropertyAsset.Application.Interfaces;
+using Trellis.Api.Modules.RentLedger.Application.Interfaces;
 using Trellis.Api.Modules.Reporting.Application.Interfaces;
 using Trellis.Api.Modules.Tenant.Application.Dtos;
 using Trellis.Api.Modules.Tenant.Application.Interfaces;
@@ -45,12 +48,15 @@ public sealed class ApplicationServiceTests : IDisposable
     private static readonly string[] AdminOnlyRoles = ["TENANT_ADMIN"];
     private readonly IAuditService _auditService = Substitute.For<IAuditService>();
     private readonly ITenantSettingsService _tenantSettingsService = Substitute.For<ITenantSettingsService>();
+    private readonly IUnitAssetService _unitAssetService = Substitute.For<IUnitAssetService>();
+    private readonly IRentScheduleService _rentScheduleService = Substitute.For<IRentScheduleService>();
 
     public void Dispose() => TenantContext.Current = null;
 
     private ApplicationService CreateSut() => new(
         _repository, _listingRepository, _screeningResultRepository, _eventRepository, _tokenRepository, _linkService,
-        _screeningProvider, _eSignatureProvider, _tenantService, _authService, _tenantSettingsService, _notificationService, _documentService, _auditService);
+        _screeningProvider, _eSignatureProvider, _tenantService, _authService, _tenantSettingsService, _notificationService,
+        _documentService, _unitAssetService, _rentScheduleService, _auditService);
 
     private static ApplicationSubmitRequest ValidRequest(bool consent = true) =>
         new("Ada Applicant", "+27821234567", new DateOnly(1990, 1, 1), "1 Main Rd", "Acme", 5000m, consent);
@@ -336,5 +342,114 @@ public sealed class ApplicationServiceTests : IDisposable
         var result = await sut.DeclineAsync(application.ApplicationId, Guid.NewGuid());
 
         result.Outcome.Should().Be(ServiceResultOutcome.BusinessRuleViolation);
+    }
+
+    // ---- EndLeaseAsync ----
+
+    private LeasingApplication ArrangeLeasedApplication(out Guid unitId)
+    {
+        var application = ArrangeApprovedApplication();
+        application.MarkLeased();
+        unitId = ArrangeListingUnit();
+        _unitAssetService.MarkVacantAsync(unitId).Returns(ServiceResult<UnitAssetResponse>.Success(
+            new UnitAssetResponse(unitId, Guid.NewGuid(), "Unit 4B", "ACTIVE", "VACANT", null, null, "AAAAAAAAAAA=", DateTimeOffset.UtcNow)));
+        _rentScheduleService.EndForLeaseAsync(_tenantId, application.ApplicationId, Arg.Any<Guid?>()).Returns(ServiceResult<bool>.Success(true));
+        return application;
+    }
+
+    [Fact]
+    public async Task EndLeaseAsync_OnALeasedApplication_EndsTheRentSchedule_VacatesTheUnit_AndClosesTheApplicationOut()
+    {
+        var staffId = Guid.NewGuid();
+        var application = ArrangeLeasedApplication(out var unitId);
+        var sut = CreateSut();
+
+        var result = await sut.EndLeaseAsync(
+            application.ApplicationId, new EndLeaseRequest(new DateOnly(2026, 6, 30), "Tenant relocated"), staffId);
+
+        result.Outcome.Should().Be(ServiceResultOutcome.Success);
+        result.Data!.Status.Should().Be("LEASE_ENDED");
+        application.LeaseEndedDate.Should().Be(new DateOnly(2026, 6, 30));
+        await _rentScheduleService.Received(1).EndForLeaseAsync(_tenantId, application.ApplicationId, staffId);
+        await _unitAssetService.Received(1).MarkVacantAsync(unitId);
+        await _eventRepository.Received(1).AddAsync(Arg.Is<ApplicationEvent>(e => e.EventType == "LEASE_ENDED"));
+        await _auditService.Received(1).RecordAsync(_tenantId, staffId, Arg.Any<Trellis.Api.Modules.Reporting.Domain.Entities.AuditActorType>(), "LEASE_ENDED", Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task EndLeaseAsync_EndsTheRentScheduleBeforeVacatingTheUnit()
+    {
+        var application = ArrangeLeasedApplication(out var unitId);
+        var order = new List<string>();
+        _rentScheduleService.EndForLeaseAsync(_tenantId, application.ApplicationId, Arg.Any<Guid?>())
+            .Returns(_ => { order.Add("rent"); return ServiceResult<bool>.Success(true); });
+        _unitAssetService.MarkVacantAsync(unitId).Returns(_ =>
+        {
+            order.Add("vacate");
+            return ServiceResult<UnitAssetResponse>.Success(
+                new UnitAssetResponse(unitId, Guid.NewGuid(), "Unit 4B", "ACTIVE", "VACANT", null, null, "AAAAAAAAAAA=", DateTimeOffset.UtcNow));
+        });
+        var sut = CreateSut();
+
+        await sut.EndLeaseAsync(application.ApplicationId, new EndLeaseRequest(new DateOnly(2026, 6, 30), null), Guid.NewGuid());
+
+        order.Should().Equal("rent", "vacate");
+    }
+
+    [Fact]
+    public async Task EndLeaseAsync_WhenThereWasNoRentSchedule_StillEndsTheLease()
+    {
+        var application = ArrangeLeasedApplication(out _);
+        _rentScheduleService.EndForLeaseAsync(_tenantId, application.ApplicationId, Arg.Any<Guid?>()).Returns(ServiceResult<bool>.Success(false));
+        var sut = CreateSut();
+
+        var result = await sut.EndLeaseAsync(application.ApplicationId, new EndLeaseRequest(new DateOnly(2026, 6, 30), null), Guid.NewGuid());
+
+        result.Outcome.Should().Be(ServiceResultOutcome.Success);
+    }
+
+    [Fact]
+    public async Task EndLeaseAsync_WhenTheUnitIsAlreadyVacant_StillCompletes_ARetryTolerance()
+    {
+        var application = ArrangeLeasedApplication(out var unitId);
+        _unitAssetService.MarkVacantAsync(unitId).Returns(ServiceResult<UnitAssetResponse>.BusinessRuleViolation("TRL-E-AST-3000"));
+        var sut = CreateSut();
+
+        var result = await sut.EndLeaseAsync(application.ApplicationId, new EndLeaseRequest(new DateOnly(2026, 6, 30), null), Guid.NewGuid());
+
+        result.Outcome.Should().Be(ServiceResultOutcome.Success);
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public async Task EndLeaseAsync_OnAnApplicationThatIsNotLeased_ReturnsBusinessRuleViolation(bool approveFirst)
+    {
+        var application = LeasingApplication.Create(
+            _tenantId, _listingId, "a@example.com", "Ada", "1", new DateOnly(1990, 1, 1), "addr", null, null, true);
+        if (approveFirst)
+        {
+            application.Approve();
+        }
+
+        _repository.GetByIdAsync(application.ApplicationId).Returns(application);
+        var sut = CreateSut();
+
+        var result = await sut.EndLeaseAsync(application.ApplicationId, new EndLeaseRequest(new DateOnly(2026, 6, 30), null), Guid.NewGuid());
+
+        result.Outcome.Should().Be(ServiceResultOutcome.BusinessRuleViolation);
+        await _rentScheduleService.DidNotReceiveWithAnyArgs().EndForLeaseAsync(default, default, default);
+        await _unitAssetService.DidNotReceiveWithAnyArgs().MarkVacantAsync(default);
+    }
+
+    [Fact]
+    public async Task EndLeaseAsync_ForAnUnknownApplication_ReturnsNotFound()
+    {
+        _repository.GetByIdAsync(Arg.Any<Guid>()).Returns((LeasingApplication?)null);
+        var sut = CreateSut();
+
+        var result = await sut.EndLeaseAsync(Guid.NewGuid(), new EndLeaseRequest(new DateOnly(2026, 6, 30), null), Guid.NewGuid());
+
+        result.Outcome.Should().Be(ServiceResultOutcome.NotFound);
     }
 }

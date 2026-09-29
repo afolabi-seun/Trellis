@@ -234,6 +234,30 @@ public sealed class RentScheduleService(
         return ServiceResult<bool>.Success(true);
     }
 
+    public async Task<ServiceResult<bool>> EndForLeaseAsync(Guid tenantId, Guid leaseApplicationId, Guid? actorUserId)
+    {
+        if (!await moduleEntitlementService.IsEntitledAsync(tenantId, ModuleKey))
+        {
+            return ServiceResult<bool>.Success(false);
+        }
+
+        var schedule = await scheduleRepository.GetByLeaseApplicationIdAsync(tenantId, leaseApplicationId);
+        if (schedule is null || schedule.Status != RentScheduleStatus.Active)
+        {
+            return ServiceResult<bool>.Success(false);
+        }
+
+        schedule.End();
+        await scheduleRepository.SaveChangesAsync();
+
+        await auditService.RecordAsync(
+            tenantId, actorUserId ?? tenantId, actorUserId is null ? AuditActorType.System : AuditActorType.HumanUser,
+            AuditTypes.RentLedger.RentScheduleEnded,
+            $"{{\"rentScheduleId\":\"{schedule.RentScheduleId}\",\"reason\":\"lease ended\"}}");
+
+        return ServiceResult<bool>.Success(true);
+    }
+
     public async Task<OwnerRentSummary?> GetOwnerRentSummaryAsync(
         IReadOnlyList<Guid> unitAssetIds, DateOnly periodStart, DateOnly periodEnd, DateOnly asOf)
     {

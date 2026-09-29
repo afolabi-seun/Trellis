@@ -35,3 +35,5 @@ public sealed record ApplicationResponse(
     string Status, string? ScreeningOutcomeSummary, DateTimeOffset SubmittedAt);
 
 public sealed record ApplicationEventResponse(Guid ApplicationEventId, string EventType, string ActorType, string? DetailJson, DateTimeOffset CreatedAt);
+
+public sealed record EndLeaseRequest(DateOnly EffectiveDate, string? Reason);

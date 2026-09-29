@@ -80,6 +80,20 @@ public sealed class VacancyListingServiceTests : IDisposable
     }
 
     [Fact]
+    public async Task CreateAsync_ForAnOccupiedUnit_IsRejected_AUnitWithALiveLeaseCannotBeRelisted()
+    {
+        _unitAssetService.GetByIdAsync(_unitId).Returns(ServiceResult<UnitAssetResponse>.Success(
+            new UnitAssetResponse(_unitId, Guid.NewGuid(), "Unit 4B", "ACTIVE", "OCCUPIED", null, null, "AAAAAAAAAAA=", DateTimeOffset.UtcNow)));
+        var sut = CreateSut();
+
+        var result = await sut.CreateAsync(new VacancyListingCreateRequest(_unitId, 1500m, "USD", new DateOnly(2026, 11, 1), null), Guid.NewGuid());
+
+        result.Outcome.Should().Be(ServiceResultOutcome.BusinessRuleViolation);
+        result.ErrorCode.Should().Be("TRL-E-LSE-11006");
+        await _repository.DidNotReceiveWithAnyArgs().AddAsync(default!);
+    }
+
+    [Fact]
     public async Task BrowsePublicAsync_WhenTheTenantIsNotEntitledToLeasing_ReturnsNotFound_EvenIfListingsExist()
     {
         _entitlements.IsEntitledAsync(_tenantId, "LEASING").Returns(false);

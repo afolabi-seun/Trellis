@@ -154,4 +154,47 @@ public sealed class ApplicationTests
         var act = submitted.MarkLeased;
         act.Should().Throw<InvalidStatusTransitionException>();
     }
+
+    [Fact]
+    public void MarkLeaseEnded_FromLeased_Succeeds_AndRecordsTheEffectiveDateAndReason()
+    {
+        var application = CreateSubmitted();
+        application.Approve();
+        application.MarkLeased();
+
+        application.MarkLeaseEnded(new DateOnly(2026, 6, 30), "Tenant relocated");
+
+        application.Status.Should().Be(ApplicationStatus.LeaseEnded);
+        application.LeaseEndedDate.Should().Be(new DateOnly(2026, 6, 30));
+        application.LeaseEndedReason.Should().Be("Tenant relocated");
+    }
+
+    [Theory]
+    [InlineData(false)]
+    [InlineData(true)]
+    public void MarkLeaseEnded_OnAnythingOtherThanLeased_Throws(bool approveFirst)
+    {
+        var application = CreateSubmitted();
+        if (approveFirst)
+        {
+            application.Approve();
+        }
+
+        var act = () => application.MarkLeaseEnded(new DateOnly(2026, 6, 30), null);
+
+        act.Should().Throw<InvalidStatusTransitionException>();
+    }
+
+    [Fact]
+    public void MarkLeaseEnded_CalledTwice_ThrowsOnTheSecondCall()
+    {
+        var application = CreateSubmitted();
+        application.Approve();
+        application.MarkLeased();
+        application.MarkLeaseEnded(new DateOnly(2026, 6, 30), null);
+
+        var act = () => application.MarkLeaseEnded(new DateOnly(2026, 7, 1), null);
+
+        act.Should().Throw<InvalidStatusTransitionException>();
+    }
 }

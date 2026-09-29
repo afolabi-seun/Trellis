@@ -30,6 +30,7 @@ public static class ApplicationEventTypes
     public const string SentForSignature = "SENT_FOR_SIGNATURE";
     public const string SignatureCompleted = "SIGNATURE_COMPLETED";
     public const string Leased = "LEASED";
+    public const string LeaseEnded = "LEASE_ENDED";
 }
 
 public sealed class ApplicationEvent : ITenantOwned

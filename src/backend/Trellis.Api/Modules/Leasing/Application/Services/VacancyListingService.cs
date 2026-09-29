@@ -41,9 +41,16 @@ public sealed class VacancyListingService(
 
     public async Task<ServiceResult<VacancyListingResponse>> CreateAsync(VacancyListingCreateRequest request, Guid createdBy)
     {
-        if ((await unitAssetService.GetByIdAsync(request.UnitAssetId)).Outcome != ServiceResultOutcome.Success)
+        var unit = await unitAssetService.GetByIdAsync(request.UnitAssetId);
+        if (unit.Outcome != ServiceResultOutcome.Success)
         {
             return ServiceResult<VacancyListingResponse>.NotFound();
+        }
+
+        // An occupied unit has a live lease — a fresh listing must wait until EndLeaseAsync frees it.
+        if (unit.Data!.OccupancyStatus == "OCCUPIED")
+        {
+            return ServiceResult<VacancyListingResponse>.BusinessRuleViolation(ErrorCodeRegistry.Leasing.UnitNotVacant);
         }
 
         if (await repository.HasActiveListingForUnitAsync(request.UnitAssetId))

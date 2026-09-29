@@ -342,6 +342,65 @@ public sealed class RentScheduleServiceTests : IDisposable
         await _auditService.Received(1).RecordAsync(_tenantId, _tenantId, AuditActorType.System, "RENT_SCHEDULE_CREATED", Arg.Any<string>());
     }
 
+    // ---- EndForLeaseAsync ----
+
+    [Fact]
+    public async Task EndForLeaseAsync_EndsTheScheduleForThatLeaseApplication_AndAudits()
+    {
+        var leaseApplicationId = Guid.NewGuid();
+        var schedule = RentSchedule.Create(_tenantId, _unitId, leaseApplicationId, 1500m, "USD", new DateOnly(2026, 1, 1), 1, 5, null);
+        _scheduleRepository.GetByLeaseApplicationIdAsync(_tenantId, leaseApplicationId).Returns(schedule);
+        var staffId = Guid.NewGuid();
+        var sut = CreateSut();
+
+        var result = await sut.EndForLeaseAsync(_tenantId, leaseApplicationId, staffId);
+
+        result.Outcome.Should().Be(ServiceResultOutcome.Success);
+        result.Data.Should().BeTrue();
+        schedule.Status.Should().Be(RentScheduleStatus.Ended);
+        await _scheduleRepository.Received(1).SaveChangesAsync();
+        await _auditService.Received(1).RecordAsync(_tenantId, staffId, AuditActorType.HumanUser, "RENT_SCHEDULE_ENDED", Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task EndForLeaseAsync_WhenThereIsNoScheduleForThatLease_IsAToleratedNoOp()
+    {
+        _scheduleRepository.GetByLeaseApplicationIdAsync(_tenantId, Arg.Any<Guid>()).Returns((RentSchedule?)null);
+        var sut = CreateSut();
+
+        var result = await sut.EndForLeaseAsync(_tenantId, Guid.NewGuid(), Guid.NewGuid());
+
+        result.Outcome.Should().Be(ServiceResultOutcome.Success);
+        result.Data.Should().BeFalse();
+        await _scheduleRepository.DidNotReceiveWithAnyArgs().SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task EndForLeaseAsync_WhenTheScheduleIsAlreadyEnded_IsAToleratedNoOp()
+    {
+        var leaseApplicationId = Guid.NewGuid();
+        var schedule = RentSchedule.Create(_tenantId, _unitId, leaseApplicationId, 1500m, "USD", new DateOnly(2026, 1, 1), 1, 5, null);
+        schedule.End();
+        _scheduleRepository.GetByLeaseApplicationIdAsync(_tenantId, leaseApplicationId).Returns(schedule);
+        var sut = CreateSut();
+
+        var result = await sut.EndForLeaseAsync(_tenantId, leaseApplicationId, Guid.NewGuid());
+
+        result.Data.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task EndForLeaseAsync_WhenNotEntitled_IsAToleratedNoOp_AndNeverLooksUpTheSchedule()
+    {
+        _entitlements.IsEntitledAsync(_tenantId, "RENT_COLLECTION").Returns(false);
+        var sut = CreateSut();
+
+        var result = await sut.EndForLeaseAsync(_tenantId, Guid.NewGuid(), Guid.NewGuid());
+
+        result.Data.Should().BeFalse();
+        await _scheduleRepository.DidNotReceiveWithAnyArgs().GetByLeaseApplicationIdAsync(default, default);
+    }
+
     // ---- Owner report rollup ----
 
     [Fact]

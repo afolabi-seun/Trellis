@@ -131,8 +131,10 @@ trellis_leasing.application_event    — the audit trail (BDR-LSE-007)
 | application_id | UUID | PK | |
 | listing_id | UUID | FK → vacancy_listing NOT NULL | |
 | applicant_email | VARCHAR(255) | NOT NULL | No `app_user` row — identity is the email + link token only |
-| status | VARCHAR(20) | NOT NULL DEFAULT 'SUBMITTED' | SUBMITTED\|SCREENING\|APPROVED\|DECLINED\|LEASED |
+| status | VARCHAR(20) | NOT NULL DEFAULT 'SUBMITTED' | SUBMITTED\|SCREENING\|APPROVED\|DECLINED\|LEASED\|LEASE_ENDED |
 | submitted_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | |
+| lease_ended_date | DATE | NULLABLE | Set only by ending a Leased application — the staff-entered move-out date |
+| lease_ended_reason | VARCHAR(500) | NULLABLE | Optional free text |
 
 ### trellis_leasing.screening_result
 
@@ -191,6 +193,21 @@ as a new `Document` version (BDR-DOC-002) against the Property/Unit/Asset, and
 `BDR-LSE-006`'s automatic status transition fires: `vacancy_listing.status → LEASED`,
 `unit_asset.status → OCCUPIED`. Provider choice (DocuSign, Adobe Sign, or a more regionally
 common alternative) is likewise left open behind this interface.
+
+---
+
+## Lease Termination
+
+There is no separate Lease entity in this schema — the `application` row that reached `LEASED` *is*
+the lease record, so ending a lease is a staff action against that same row: `POST
+applications/{id}/end-lease` (`LEASED` only → `LEASE_ENDED`, with an effective date and an optional
+reason). It mirrors the lease-execution webhook's own retry-safe ordering, tolerating "already done"
+at each step so a retry can always complete: end the unit's rent schedule if one exists
+(`IRentScheduleService.EndForLeaseAsync`, a no-op if Rent Collection isn't entitled or there was
+none), mark the unit vacant (`IUnitAssetService.MarkVacantAsync`, tolerating already-vacant), then
+close out the application. The `vacancy_listing` row is left `LEASED` as history — re-letting the
+unit is a fresh listing, and `VacancyListingService.CreateAsync` now refuses to list a unit that is
+still `OCCUPIED` (a signed lease must be ended first).
 
 ---
 

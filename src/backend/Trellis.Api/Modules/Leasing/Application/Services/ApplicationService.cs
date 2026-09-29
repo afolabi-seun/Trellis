@@ -14,6 +14,8 @@ using Trellis.Api.Modules.Leasing.Infrastructure.Security;
 using Trellis.Api.Modules.Notification.Application.Dtos;
 using Trellis.Api.Modules.Notification.Application.Interfaces;
 using Trellis.Api.Modules.Notification.Domain.Entities;
+using Trellis.Api.Modules.PropertyAsset.Application.Interfaces;
+using Trellis.Api.Modules.RentLedger.Application.Interfaces;
 using Trellis.Api.Modules.Reporting.Application.Interfaces;
 using Trellis.Api.Modules.Reporting.Domain.Entities;
 using Trellis.Api.Modules.Tenant.Application.Interfaces;
@@ -35,6 +37,8 @@ public sealed class ApplicationService(
     ITenantSettingsService tenantSettingsService,
     INotificationService notificationService,
     IDocumentService documentService,
+    IUnitAssetService unitAssetService,
+    IRentScheduleService rentScheduleService,
     IAuditService auditService) : IApplicationService
 {
     public async Task<ServiceResult<ApplicationSubmitResponse>> SubmitAsync(string rawLinkToken, ApplicationSubmitRequest request)
@@ -246,6 +250,44 @@ public sealed class ApplicationService(
         await auditService.RecordAsync(
             application.TenantId, staffUserId, AuditActorType.HumanUser, AuditTypes.Leasing.LeaseSentForSignature,
             $"{{\"applicationId\":\"{application.ApplicationId}\",\"envelopeId\":\"{envelopeId}\"}}");
+
+        return ServiceResult<ApplicationResponse>.Success(await ToResponseAsync(application));
+    }
+
+    public async Task<ServiceResult<ApplicationResponse>> EndLeaseAsync(Guid applicationId, EndLeaseRequest request, Guid staffUserId)
+    {
+        var application = await repository.GetByIdAsync(applicationId);
+        if (application is null)
+        {
+            return ServiceResult<ApplicationResponse>.NotFound();
+        }
+
+        if (application.Status != ApplicationStatus.Leased)
+        {
+            return ServiceResult<ApplicationResponse>.BusinessRuleViolation(ErrorCodeRegistry.Leasing.InvalidStatusTransition);
+        }
+
+        var listing = await listingRepository.GetByIdAsync(application.VacancyListingId)
+            ?? throw new InvalidOperationException($"Vacancy listing {application.VacancyListingId} not found for application {application.ApplicationId}.");
+
+        // Ending the schedule and vacating the unit both tolerate "already done" — a retry after a
+        // partial failure must still be able to complete, same posture as the lease-execution webhook.
+        await rentScheduleService.EndForLeaseAsync(application.TenantId, application.ApplicationId, staffUserId);
+
+        var vacated = await unitAssetService.MarkVacantAsync(listing.UnitAssetId);
+        if (vacated.Outcome is not (ServiceResultOutcome.Success or ServiceResultOutcome.BusinessRuleViolation))
+        {
+            throw new InvalidOperationException($"Marking the unit vacant failed: {vacated.Outcome}.");
+        }
+
+        application.MarkLeaseEnded(request.EffectiveDate, request.Reason);
+        await AddEventAsync(application, ApplicationEventTypes.LeaseEnded, ApplicationEventActorType.HumanUser, staffUserId,
+            $"{{\"effectiveDate\":\"{request.EffectiveDate:O}\"}}");
+        await repository.SaveChangesAsync();
+
+        await auditService.RecordAsync(
+            application.TenantId, staffUserId, AuditActorType.HumanUser, AuditTypes.Leasing.LeaseEnded,
+            $"{{\"applicationId\":\"{application.ApplicationId}\",\"unitAssetId\":\"{listing.UnitAssetId}\"}}");
 
         return ServiceResult<ApplicationResponse>.Success(await ToResponseAsync(application));
     }

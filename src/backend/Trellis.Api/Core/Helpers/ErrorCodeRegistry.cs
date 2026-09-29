@@ -210,6 +210,9 @@ public static class ErrorCodeRegistry
 
         /// <summary>TRL-E-LSE-11005 — SendForSignatureAsync: the chosen draft isn't a LEASE document on this application's unit (the executed lease is filed as its next version, so it must be one).</summary>
         public const string DraftDocumentInvalid = "TRL-E-LSE-11005";
+
+        /// <summary>TRL-E-LSE-11006 — CreateAsync (VacancyListing): the target unit is still OCCUPIED, so it can't be listed until its current lease is ended.</summary>
+        public const string UnitNotVacant = "TRL-E-LSE-11006";
     }
 
     /// <summary>api_standards.md's registry table: Rent Collection | TRL-E-RENT | 12000–12999 — the doc reserves the block but enumerates no individual codes.</summary>
