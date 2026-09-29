@@ -4,6 +4,7 @@ import { AdminShell } from "./features/admin/AdminShell";
 import { ExtractionJobDetailPage } from "./features/admin/ai/ExtractionJobDetailPage";
 import { ExtractionReviewQueuePage } from "./features/admin/ai/ExtractionReviewQueuePage";
 import { BillingSettingsPage } from "./features/admin/billing/BillingSettingsPage";
+import { DataSubjectsPage } from "./features/admin/data-subjects/DataSubjectsPage";
 import { DocumentsLibraryPage } from "./features/admin/document/DocumentsLibraryPage";
 import { InspectionDetailPage } from "./features/admin/inspection/InspectionDetailPage";
 import { InspectionsListPage } from "./features/admin/inspection/InspectionsListPage";
@@ -80,6 +81,7 @@ export function App() {
             <Route path="billing" element={<BillingSettingsPage />} />
             <Route path="owner-reports" element={<OwnerReportsPage />} />
             <Route path="settings" element={<SettingsPage />} />
+            <Route path="data-subjects" element={<DataSubjectsPage />} />
           </Route>
         </Route>
       </Route>

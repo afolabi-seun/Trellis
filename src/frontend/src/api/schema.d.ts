@@ -1319,6 +1319,92 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/data-subjects/export": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["DataSubjectExportRequest"];
+                    "text/json": components["schemas"]["DataSubjectExportRequest"];
+                    "application/*+json": components["schemas"]["DataSubjectExportRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DataSubjectExportResponseApiResponse"];
+                        "application/json": components["schemas"]["DataSubjectExportResponseApiResponse"];
+                        "text/json": components["schemas"]["DataSubjectExportResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/data-subjects/erase": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["EraseDataSubjectRequest"];
+                    "text/json": components["schemas"]["EraseDataSubjectRequest"];
+                    "application/*+json": components["schemas"]["EraseDataSubjectRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["DataSubjectErasureResponseApiResponse"];
+                        "application/json": components["schemas"]["DataSubjectErasureResponseApiResponse"];
+                        "text/json": components["schemas"]["DataSubjectErasureResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/departments": {
         parameters: {
             query?: never;
@@ -6078,6 +6164,29 @@ export interface components {
             error?: components["schemas"]["ApiError"];
             meta: components["schemas"]["ApiMeta"];
         };
+        DataSubjectErasureResponse: {
+            counts?: components["schemas"]["ModuleErasureCount"][] | null;
+        };
+        DataSubjectErasureResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["DataSubjectErasureResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        DataSubjectExportRequest: {
+            subjectEmail?: string | null;
+        };
+        DataSubjectExportResponse: {
+            modules?: {
+                [key: string]: unknown;
+            } | null;
+        };
+        DataSubjectExportResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["DataSubjectExportResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
         DepartmentCreateRequest: {
             name?: string | null;
         };
@@ -6174,6 +6283,12 @@ export interface components {
         EndLeaseRequest: {
             /** Format: date */
             effectiveDate?: string;
+            reason?: string | null;
+        };
+        EraseDataSubjectRequest: {
+            subjectEmail?: string | null;
+            confirmEmail?: string | null;
+            currentPassword?: string | null;
             reason?: string | null;
         };
         ExtractedFieldDto: {
@@ -6469,6 +6584,11 @@ export interface components {
             status?: string | null;
             /** Format: double */
             monthlyPrice?: number;
+        };
+        ModuleErasureCount: {
+            moduleName?: string | null;
+            /** Format: int32 */
+            recordsAffected?: number;
         };
         NotificationSettingsDto: {
             applicationSubmittedRoles?: string[] | null;
