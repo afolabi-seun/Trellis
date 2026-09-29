@@ -24,5 +24,8 @@ public sealed class AppUserRepository(AuthDbContext dbContext) : IAppUserReposit
     public async Task<IReadOnlyList<AppUser>> GetByRolesAsync(Guid tenantId, IReadOnlyCollection<UserRole> roles) =>
         await dbContext.Users.Where(u => u.TenantId == tenantId && roles.Contains(u.Role)).ToListAsync();
 
+    public Task<int> CountActiveTenantAdminsAsync(Guid tenantId) =>
+        dbContext.Users.CountAsync(u => u.TenantId == tenantId && u.Role == UserRole.TenantAdmin && u.Status == UserStatus.Active);
+
     public Task SaveChangesAsync() => dbContext.SaveChangesAsync();
 }

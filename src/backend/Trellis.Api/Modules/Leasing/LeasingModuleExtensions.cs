@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Trellis.Api.Core.Data;
+using Trellis.Api.Core.Privacy;
 using Trellis.Api.Modules.Leasing.Application.Interfaces;
 using Trellis.Api.Modules.Leasing.Application.Services;
 using Trellis.Api.Modules.Leasing.Configuration;
@@ -36,6 +37,7 @@ public static class LeasingModuleExtensions
         services.AddScoped<IApplicationService, ApplicationService>();
         services.AddScoped<ILeasingWebhookService, LeasingWebhookService>();
         services.AddScoped<IScreeningReportService, ScreeningReportService>();
+        services.AddScoped<IPersonalDataHandler, LeasingPersonalDataHandler>();
 
         // No real screening bureau or e-signature vendor is fixed for this phase (leasing_design.md
         // deliberately doesn't commit to one — a business/legal decision). Swap each of these two

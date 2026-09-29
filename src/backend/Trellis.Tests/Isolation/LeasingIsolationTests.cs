@@ -285,4 +285,52 @@ public sealed class LeasingIsolationTests(PostgresIsolationFixture fixture) : IA
         var deleteAct = async () => await delete.ExecuteNonQueryAsync();
         (await deleteAct.Should().ThrowAsync<PostgresException>()).Which.SqlState.Should().Be("42501");
     }
+
+    /// <summary>
+    /// P7's one deliberate loosening of screening_result's otherwise INSERT-only grant — proves
+    /// it's exactly as narrow as intended: the app role can UPDATE full_report_ciphertext (the
+    /// real erasure code path, ScreeningResult.ClearFullReportCiphertext + SaveChangesAsync) but
+    /// still can't UPDATE any other column on the same table, at the grant level.
+    /// </summary>
+    [Fact]
+    public async Task ScreeningResult_TheAppRole_CanUpdateOnlyTheCiphertextColumn_EveryOtherColumnStaysGrantDenied()
+    {
+        await using (var migrationsConnection = new NpgsqlConnection(fixture.MigrationsConnectionString))
+        {
+            await migrationsConnection.OpenAsync();
+            await using var setCiphertext = migrationsConnection.CreateCommand();
+            setCiphertext.CommandText = "update trellis_leasing.screening_result set full_report_ciphertext = 'k1:seed-ciphertext' where screening_result_id = @id";
+            setCiphertext.Parameters.AddWithValue("id", _screeningAId);
+            await setCiphertext.ExecuteNonQueryAsync();
+        }
+
+        TenantContext.Current = new TenantContext(TenantA);
+        await using (var db = fixture.CreateAppLeasingContext())
+        {
+            var screening = await db.ScreeningResults.SingleAsync(r => r.ScreeningResultId == _screeningAId);
+            screening.ClearFullReportCiphertext();
+            (await db.SaveChangesAsync()).Should().Be(1);
+        }
+
+        await using var connection = new NpgsqlConnection(fixture.AppConnectionString);
+        await connection.OpenAsync();
+
+        await using var updateProvider = connection.CreateCommand();
+        updateProvider.CommandText = "update trellis_leasing.screening_result set provider = 'TAMPERED' where screening_result_id = @id";
+        updateProvider.Parameters.AddWithValue("id", _screeningAId);
+        var updateProviderAct = async () => await updateProvider.ExecuteNonQueryAsync();
+        (await updateProviderAct.Should().ThrowAsync<PostgresException>()).Which.SqlState.Should().Be("42501");
+
+        await using var updateOutcome = connection.CreateCommand();
+        updateOutcome.CommandText = "update trellis_leasing.screening_result set outcome_summary = 'FAIL' where screening_result_id = @id";
+        updateOutcome.Parameters.AddWithValue("id", _screeningAId);
+        var updateOutcomeAct = async () => await updateOutcome.ExecuteNonQueryAsync();
+        (await updateOutcomeAct.Should().ThrowAsync<PostgresException>()).Which.SqlState.Should().Be("42501");
+
+        await using var deleteRow = connection.CreateCommand();
+        deleteRow.CommandText = "delete from trellis_leasing.screening_result where screening_result_id = @id";
+        deleteRow.Parameters.AddWithValue("id", _screeningAId);
+        var deleteRowAct = async () => await deleteRow.ExecuteNonQueryAsync();
+        (await deleteRowAct.Should().ThrowAsync<PostgresException>()).Which.SqlState.Should().Be("42501");
+    }
 }

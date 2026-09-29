@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.RateLimiting;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.IdentityModel.Tokens;
 using Trellis.Api.Core.Data;
+using Trellis.Api.Core.Privacy;
 using Trellis.Api.Core.Secrets;
 using Trellis.Api.Modules.Auth.Application.Interfaces;
 using Trellis.Api.Modules.Auth.Application.Services;
@@ -44,6 +45,7 @@ public static class AuthModuleExtensions
 
         services.AddScoped<ISessionService, SessionService>();
         services.AddScoped<IAuthService, AuthService>();
+        services.AddScoped<IPersonalDataHandler, AuthPersonalDataHandler>();
 
         AddJwtBearerAuthentication(services);
         AddAuthSensitiveRateLimiting(services, config);

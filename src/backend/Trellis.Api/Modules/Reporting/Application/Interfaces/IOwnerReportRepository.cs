@@ -23,5 +23,8 @@ public interface IOwnerReportRepository
     Task<(IReadOnlyList<OwnerReport> Items, bool HasMore, int TotalCount)> ListAsync(
         Guid? ownerId, (DateTimeOffset CreatedAt, Guid Id)? cursor, int limit);
 
+    /// <summary>POPIA erasure — every report this owner has, unpaged (an owner's own report count is bounded by their tenancy, never large enough to need paging for this one-off operation).</summary>
+    Task<IReadOnlyList<OwnerReport>> ListAllForOwnerAsync(Guid ownerId);
+
     Task SaveChangesAsync();
 }

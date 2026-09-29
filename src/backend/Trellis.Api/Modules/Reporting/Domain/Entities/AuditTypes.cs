@@ -29,6 +29,12 @@ public static class AuditTypes
         public const string TenantDomainAdded = "TENANT_DOMAIN_ADDED";
         public const string TenantDomainVerified = "TENANT_DOMAIN_VERIFIED";
         public const string TenantDomainRemoved = "TENANT_DOMAIN_REMOVED";
+
+        /// <summary>security_guide.md's Compliance table shape — detail_json carries a SHA-256 hash of the normalised subject email, per-module record counts, and the actor, never the email itself.</summary>
+        public const string DataSubjectExported = "DATA_SUBJECT_EXPORTED";
+
+        /// <summary>Irreversible. Same detail_json shape as DataSubjectExported, plus a lawful-basis note.</summary>
+        public const string DataErasure = "DATA_ERASURE";
     }
 
     public static class Auth

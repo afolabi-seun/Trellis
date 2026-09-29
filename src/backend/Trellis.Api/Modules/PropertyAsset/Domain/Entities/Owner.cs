@@ -72,4 +72,13 @@ public sealed class Owner : ITenantOwned
         Status = OwnerStatus.Archived;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
+
+    /// <summary>POPIA erasure — Name is NOT NULL (Create/Update both guard against blank), so it's tombstoned rather than cleared; the row is kept, never Archived by this alone, since Property.OwnerId must keep resolving regardless of the owner's own status.</summary>
+    public void RedactPii()
+    {
+        Name = "Erased owner";
+        Email = null;
+        Phone = null;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
 }

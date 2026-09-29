@@ -52,6 +52,9 @@ public static class ErrorCodeRegistry
 
         /// <summary>TRL-E-TEN-2005 — VerifyAsync: the DNS TXT record wasn't found (yet), or the domain is already verified by another tenant.</summary>
         public const string DomainVerificationFailed = "TRL-E-TEN-2005";
+
+        /// <summary>TRL-E-TEN-2006 — DataSubjectService.EraseAsync: the subject is the caller's own login, or the tenant's last active TENANT_ADMIN.</summary>
+        public const string CannotEraseSelfOrLastAdmin = "TRL-E-TEN-2006";
     }
 
     public static class Auth

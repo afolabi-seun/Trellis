@@ -29,5 +29,8 @@ public sealed class LeasingWebhookEventRepository(LeasingDbContext dbContext) : 
         webhookEvent?.MarkProcessed();
     }
 
+    public Task<LeasingWebhookEvent?> GetByEnvelopeIdAsync(string providerEventId) =>
+        dbContext.LeasingWebhookEvents.FirstOrDefaultAsync(w => w.ProviderEventId == providerEventId);
+
     public Task SaveChangesAsync() => dbContext.SaveChangesAsync();
 }

@@ -18,5 +18,8 @@ public interface IApplicationRepository
     /// <summary>The webhook's own lookup — the provider's completion payload carries an envelope id, never a Trellis ApplicationId.</summary>
     Task<LeasingApplication?> GetByEnvelopeIdAcrossTenantsAsync(string envelopeId);
 
+    /// <summary>POPIA erasure's own lookup — Scoped() to TenantContext.Current, same as GetByIdAsync. Every application this applicant ever submitted against this tenant, not just one.</summary>
+    Task<IReadOnlyList<LeasingApplication>> ListByApplicantEmailAsync(string applicantEmail);
+
     Task SaveChangesAsync();
 }

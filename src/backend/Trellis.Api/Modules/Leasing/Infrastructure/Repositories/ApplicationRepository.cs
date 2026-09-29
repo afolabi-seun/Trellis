@@ -37,5 +37,8 @@ public sealed class ApplicationRepository(LeasingDbContext dbContext) : TenantAw
     public Task<LeasingApplication?> GetByEnvelopeIdAcrossTenantsAsync(string envelopeId) =>
         dbContext.Applications.FirstOrDefaultAsync(a => a.EnvelopeId == envelopeId);
 
+    public async Task<IReadOnlyList<LeasingApplication>> ListByApplicantEmailAsync(string applicantEmail) =>
+        await Scoped(dbContext.Applications).Where(a => a.ApplicantEmail == applicantEmail).ToListAsync();
+
     public Task SaveChangesAsync() => dbContext.SaveChangesAsync();
 }

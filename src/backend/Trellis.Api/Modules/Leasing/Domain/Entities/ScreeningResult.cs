@@ -41,4 +41,7 @@ public sealed class ScreeningResult : ITenantOwned
             FullReportCiphertext = fullReportCiphertext,
             ReceivedAt = DateTimeOffset.UtcNow,
         };
+
+    /// <summary>POPIA erasure — the one deliberate loosening of this otherwise INSERT-only table's grants (a column-level UPDATE grant on full_report_ciphertext only, not the whole row). OutcomeSummary/Provider/ReceivedAt are kept — they carry no PII on their own.</summary>
+    public void ClearFullReportCiphertext() => FullReportCiphertext = null;
 }

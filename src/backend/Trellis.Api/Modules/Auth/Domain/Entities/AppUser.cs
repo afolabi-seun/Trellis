@@ -113,4 +113,18 @@ public sealed class AppUser
     public bool HasMfaEnrolled() => TotpSecretEncrypted is not null;
 
     public void EnrollMfa(byte[] totpSecretEncrypted) => TotpSecretEncrypted = totpSecretEncrypted;
+
+    /// <summary>
+    /// POPIA erasure — Username carries a unique constraint, so the tombstone must stay unique
+    /// too, keyed off UserId the same way Leasing's own applicant-PII tombstones are. The caller
+    /// (AuthPersonalDataHandler) is responsible for revoking this user's sessions separately —
+    /// that's ISessionService's own concern, not a domain-entity one.
+    /// </summary>
+    public void RedactForErasure()
+    {
+        Username = $"erased-{UserId:N}@erased.invalid";
+        PasswordHash = null;
+        TotpSecretEncrypted = null;
+        Status = UserStatus.Deactivated;
+    }
 }

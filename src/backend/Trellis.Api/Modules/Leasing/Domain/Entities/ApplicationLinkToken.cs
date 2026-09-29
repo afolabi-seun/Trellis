@@ -60,4 +60,7 @@ public sealed class ApplicationLinkToken : ITenantOwned
 
     /// <summary>Time-based expiry is inferred here, exactly like ReportShareLink.IsUsable() — Status never flips to Expired by any code path this phase; that enum value exists for schema completeness / a future housekeeping job only.</summary>
     public bool IsUsable() => Status == ApplicationLinkTokenStatus.Active && ExpiresAt > DateTimeOffset.UtcNow;
+
+    /// <summary>POPIA erasure — tombstoned to keep the column's own shape, keyed off this row's own id (ApplicationLinkTokenId, not the erased Application's, since a token can outlive an abandoned application that was never submitted).</summary>
+    public void RedactApplicantEmail() => ApplicantEmail = $"erased-{ApplicationLinkTokenId:N}@erased.invalid";
 }

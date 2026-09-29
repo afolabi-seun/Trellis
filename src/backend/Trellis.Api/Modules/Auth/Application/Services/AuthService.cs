@@ -232,6 +232,28 @@ public sealed class AuthService(
             ? ServiceResult<bool>.Success(true)
             : ServiceResult<bool>.Forbidden(ErrorCodeRegistry.Auth.ReauthenticationFailed);
 
+    public async Task<bool> CanEraseStaffAsync(string username, Guid actorUserId)
+    {
+        var user = await userRepository.GetByUsernameAsync(username);
+        if (user is null || user.TenantId != TenantContext.Current!.TenantId)
+        {
+            return true;
+        }
+
+        if (user.UserId == actorUserId)
+        {
+            return false;
+        }
+
+        if (user.Role != UserRole.TenantAdmin)
+        {
+            return true;
+        }
+
+        var activeAdmins = await userRepository.CountActiveTenantAdminsAsync(TenantContext.Current!.TenantId);
+        return activeAdmins > 1;
+    }
+
     /// <summary>Argon2id check shared by every re-auth-gated action; a failed attempt is audited here so no caller can forget to.</summary>
     private async Task<AppUser?> VerifyPasswordAsync(Guid userId, string currentPassword)
     {

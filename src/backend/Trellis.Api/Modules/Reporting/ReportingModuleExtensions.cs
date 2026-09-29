@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Trellis.Api.Core.Data;
+using Trellis.Api.Core.Privacy;
 using Trellis.Api.Modules.Reporting.Application.Interfaces;
 using Trellis.Api.Modules.Reporting.Application.Services;
 using Trellis.Api.Modules.Reporting.Configuration;
@@ -30,6 +31,7 @@ public static class ReportingModuleExtensions
         services.AddScoped<IDashboardService, DashboardService>();
         services.AddScoped<IOwnerReportService, OwnerReportService>();
         services.AddScoped<IReportShareLinkService, ReportShareLinkService>();
+        services.AddScoped<IPersonalDataHandler, ReportingPersonalDataHandler>();
         // QuestPdfOwnerReportRenderer's own static constructor sets QuestPDF.Settings.License —
         // guaranteed to run before the first render regardless of DI, so no explicit call is
         // needed here. QuestPDF's Community license is free under $1M USD annual revenue — a

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Trellis.Api.Core.Data;
+using Trellis.Api.Core.Privacy;
 using Trellis.Api.Modules.Notification.Application.Interfaces;
 using Trellis.Api.Modules.Notification.Application.Services;
 using Trellis.Api.Modules.Notification.Infrastructure;
@@ -21,6 +22,7 @@ public static class NotificationModuleExtensions
         services.AddScoped<INotificationDeliveryRepository, NotificationDeliveryRepository>();
         services.AddScoped<INotificationService, NotificationService>();
         services.AddScoped<INotificationProvider, LoggingNotificationProvider>();
+        services.AddScoped<IPersonalDataHandler, NotificationPersonalDataHandler>();
 
         services.AddHostedService<NotificationDispatchBackgroundService>();
 

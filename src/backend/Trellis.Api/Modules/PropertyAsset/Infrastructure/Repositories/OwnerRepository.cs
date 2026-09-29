@@ -20,6 +20,9 @@ public sealed class OwnerRepository(PropertyDbContext dbContext) : TenantAwareRe
     public Task<Owner?> GetByIdAsync(Guid ownerId) =>
         Scoped(dbContext.Owners).FirstOrDefaultAsync(o => o.OwnerId == ownerId);
 
+    public Task<Owner?> GetByEmailAsync(string email) =>
+        Scoped(dbContext.Owners).FirstOrDefaultAsync(o => o.Email == email);
+
     public async Task<(IReadOnlyList<Owner> Items, bool HasMore, int TotalCount)> ListAsync(
         (DateTimeOffset CreatedAt, Guid Id)? cursor, int limit)
     {

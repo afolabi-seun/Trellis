@@ -29,6 +29,14 @@ public sealed class OwnerService(IOwnerRepository repository) : IOwnerService
             : ServiceResult<OwnerResponse>.Success(ToResponse(owner));
     }
 
+    public async Task<ServiceResult<OwnerResponse>> GetByEmailAsync(string email)
+    {
+        var owner = await repository.GetByEmailAsync(email);
+        return owner is null
+            ? ServiceResult<OwnerResponse>.NotFound()
+            : ServiceResult<OwnerResponse>.Success(ToResponse(owner));
+    }
+
     public async Task<ServiceResult<PagedResponse<OwnerResponse>>> ListAsync(string? cursor, int limit)
     {
         var decoded = CursorCodec.Decode(cursor);

@@ -39,3 +39,15 @@ public sealed record NotificationSettingsDto(IReadOnlyList<string> ApplicationSu
 
 /// <summary>What staff can read about their own tenant's settings. DefaultCurrency comes from the tenant's country and defaults the currency on listing and rent-schedule forms.</summary>
 public sealed record TenantSettingsResponse(string DefaultCurrency, string CountryCode, NotificationSettingsDto Notifications);
+
+public sealed record DataSubjectExportRequest(string SubjectEmail);
+
+/// <summary>Keyed by IPersonalDataHandler.ModuleName; a module with nothing for this subject is simply absent from the bundle, not present with a null value.</summary>
+public sealed record DataSubjectExportResponse(IReadOnlyDictionary<string, object> Modules);
+
+/// <summary>ConfirmEmail must match SubjectEmail exactly (validated) — a typed-confirmation guard against erasing the wrong person by a single mistyped character. Reason is free text, kept only in the audit record's own detail_json, never against the subject's own erased data.</summary>
+public sealed record EraseDataSubjectRequest(string SubjectEmail, string ConfirmEmail, string CurrentPassword, string? Reason);
+
+public sealed record ModuleErasureCount(string ModuleName, int RecordsAffected);
+
+public sealed record DataSubjectErasureResponse(IReadOnlyList<ModuleErasureCount> Counts);

@@ -17,6 +17,9 @@ public interface IAppUserRepository
     /// <summary>Every user of the tenant holding any of the given roles — Leasing's staff-notify fan-out (BDR-LSE-004), where an application isn't routed to a department.</summary>
     Task<IReadOnlyList<AppUser>> GetByRolesAsync(Guid tenantId, IReadOnlyCollection<UserRole> roles);
 
+    /// <summary>POPIA erasure's last-admin guard — how many ACTIVE TENANT_ADMIN users the tenant has left, so erasing one can be refused when it would leave zero.</summary>
+    Task<int> CountActiveTenantAdminsAsync(Guid tenantId);
+
     Task SaveChangesAsync();
 }
 

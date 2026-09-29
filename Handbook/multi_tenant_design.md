@@ -360,12 +360,16 @@ Management Endpoints (Platform)" section.
    `data_model.md`'s audit-retention section already states for the same reason. Throughout the
    window, all three tenant-isolation layers above continue to apply unchanged: an offboarding
    tenant's data is inert, not unprotected.
-5. At window expiry, PII is erased using the identical mechanism `security_guide.md` already
-   specifies for individual erasure requests (fields nulled across `trellis_property`,
-   `trellis_document`, `trellis_vendor` — rows kept, not deleted, for referential and audit
-   integrity), applied tenant-wide rather than to one subject. The Billing subscription is
-   cancelled via the existing `IPaymentGateway` cancel-subscription call (`billing_design.md`).
-   `tenant.status` moves to the terminal value `OFFBOARDED`.
+5. At window expiry, PII is erased tenant-wide using the same per-module `IPersonalDataHandler`
+   mechanism `security_guide.md` specifies for one data subject's own erasure request (fields
+   tombstoned across every module that holds personal data — rows kept, not deleted, for
+   referential and audit integrity) — but **this step still has no real caller**: today's
+   `IPersonalDataHandler.EraseAsync(subjectEmail)` erases one named subject at a time, and a
+   bulk tenant-wide variant needs a subject-enumeration query this phase doesn't build (which
+   applicant/owner/staff emails does an offboarding tenant even have?) plus its own retention
+   decision, deliberately left for whenever real tenant offboarding is scheduled. The Billing
+   subscription is cancelled via the existing `IPaymentGateway` cancel-subscription call
+   (`billing_design.md`). `tenant.status` moves to the terminal value `OFFBOARDED`.
 ```
 
 New `audit_type` values: `TENANT_OFFBOARDING_INITIATED`, `TENANT_EXPORT_READY`,

@@ -11,5 +11,8 @@ public interface ILeasingWebhookEventRepository
 
     Task MarkProcessedAsync(string providerEventId);
 
+    /// <summary>POPIA erasure — the applicant's own Application.EnvelopeId (if any) is the only link between an applicant and their webhook delivery, since this table has no TenantId/applicant column of its own.</summary>
+    Task<LeasingWebhookEvent?> GetByEnvelopeIdAsync(string providerEventId);
+
     Task SaveChangesAsync();
 }

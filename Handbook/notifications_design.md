@@ -106,7 +106,7 @@ day one — override is opt-in customisation, never a setup requirement.
 | delivery_id | UUID | PK | |
 | tenant_id | UUID | NULLABLE | `NULL` for a platform-level notification with no tenant context |
 | recipient_type | VARCHAR(20) | NOT NULL | `APP_USER`\|`VENDOR_USER`\|`OWNER`\|`PROSPECTIVE_TENANT`\|`EXTERNAL` |
-| recipient_address | VARCHAR(255) | NOT NULL | Email or phone — never logged elsewhere in plaintext beyond what's needed here |
+| recipient_address | VARCHAR(255) | NOT NULL | Email or phone — never logged elsewhere in plaintext beyond what's needed here. `security_guide.md`'s POPIA erasure tombstones this to `"[erased]"` if the recipient is later erased as a data subject; the row itself (template_key, status, timestamps) is kept |
 | template_key | VARCHAR(50) | NOT NULL | |
 | channel | VARCHAR(10) | NOT NULL | |
 | status | VARCHAR(20) | NOT NULL DEFAULT 'QUEUED' | `QUEUED`\|`SENT`\|`FAILED`\|`BOUNCED` |

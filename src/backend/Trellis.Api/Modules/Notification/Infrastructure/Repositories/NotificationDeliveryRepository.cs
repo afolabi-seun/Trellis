@@ -16,5 +16,8 @@ public sealed class NotificationDeliveryRepository(NotificationDbContext dbConte
             .Take(batchSize)
             .ToListAsync();
 
+    public async Task<IReadOnlyList<NotificationDelivery>> ListByRecipientAddressAsync(Guid tenantId, string recipientAddress) =>
+        await dbContext.Deliveries.Where(d => d.TenantId == tenantId && d.RecipientAddress == recipientAddress).ToListAsync();
+
     public Task SaveChangesAsync() => dbContext.SaveChangesAsync();
 }

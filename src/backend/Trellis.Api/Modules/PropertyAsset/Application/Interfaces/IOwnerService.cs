@@ -10,6 +10,9 @@ public interface IOwnerService
 
     Task<ServiceResult<OwnerResponse>> GetByIdAsync(Guid ownerId);
 
+    /// <summary>Reporting's own POPIA erasure handler resolves an owner subject this way — the only cross-module lookup this interface exposes by email rather than id.</summary>
+    Task<ServiceResult<OwnerResponse>> GetByEmailAsync(string email);
+
     Task<ServiceResult<PagedResponse<OwnerResponse>>> ListAsync(string? cursor, int limit);
 
     Task<ServiceResult<OwnerResponse>> UpdateAsync(Guid ownerId, OwnerUpdateRequest request);

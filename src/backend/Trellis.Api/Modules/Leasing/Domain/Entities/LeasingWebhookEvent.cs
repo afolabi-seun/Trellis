@@ -27,4 +27,7 @@ public sealed class LeasingWebhookEvent
     };
 
     public void MarkProcessed() => ProcessedAt = DateTimeOffset.UtcNow;
+
+    /// <summary>POPIA erasure — the provider's raw payload can embed applicant PII; the event row itself (ProviderEventId, EventType, timestamps) is kept for the idempotency ledger's own sake, only its body is cleared.</summary>
+    public void MarkPayloadRedacted() => PayloadJson = "{\"redacted\":true}";
 }

@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Trellis.Api.Core.Data;
+using Trellis.Api.Core.Privacy;
 using Trellis.Api.Modules.PropertyAsset.Application.Interfaces;
 using Trellis.Api.Modules.PropertyAsset.Application.Services;
 using Trellis.Api.Modules.PropertyAsset.Infrastructure.Data;
@@ -23,6 +24,7 @@ public static class PropertyAssetModuleExtensions
         services.AddScoped<IOwnerService, OwnerService>();
         services.AddScoped<IPropertyService, PropertyService>();
         services.AddScoped<IUnitAssetService, UnitAssetService>();
+        services.AddScoped<IPersonalDataHandler, PropertyAssetPersonalDataHandler>();
 
         return services;
     }

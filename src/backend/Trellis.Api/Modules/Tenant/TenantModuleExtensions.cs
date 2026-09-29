@@ -21,6 +21,7 @@ public static class TenantModuleExtensions
         services.AddScoped<ITenantRepository, TenantRepository>();
         services.AddScoped<ITenantService, TenantService>();
         services.AddScoped<ITenantSettingsService, TenantSettingsService>();
+        services.AddScoped<IDataSubjectService, DataSubjectService>();
 
         // Custom domains (ENTERPRISE): DNS TXT proof of control, plus the CORS origin snapshot Core's
         // policy provider consults through the ICustomDomainOriginProvider interface (Core never

@@ -39,5 +39,8 @@ public sealed class OwnerReportRepository(ReportingDbContext dbContext) : Tenant
         return (page.Take(limit).ToList(), hasMore, totalCount);
     }
 
+    public async Task<IReadOnlyList<OwnerReport>> ListAllForOwnerAsync(Guid ownerId) =>
+        await Scoped(dbContext.OwnerReports).Where(r => r.OwnerId == ownerId).ToListAsync();
+
     public Task SaveChangesAsync() => dbContext.SaveChangesAsync();
 }

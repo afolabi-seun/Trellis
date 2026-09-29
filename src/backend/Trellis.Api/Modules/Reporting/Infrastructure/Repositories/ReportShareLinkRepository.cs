@@ -16,5 +16,8 @@ public sealed class ReportShareLinkRepository(ReportingDbContext dbContext) : Te
     public Task<ReportShareLink?> ResolveByTokenHashAsync(string tokenHash) =>
         dbContext.ReportShareLinks.FirstOrDefaultAsync(l => l.TokenHash == tokenHash);
 
+    public async Task<IReadOnlyList<ReportShareLink>> ListByOwnerReportIdAsync(Guid ownerReportId) =>
+        await Scoped(dbContext.ReportShareLinks).Where(l => l.OwnerReportId == ownerReportId).ToListAsync();
+
     public Task SaveChangesAsync() => dbContext.SaveChangesAsync();
 }

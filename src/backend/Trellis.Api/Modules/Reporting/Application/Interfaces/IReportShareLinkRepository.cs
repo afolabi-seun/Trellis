@@ -17,5 +17,8 @@ public interface IReportShareLinkRepository
     /// </summary>
     Task<ReportShareLink?> ResolveByTokenHashAsync(string tokenHash);
 
+    /// <summary>POPIA erasure — every share link (any status) issued against one report, so an Active one can be revoked before the report itself is redacted underneath it.</summary>
+    Task<IReadOnlyList<ReportShareLink>> ListByOwnerReportIdAsync(Guid ownerReportId);
+
     Task SaveChangesAsync();
 }

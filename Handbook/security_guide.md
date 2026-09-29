@@ -561,7 +561,7 @@ network segment to secure.
 
 | Regulation | Key Requirement | Trellis Implementation |
 |------------|------------------|--------------------------|
-| **POPIA** (South Africa) | Lawful basis; data subject access and deletion rights | Data export and erasure endpoints on the Tenant/PropertyAsset modules; all processing logged with a `lawful_basis` note in `audit_record.detail_json` |
+| **POPIA** (South Africa) | Lawful basis; data subject access and deletion rights | `POST api/v1/data-subjects/export`/`erase` (Tenant module, TENANT_ADMIN only); every module holding personal data implements `Core/Privacy/IPersonalDataHandler`, orchestrated by `DataSubjectService` |
 | **Kenya DPA 2019** | Consent; data minimisation; registration with the ODPC for data controllers/processors above threshold | Consent tracking on Owner/tenant onboarding; `country_code` on `tenant` drives which jurisdiction's retention defaults apply |
 | **NDPR** (Nigeria) | Consent; data minimisation; restrictions on cross-border transfer | Tenant data residency flag (mirrors the reference's approach) once a Nigerian tenant is onboarded — not yet exercised |
 | **GDPR** | Only if a tenant or owner is EU-domiciled | Same erasure/export mechanism as POPIA above; evaluate applicability per tenant at onboarding |
@@ -583,11 +583,28 @@ the plaintext could escape and the audit write fail afterwards. The response car
 mechanism below — an erasure request against an `application` row should cascade to its
 `screening_result`, not leave the most sensitive part behind.
 
-Erasure request handling: PII fields are nulled (not the row deleted, to preserve referential
-and audit integrity) across `trellis_property`, `trellis_document`, and `trellis_vendor`
-within a defined SLA, with an `AUDIT_TYPE = DATA_ERASURE` record written for the action itself.
-This mirrors the reference's erasure workflow; Trellis needs no dedicated ops-svc to run it
-since it's one in-process operation spanning a few module services.
+**Erasure request handling**, built for real: a data subject (an applicant, a property Owner, or a
+staff login) is matched by email across every module that holds their PII — `Core/Privacy
+/IPersonalDataHandler`, one implementation per module (Leasing, PropertyAsset, Reporting,
+Notification, Auth), registered into DI and iterated by `DataSubjectService` (Tenant module) in a
+**fixed order**, not DI registration order: Reporting resolves an owner subject through
+PropertyAsset's own `IOwnerService.GetByEmailAsync`, so it must run before PropertyAsset's own
+handler has redacted that email out from under it (found the hard way, via a live smoke test).
+PII fields are tombstoned in place (`Application.RedactApplicantPii`, `Owner.RedactPii`,
+`OwnerReport.RedactOwnerPii`, `NotificationDelivery.RedactRecipientAddress`,
+`AppUser.RedactForErasure`) — never a row deleted, to preserve referential and audit integrity;
+`screening_result.full_report_ciphertext` is cleared too, the one deliberate column-level UPDATE
+grant on an otherwise INSERT-only table (`GrantScreeningCiphertextErase` migration). Erasing an
+already-erased subject is a no-op (the redacted email no longer matches). Gated by
+`IAuthService.CanEraseStaffAsync` (refuses the caller's own login, or the tenant's last active
+TENANT_ADMIN — `TRL-E-TEN-2006`) and a password re-entry (`ReauthenticateAsync`) before anything is
+touched. `AUDIT_TYPE = DATA_ERASURE`/`DATA_SUBJECT_EXPORTED` records carry a SHA-256 hash of the
+normalised subject email, per-module record counts, and an optional free-text reason — never the
+email itself. Retained on purpose, not an oversight: the executed lease Document (a legal record),
+rent schedules/payment records (no email/name in them), and `application_event`/`audit_record`
+(IDs and hashes only, by design). Tenant-wide offboarding erasure (`Tenant.CompleteOffboarding`)
+still has no caller — a bulk, subject-enumerating variant of this same mechanism, deliberately not
+built this phase.
 
 **Audit log retention** is the other side of the data-minimisation coin these regulations care
 about — see `data_model.md` for the retention/archival plan (BDR-NFR-008, real as of BRD v0.4) and its

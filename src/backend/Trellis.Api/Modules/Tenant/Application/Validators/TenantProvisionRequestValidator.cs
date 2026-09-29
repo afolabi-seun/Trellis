@@ -45,3 +45,25 @@ public sealed class NotificationSettingsDtoValidator : AbstractValidator<Notific
             .WithMessage("Choose at least one of TENANT_ADMIN, DEPARTMENT_STAFF (no duplicates).");
     }
 }
+
+public sealed class DataSubjectExportRequestValidator : AbstractValidator<DataSubjectExportRequest>
+{
+    public DataSubjectExportRequestValidator()
+    {
+        RuleFor(x => x.SubjectEmail).NotEmpty().MaximumLength(255);
+    }
+}
+
+/// <summary>ConfirmEmail must match SubjectEmail exactly (case-insensitive) — the typed-confirmation guard against erasing the wrong person over a single mistyped character.</summary>
+public sealed class EraseDataSubjectRequestValidator : AbstractValidator<EraseDataSubjectRequest>
+{
+    public EraseDataSubjectRequestValidator()
+    {
+        RuleFor(x => x.SubjectEmail).NotEmpty().MaximumLength(255);
+        RuleFor(x => x.CurrentPassword).NotEmpty();
+        RuleFor(x => x.ConfirmEmail)
+            .Must((request, confirmEmail) => string.Equals(confirmEmail?.Trim(), request.SubjectEmail?.Trim(), StringComparison.OrdinalIgnoreCase))
+            .WithMessage("Confirmation email must match the subject email exactly.");
+        RuleFor(x => x.Reason).MaximumLength(500);
+    }
+}

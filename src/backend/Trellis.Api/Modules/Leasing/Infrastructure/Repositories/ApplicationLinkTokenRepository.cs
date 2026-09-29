@@ -13,5 +13,8 @@ public sealed class ApplicationLinkTokenRepository(LeasingDbContext dbContext) :
     public Task<ApplicationLinkToken?> ResolveByTokenHashAsync(string tokenHash) =>
         dbContext.ApplicationLinkTokens.FirstOrDefaultAsync(t => t.TokenHash == tokenHash);
 
+    public async Task<IReadOnlyList<ApplicationLinkToken>> ListByApplicantEmailAsync(string applicantEmail) =>
+        await Scoped(dbContext.ApplicationLinkTokens).Where(t => t.ApplicantEmail == applicantEmail).ToListAsync();
+
     public Task SaveChangesAsync() => dbContext.SaveChangesAsync();
 }

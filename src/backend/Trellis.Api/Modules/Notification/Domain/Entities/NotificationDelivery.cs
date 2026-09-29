@@ -71,4 +71,7 @@ public sealed class NotificationDelivery
 
     /// <summary>BDR-NOTIF-004: never silently dropped — a final failure still leaves an auditable, queryable row.</summary>
     public void MarkFailed() => Status = NotificationDeliveryStatus.Failed;
+
+    /// <summary>POPIA erasure — the row (TemplateKey, Status, timestamps) is kept for delivery-audit purposes; only the address itself is cleared.</summary>
+    public void RedactRecipientAddress() => RecipientAddress = "[erased]";
 }

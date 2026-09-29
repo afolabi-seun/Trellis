@@ -148,4 +148,21 @@ public sealed class Application : ITenantOwned
         LeaseEndedDate = effectiveDate;
         LeaseEndedReason = reason;
     }
+
+    /// <summary>
+    /// POPIA erasure — several applicant columns are NOT NULL, so tombstoning rather than
+    /// nulling; ApplicantEmail's tombstone is keyed off ApplicationId to stay unique the same way
+    /// AppUser.RedactForErasure's username tombstone is. application_event and audit_record are
+    /// deliberately untouched — both are IDs-only by design (security_guide.md).
+    /// </summary>
+    public void RedactApplicantPii()
+    {
+        ApplicantEmail = $"erased-{ApplicationId:N}@erased.invalid";
+        ApplicantFullName = "Erased applicant";
+        ApplicantPhone = "[erased]";
+        ApplicantDateOfBirth = DateOnly.MinValue;
+        ApplicantCurrentAddress = "[erased]";
+        ApplicantEmployerName = null;
+        ApplicantMonthlyIncome = null;
+    }
 }

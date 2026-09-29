@@ -18,5 +18,8 @@ public interface INotificationDeliveryRepository
 
     Task<IReadOnlyList<NotificationDelivery>> GetQueuedAsync(int batchSize);
 
+    /// <summary>POPIA erasure's own lookup — explicit tenantId, same reasoning as AppUserRepository's own methods (NotificationDelivery isn't ITenantOwned; TenantId is nullable for platform-level rows, which this deliberately excludes).</summary>
+    Task<IReadOnlyList<NotificationDelivery>> ListByRecipientAddressAsync(Guid tenantId, string recipientAddress);
+
     Task SaveChangesAsync();
 }

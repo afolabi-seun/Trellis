@@ -52,6 +52,15 @@ public interface IAuthService
     /// </summary>
     Task<ServiceResult<bool>> ReauthenticateAsync(Guid userId, string currentPassword);
 
+    /// <summary>
+    /// POPIA erasure's guard, ahead of touching any module's data: false when username is the
+    /// caller's own login, or the tenant's last active TENANT_ADMIN — true (safe to proceed) for
+    /// every other case, including when username doesn't resolve to a staff login in the
+    /// caller's own tenant at all (nothing here to guard against; the subject is presumably an
+    /// applicant or owner instead). Runs under TenantContext.Current — same-tenant only.
+    /// </summary>
+    Task<bool> CanEraseStaffAsync(string username, Guid actorUserId);
+
     /// <summary>Always returns success regardless of whether the account exists — existence-non-disclosure (security_guide.md).</summary>
     Task RequestPasswordResetAsync(string username, string? requestedIp);
 

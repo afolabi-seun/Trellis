@@ -118,4 +118,11 @@ public sealed class OwnerReport : ITenantOwned
 
         Status = OwnerReportStatus.Failed;
     }
+
+    /// <summary>POPIA erasure — OwnerName is a denormalized snapshot (deliberately never re-synced from Owner, per this class's own field), and the rendered PdfContent embeds it too, so both are cleared; the row and its financial figures are kept, matching the retained-not-erased rent/maintenance history the PROPERTYASSET/Leasing handlers leave alone.</summary>
+    public void RedactOwnerPii()
+    {
+        OwnerName = "Erased owner";
+        PdfContent = null;
+    }
 }
