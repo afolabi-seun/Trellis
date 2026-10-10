@@ -11,7 +11,7 @@ vendor management, and targeted AI capabilities.
   requirements, traceable by domain (tenancy, owners, departments, vendors,
   assets, workflow, documents, inspections, AI, reporting, security, billing,
   leasing & vacancy management, rent collection, platform notifications,
-  cross-tenant support ticketing). v0.5 is current; v0.1 through v0.4 kept
+  cross-tenant support ticketing). v0.6 is current; v0.1 through v0.5 kept
   for history.
 - **Pitch/** — Customer-facing pitch deck used to validate the concept with
   prospective property management company partners.
@@ -131,9 +131,17 @@ vendor management, and targeted AI capabilities.
       `Handbook/project_architecture.md`, `Handbook/api_standards.md`,
       `Handbook/coding_standards.md`, `Handbook/frontend_architecture.md`,
       `Handbook/error_handling.md`, `Handbook/data_model.md`, `Handbook/roadmap.md`)
+- [x] BRD v0.6 (Requirements/Trellis_BRD_v0.6.docx) — folds in a competitive product review
+      (10 October 2026): lease term and expiry, renewal offers, structured termination
+      reasons (BDR-LSE-009–011); payment timeliness and deposit records (BDR-RENT-007–008);
+      vacancy duration and bulk import results (BDR-AST-005–006); work-assignment costs and
+      property expenses (BDR-VEN-007, BDR-OWN-006); trend reports, weighted roll-ups, RAG
+      thresholds, activity timeline (BDR-RPT-004–007); threshold alerts (BDR-NOTIF-007);
+      external-facing branding (BDR-TEN-007); a read-only financial reporting role
+      (BDR-DEPT-005). Scheduled as engineering Phases 11–12 in `Handbook/roadmap.md`
 - [ ] Early design partner conversations
 - [ ] Application scaffolding (.NET solution + React SPA)
 
 ## Last updated
 
-19 September 2026 (updated)
+10 October 2026

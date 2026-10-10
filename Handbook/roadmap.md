@@ -8,12 +8,14 @@ Notification → Auth → PropertyAsset → Vendor → Document → Workflow →
 Reporting → Leasing → RentLedger`), and a product-sequencing judgment about what a design
 partner needs to see and when Trellis is actually ready to invoice someone.
 
-**Relation to the BRD's own Roadmap section**: `Requirements/Trellis_BRD_v0.4.docx` (Section
+**Relation to the BRD's own Roadmap section**: `Requirements/Trellis_BRD_v0.6.docx` (Section
 9.2) already has a Roadmap/Out of Scope section describing business-level future scope. That
 document is the source of truth for *what's in scope*; this one is the source of truth for
 *build order*. The two are reconciled at every BRD revision — v0.2 folded in Billing, v0.3
-folded in Leasing/Rent Collection, and v0.4 folded in Notification, Support, and the security/
-NFR/lifecycle additions — rather than maintaining two separate scope narratives. The one BDR
+folded in Leasing/Rent Collection, v0.4 folded in Notification, Support, and the security/
+NFR/lifecycle additions, v0.5 folded in module entitlements, and v0.6 folded in the lease
+lifecycle and portfolio reporting additions built as Phases 11–12 — rather than maintaining two
+separate scope narratives. The one BDR
 set still genuinely proposed, not yet in any BRD version, is BDR-LIC (on-premises/licensing,
 `deployment_topologies.md`) — triggered by a qualifying enterprise deal, not scheduled to a
 phase.
@@ -79,6 +81,13 @@ phase.
   exception worth naming — it's a stated procedure, not code, so it has no phase dependency at
   all; it's written down by Phase 1, alongside the rest of this round's security-guide work, on
   the same "should already exist" logic as everything else this fourth gap review found.
+- **Phase 11 records data before Phase 12 reports on it** — BRD v0.6's additions came out of a
+  competitive product review, and split cleanly into two kinds: new fields captured at the
+  moment something happens (lease term, termination reason, deposit, vacant-since date, work
+  assignment cost), and reports over those fields. The capture side goes first and goes soon,
+  because every lease executed or ended before it exists is permanently missing from expiry,
+  renewal, and turnover reporting; nothing can be honestly backfilled. That is also why
+  BDR-LSE-009 and BDR-LSE-011 are Musts in a set that is otherwise Should/Could.
 
 ---
 
@@ -215,6 +224,33 @@ No BDRs directly — this is the scaffolding everything else stands on.
 | **Frontend** | Rent schedule view, payment recording form, arrears list |
 | **Dependencies** | PropertyAsset, Leasing (a rent schedule is created on lease execution), Notification (arrears-flag alerts) |
 | **Exit criteria** | A staff member records a rent payment against a schedule, an unpaid entry past its grace period surfaces as an arrears flag, and both appear correctly in the Owner portfolio report |
+
+---
+
+## Phase 11 — Lease Lifecycle Tracking
+
+| | |
+|---|---|
+| **Modules** | Leasing, Rent Collection, PropertyAsset, Notification (no new module) |
+| **BDRs** | BDR-LSE-009–011, BDR-RENT-007–008, BDR-AST-005, BDR-NOTIF-007 (all real as of BRD v0.6) |
+| **Backend** | Lease term (start date, end date or month-to-month) captured at lease execution; the existing end-lease flow takes a reason from a fixed list plus the ending party, with the existing free-text `LeaseEndedReason` kept as the optional note; renewal offers and outcomes, with an accepted renewal extending the existing lease and its rent schedule rather than creating a new application; deposit records on the rent ledger, worded as records per BDR-RENT-006; on-time rate and average days late calculated from `RentPaymentRecord.DateReceived` against each schedule's due day and grace period; a vacant-since date on Unit/Asset set on every transition to vacant; threshold alerts built on the alert-recipient settings already in tenant settings for arrears, each alert type offered only when the tenant is entitled to the module it reads from |
+| **Frontend** | Lease term fields on the send-for-signature step; an "ending within 30/60/90 days" list; renewal offer and outcome recording; structured end-lease dialog; deposit section on the rent schedule; days-vacant column and filter on the units table; alert settings page with per-alert on/off, threshold, channel, and recipients |
+| **Dependencies** | Leasing (Phase 9), Rent Collection (Phase 10), Inspection (Phase 5, for the overdue-inspection alert), Notification (Phase 1), Billing entitlements (Phase 7) |
+| **Open design questions** | (1) `Application` currently doubles as the lease record (`leasing_design.md`); renewals that extend a lease make a separate lease entity worth deciding on before this phase, not during it. (2) A tenant entitled to Rent Collection but not Leasing has rent schedules with no lease behind them, so lease term and deposit need a home that doesn't assume Leasing. (3) Default deposit refund periods and interest treatment need a legal answer per jurisdiction (BRD Section 8), not an engineering default. |
+| **Exit criteria** | A lease executed after this phase has a term and appears in the 30/60/90-day list; ending it records a structured reason; leases executed before this phase show "term not recorded", never a guessed date; a recorded deposit whose refund is overdue raises the configured alert; the Owner report shows on-time rate alongside the existing rent status |
+
+---
+
+## Phase 12 — Portfolio Reporting & Onboarding
+
+| | |
+|---|---|
+| **Modules** | Reporting, Vendor, PropertyAsset, Tenant, Auth (no new module) |
+| **BDRs** | BDR-RPT-004–007, BDR-VEN-007, BDR-OWN-006, BDR-AST-006, BDR-TEN-007, BDR-DEPT-005 (all real as of BRD v0.6); also BDR-AST-004, scoped to Phase 2 but not yet delivered |
+| **Backend** | Trend reports over 3/6/12/24 months by property, Owner, and department, every roll-up weighted by its underlying count and keeping the existing null-not-zero convention for "no data" (BDR-RPT-005 is a Must); configurable RAG thresholds with platform defaults; an activity timeline read from `trellis_audit.audit_record`, scoped per BDR-RPT-003; estimated and actual cost with an expense category on `vendor_assignment`, with AI invoice extraction allowed to propose the actual cost under the usual review step; property expense records feeding a net figure in the Owner report; CSV import of owners, properties, and units with a per-row created/skipped result; tenant logo, colour, and display name applied to every external-facing surface; a read-only financial reporting role with no write permissions and no screening-report access |
+| **Frontend** | Reporting pages in one consistent layout (summary figures, trend chart, breakdown table, period switch); activity timeline with category filters; cost fields on work assignments; expense recording; import screen with template download and a results table; branding settings with a live preview; role picker updated for the new role |
+| **Dependencies** | Phase 11 (most trend reports read the data it captures), Vendor (Phase 4), Ai (Phase 6), Reporting (Phase 8) |
+| **Exit criteria** | Portfolio occupancy reads the same on every screen that shows it; a report on a module the tenant isn't entitled to is omitted, not zero; a 200-row import with deliberate bad rows creates the good ones and lists each bad one with its reason; a Finance Viewer user can export every financial report and is refused on every write endpoint and on the screening report |
 
 ---
 

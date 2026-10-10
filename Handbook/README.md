@@ -154,8 +154,8 @@ auto-discover a `.sln` that won't exist inside `src/` alone until someone adds o
 points CI at an explicit project file) at actual extraction time. No BDR — a repository-layout
 decision, not a requirement.
 
-Every technical decision here traces back to a BDR ID in `Requirements/Trellis_BRD_v0.4.docx`
-(the current version; earlier IDs trace back through v0.1–v0.3 as noted per document above).
+Every technical decision here traces back to a BDR ID in `Requirements/Trellis_BRD_v0.6.docx`
+(the current version; earlier IDs trace back through v0.1–v0.5 as noted per document above).
 Where an implementation detail extends or narrows a BDR, that's called out in the relevant
 document rather than left implicit.
 

@@ -298,23 +298,23 @@ separately are two different questions with two different triggers.
 
 | Module | Owns (schema) | Billable | Key BDR References | Notes |
 |--------|--------------|----------|---------------------|-------|
-| **Auth** | `trellis_auth` | Core | BDR-DEPT-002, BDR-SEC-001–004, BDR-SEC-005–006/008–010 (real as of BRD v0.4), BDR-NFR-009–011 (real as of BRD v0.4) | Users, roles, sessions, JWT issuance/refresh, password reset, MFA recovery codes, auth throttling, incident response — see `security_guide.md` |
-| **Tenant** | `trellis_tenant` | Core | BDR-TEN-001–005, BDR-TEN-006 (real as of BRD v0.4) | PM company tenants, subscription tier, config, offboarding — see `multi_tenant_design.md` |
-| **Notification** | `trellis_notification` | Core | BDR-NOTIF-001–006 (real as of BRD v0.4) | Shared email/SMS dispatch, template resolution, delivery audit — depended on by nearly every other module — see `notifications_design.md` |
-| **PropertyAsset** | `trellis_property` | Core | BDR-OWN-001–005, BDR-AST-001–004 | Owners, Properties, Units/Assets |
+| **Auth** | `trellis_auth` | Core | BDR-DEPT-002, BDR-SEC-001–004, BDR-SEC-005–006/008–010 (real as of BRD v0.4), BDR-NFR-009–011 (real as of BRD v0.4), BDR-DEPT-005 (real as of BRD v0.6) | Users, roles, sessions, JWT issuance/refresh, password reset, MFA recovery codes, auth throttling, incident response — see `security_guide.md` |
+| **Tenant** | `trellis_tenant` | Core | BDR-TEN-001–005, BDR-TEN-006 (real as of BRD v0.4), BDR-TEN-007 (real as of BRD v0.6) | PM company tenants, subscription tier, config, offboarding — see `multi_tenant_design.md` |
+| **Notification** | `trellis_notification` | Core | BDR-NOTIF-001–006 (real as of BRD v0.4), BDR-NOTIF-007 (real as of BRD v0.6) | Shared email/SMS dispatch, template resolution, delivery audit — depended on by nearly every other module — see `notifications_design.md` |
+| **PropertyAsset** | `trellis_property` | Core | BDR-OWN-001–005, BDR-AST-001–004, BDR-OWN-006 and BDR-AST-005–006 (real as of BRD v0.6) | Owners, Properties, Units/Assets |
 | **Document** | `trellis_document` | Core | BDR-DOC-001–005 | Documents, versions, expiry alerts |
 | **Workflow** | `trellis_workflow` | Core | BDR-WF-001–005, BDR-DEPT-001–004 | Departments, workflow templates/instances, approvals |
 | **Inspection** | `trellis_inspection` | Add-on | BDR-INSP-001–005 | Inspections, checklist items, photos, offline sync |
-| **Vendor** | `trellis_vendor` | Core | BDR-VEN-001–005, BDR-VEN-006 (real as of BRD v0.4) | Vendor identities, cross-tenant work assignments, relationship termination — see `multi_tenant_design.md` |
+| **Vendor** | `trellis_vendor` | Core | BDR-VEN-001–005, BDR-VEN-006 (real as of BRD v0.4), BDR-VEN-007 (real as of BRD v0.6) | Vendor identities, cross-tenant work assignments, relationship termination — see `multi_tenant_design.md` |
 | **Ai** | `trellis_ai` | Add-on | BDR-AI-001–005 | Document extraction jobs, routing suggestions, override log |
-| **Reporting** | `trellis_audit`, `trellis_reporting` | Core | BDR-RPT-001–003, BDR-SEC-002 | Append-only audit log, dashboards, Owner report generation |
+| **Reporting** | `trellis_audit`, `trellis_reporting` | Core | BDR-RPT-001–003, BDR-SEC-002, BDR-RPT-004–007 (real as of BRD v0.6) | Append-only audit log, dashboards, Owner report generation |
 | **Billing** | `trellis_billing` | N/A | BDR-BIL-001–008 (real as of BRD v0.2), BDR-BIL-009 (real as of BRD v0.5) | Usage-based invoicing, module entitlements, Paystack integration, dunning — see `billing_design.md` |
-| **Leasing** | `trellis_leasing` | Add-on | BDR-LSE-001–008 (real as of BRD v0.4) | Vacancy listings, application intake, screening, e-signature, lease execution — see `leasing_design.md` |
-| **Rent Collection** | `trellis_rentledger` | Add-on | BDR-RENT-001–006 (real as of BRD v0.3) | Rent schedules, recorded payments, arrears flagging — tracking only, no payment processing — see `rent_collection_design.md` |
+| **Leasing** | `trellis_leasing` | Add-on | BDR-LSE-001–008 (real as of BRD v0.4), BDR-LSE-009–011 (real as of BRD v0.6) | Vacancy listings, application intake, screening, e-signature, lease execution — see `leasing_design.md` |
+| **Rent Collection** | `trellis_rentledger` | Add-on | BDR-RENT-001–006 (real as of BRD v0.3), BDR-RENT-007–008 (real as of BRD v0.6) | Rent schedules, recorded payments, arrears flagging — tracking only, no payment processing — see `rent_collection_design.md` |
 | **Support** | `trellis_support` | N/A | BDR-SUP-001–004 (real as of BRD v0.4) | Cross-tenant support ticketing for the Platform Operator — Triggered, Not Scheduled (`roadmap.md`), not a numbered phase — see `support_design.md` |
 
-BDR IDs refer to `Requirements/Trellis_BRD_v0.5.docx` (the current version; earlier IDs trace
-back through v0.1–v0.4 as noted per module above). Where a module's implementation diverges from
+BDR IDs refer to `Requirements/Trellis_BRD_v0.6.docx` (the current version; earlier IDs trace
+back through v0.1–v0.5 as noted per module above). Where a module's implementation diverges from
 or extends a BDR, note it in that module's own `README.md`, not here.
 
 ---
