@@ -133,8 +133,8 @@ trellis_leasing.application_event    — the audit trail (BDR-LSE-007)
 | applicant_email | VARCHAR(255) | NOT NULL | No `app_user` row — identity is the email + link token only |
 | status | VARCHAR(20) | NOT NULL DEFAULT 'SUBMITTED' | SUBMITTED\|SCREENING\|APPROVED\|DECLINED\|LEASED\|LEASE_ENDED |
 | submitted_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | |
-| lease_ended_date | DATE | NULLABLE | Set only by ending a Leased application — the staff-entered move-out date |
-| lease_ended_reason | VARCHAR(500) | NULLABLE | Optional free text |
+| lease_start_date, lease_end_date | DATE | NULLABLE | BDR-LSE-009, Phase 11 — the term staff set at send-for-signature, carried to the lease record once signed. No end date with a start date means month-to-month; both null only for applications sent before term capture |
+| lease_ended_date | DATE | NULLABLE | Set only by ending a Leased application — the staff-entered move-out date. *Why* it ended lives on the lease record (`trellis_property.lease`), not here; the old free-text `lease_ended_reason` column was moved there as `end_note` and dropped in Phase 11 |
 
 ### trellis_leasing.screening_result
 
@@ -204,14 +204,18 @@ be correct, only the envelope contents on the other side of it do.
 
 ## Lease Termination
 
-There is no separate Lease entity in this schema — the `application` row that reached `LEASED` *is*
-the lease record, so ending a lease is a staff action against that same row: `POST
-applications/{id}/end-lease` (`LEASED` only → `LEASE_ENDED`, with an effective date and an optional
-reason). It mirrors the lease-execution webhook's own retry-safe ordering, tolerating "already done"
-at each step so a retry can always complete: end the unit's rent schedule if one exists
-(`IRentScheduleService.EndForLeaseAsync`, a no-op if Rent Collection isn't entitled or there was
-none), mark the unit vacant (`IUnitAssetService.MarkVacantAsync`, tolerating already-vacant), then
-close out the application. The `vacancy_listing` row is left `LEASED` as history — re-letting the
+Since Phase 11 the lease itself is a separate record, `trellis_property.lease` (see
+`data_model.md`), not the `application` row — the application records how a tenancy was *won*,
+the lease records the tenancy. Execution creates it (`ILeaseService.StartAsync`, idempotent by
+application id, with the term from send-for-signature; a signed lease supersedes any earlier active
+lease on the unit rather than being blocked by it). Ending one is still a staff action on the
+application, `POST applications/{id}/end-lease` (`LEASED` only → `LEASE_ENDED`), now with BDR-LSE-011's
+structured reason: an effective date (not in the future, not before the lease started), a reason
+from a fixed list, who ended it, and a note required when the reason is OTHER. It keeps the
+lease-execution webhook's retry-safe ordering, tolerating "already done" at each step: end the
+unit's rent schedule if one exists (`IRentScheduleService.EndForLeaseAsync`, a no-op if Rent
+Collection isn't entitled or there was none), end the lease (`ILeaseService.EndAsync`, which marks
+the unit vacant from that date — skipped if already ended), then close out the application. The `vacancy_listing` row is left `LEASED` as history — re-letting the
 unit is a fresh listing, and `VacancyListingService.CreateAsync` now refuses to list a unit that is
 still `OCCUPIED` (a signed lease must be ended first).
 

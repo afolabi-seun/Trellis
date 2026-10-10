@@ -151,6 +151,7 @@ export async function deletePropertyAssetDataForTenant(tenantId: string): Promis
   const client = new Client({ connectionString: CONNECTION_STRING });
   await client.connect();
   try {
+    await client.query(`delete from trellis_property.lease where tenant_id = $1`, [tenantId]);
     await client.query(`delete from trellis_property.unit_asset where tenant_id = $1`, [tenantId]);
     await client.query(`delete from trellis_property.property where tenant_id = $1`, [tenantId]);
     await client.query(`delete from trellis_property.owner where tenant_id = $1`, [tenantId]);
@@ -539,6 +540,55 @@ export async function seedUnitAsset(
   }
 }
 
+export interface LeaseRow {
+  source: string;
+  status: string;
+  termType: string;
+  endDate: string | null;
+  endReason: string | null;
+  endedBy: string | null;
+  endNote: string | null;
+}
+
+/** BDR-LSE-009/011 — a unit's lease records, oldest first, with dates as plain yyyy-mm-dd strings. */
+export async function getLeasesForUnit(unitAssetId: string): Promise<LeaseRow[]> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    const result = await client.query(
+      `select source, status, term_type, to_char(end_date, 'YYYY-MM-DD') as end_date, end_reason, ended_by, end_note
+       from trellis_property.lease where unit_asset_id = $1 order by created_at`,
+      [unitAssetId],
+    );
+    return result.rows.map((r) => ({
+      source: r.source as string,
+      status: r.status as string,
+      termType: r.term_type as string,
+      endDate: r.end_date as string | null,
+      endReason: r.end_reason as string | null,
+      endedBy: r.ended_by as string | null,
+      endNote: r.end_note as string | null,
+    }));
+  } finally {
+    await client.end();
+  }
+}
+
+/** BDR-AST-005 — yyyy-mm-dd, or null while occupied or when the vacancy start is unknown. */
+export async function getUnitVacantSince(unitAssetId: string): Promise<string | null> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    const result = await client.query(
+      `select to_char(vacant_since, 'YYYY-MM-DD') as vacant_since from trellis_property.unit_asset where unit_asset_id = $1`,
+      [unitAssetId],
+    );
+    return result.rows[0].vacant_since as string | null;
+  } finally {
+    await client.end();
+  }
+}
+
 export async function getUnitOccupancyStatus(unitAssetId: string): Promise<string> {
   const client = new Client({ connectionString: CONNECTION_STRING });
   await client.connect();
@@ -657,10 +707,19 @@ export async function seedRentSchedule(
   const client = new Client({ connectionString: CONNECTION_STRING });
   await client.connect();
   try {
+    // Every schedule tracks a lease (BDR-LSE-009). A seeded schedule stands for a tenancy started
+    // by hand, so it gets a MANUAL lease of its own — reusing the schedule's id, the same way the
+    // migration that introduced lease records backfilled existing schedules.
+    await client.query(
+      `insert into trellis_property.lease
+         (lease_id, tenant_id, unit_asset_id, source, start_date, term_type, status, created_at, updated_at)
+       values ($1, $2, $3, 'MANUAL', '2025-01-01', 'NOT_RECORDED', 'ACTIVE', now(), now())`,
+      [scheduleId, tenantId, unitAssetId],
+    );
     await client.query(
       `insert into trellis_rentledger.rent_schedule
-         (rent_schedule_id, tenant_id, unit_asset_id, rent_amount, currency, start_date, due_day_of_month, grace_period_days, status, created_at, updated_at)
-       values ($1, $2, $3, $4, 'USD', '2025-01-01', 1, 5, 'ACTIVE', now(), now())`,
+         (rent_schedule_id, tenant_id, unit_asset_id, lease_id, rent_amount, currency, start_date, due_day_of_month, grace_period_days, status, created_at, updated_at)
+       values ($1, $2, $3, $1, $4, 'USD', '2025-01-01', 1, 5, 'ACTIVE', now(), now())`,
       [scheduleId, tenantId, unitAssetId, rentAmount],
     );
   } finally {

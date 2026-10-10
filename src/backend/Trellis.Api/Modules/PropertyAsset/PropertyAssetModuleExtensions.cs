@@ -20,10 +20,12 @@ public static class PropertyAssetModuleExtensions
         services.AddScoped<IOwnerRepository, OwnerRepository>();
         services.AddScoped<IPropertyRepository, PropertyRepository>();
         services.AddScoped<IUnitAssetRepository, UnitAssetRepository>();
+        services.AddScoped<ILeaseRepository, LeaseRepository>();
 
         services.AddScoped<IOwnerService, OwnerService>();
         services.AddScoped<IPropertyService, PropertyService>();
         services.AddScoped<IUnitAssetService, UnitAssetService>();
+        services.AddScoped<ILeaseService, LeaseService>();
         services.AddScoped<IPersonalDataHandler, PropertyAssetPersonalDataHandler>();
 
         return services;

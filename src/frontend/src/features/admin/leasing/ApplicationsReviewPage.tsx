@@ -22,6 +22,8 @@ import { useAuth } from "../../../auth/useAuth";
 import { TrellisApiError } from "../../../api/client";
 import { documentsApi } from "../../../api/documents";
 import { applicationsApi, vacancyListingsApi } from "../../../api/leasing";
+import { EndLeaseModal, type EndLeaseValues } from "../leases/EndLeaseModal";
+import { leaseErrorMessage } from "../leases/leaseLabels";
 import {
   dangerAlertStyles,
   dangerButtonStyles,
@@ -54,7 +56,7 @@ function errorMessage(error: unknown): string {
     if (error.code === "TRL-E-AUT-1004") {
       return "That password isn't correct.";
     }
-    return error.message;
+    return leaseErrorMessage(error);
   }
   return "Something went wrong.";
 }
@@ -69,9 +71,10 @@ export function ApplicationsReviewPage() {
   const [signFor, setSignFor] = useState<string | null>(null);
   const [draftDocumentId, setDraftDocumentId] = useState<string | null>(null);
   const [signModalOpened, { open: openSignModal, close: closeSignModal }] = useDisclosure(false);
+  const [leaseStartDate, setLeaseStartDate] = useState("");
+  const [leaseTermType, setLeaseTermType] = useState<string | null>("FIXED");
+  const [leaseEndDate, setLeaseEndDate] = useState("");
   const [endLeaseFor, setEndLeaseFor] = useState<string | null>(null);
-  const [effectiveDate, setEffectiveDate] = useState("");
-  const [endLeaseReason, setEndLeaseReason] = useState("");
   const [reportFor, setReportFor] = useState<string | null>(null);
   const [reportPassword, setReportPassword] = useState("");
   const [reportModalOpened, { open: openReportModal, close: closeReportModal }] =
@@ -108,31 +111,37 @@ export function ApplicationsReviewPage() {
 
   const approveMutation = useMutation({ mutationFn: applicationsApi.approve, onSuccess: refresh });
   const declineMutation = useMutation({ mutationFn: applicationsApi.decline, onSuccess: refresh });
+  const monthToMonth = leaseTermType === "MONTH_TO_MONTH";
   const signMutation = useMutation({
     mutationFn: ({ id, documentId }: { id: string; documentId: string }) =>
-      applicationsApi.sendForSignature(id, documentId),
+      applicationsApi.sendForSignature(id, {
+        draftDocumentId: documentId,
+        leaseStartDate,
+        leaseEndDate: monthToMonth ? null : leaseEndDate,
+        monthToMonth,
+      }),
     onSuccess: () => {
       refresh();
       closeSignModal();
       setDraftDocumentId(null);
+      setLeaseStartDate("");
+      setLeaseTermType("FIXED");
+      setLeaseEndDate("");
     },
   });
+  // BDR-LSE-009: a send needs the term — a fixed end date after the start, or month-to-month.
+  const termEndBeforeStart =
+    !monthToMonth && leaseStartDate !== "" && leaseEndDate !== "" && leaseEndDate <= leaseStartDate;
+  const termReady =
+    leaseStartDate !== "" && (monthToMonth || (leaseEndDate !== "" && !termEndBeforeStart));
   const endLeaseMutation = useMutation({
-    mutationFn: ({
-      id,
-      effectiveDate,
-      reason,
-    }: {
-      id: string;
-      effectiveDate: string;
-      reason: string;
-    }) => applicationsApi.endLease(id, { effectiveDate, reason: reason || null }),
+    mutationFn: ({ id, values }: { id: string; values: EndLeaseValues }) =>
+      applicationsApi.endLease(id, values),
     onSuccess: () => {
       refresh();
       queryClient.invalidateQueries({ queryKey: ["propertyasset", "units"] });
+      queryClient.invalidateQueries({ queryKey: ["leases"] });
       setEndLeaseFor(null);
-      setEffectiveDate("");
-      setEndLeaseReason("");
     },
   });
   const viewReportMutation = useMutation({
@@ -330,8 +339,34 @@ export function ApplicationsReviewPage() {
             onChange={setDraftDocumentId}
             nothingFoundMessage="No LEASE documents on this unit."
           />
+          <TextInput
+            label="Lease starts on"
+            type="date"
+            value={leaseStartDate}
+            onChange={(event) => setLeaseStartDate(event.currentTarget.value)}
+          />
+          <Select
+            label="Lease term"
+            data={[
+              { value: "FIXED", label: "Fixed term" },
+              { value: "MONTH_TO_MONTH", label: "Month-to-month" },
+            ]}
+            value={leaseTermType}
+            onChange={setLeaseTermType}
+            allowDeselect={false}
+          />
+          {!monthToMonth && (
+            <TextInput
+              label="Lease ends on"
+              type="date"
+              min={leaseStartDate || undefined}
+              value={leaseEndDate}
+              onChange={(event) => setLeaseEndDate(event.currentTarget.value)}
+              error={termEndBeforeStart ? "The end date must be after the start date." : undefined}
+            />
+          )}
           <Button
-            disabled={!draftDocumentId || !signFor}
+            disabled={!draftDocumentId || !signFor || !termReady}
             loading={signMutation.isPending}
             onClick={() => signMutation.mutate({ id: signFor!, documentId: draftDocumentId! })}
           >
@@ -340,39 +375,17 @@ export function ApplicationsReviewPage() {
         </Stack>
       </Modal>
 
-      <Modal opened={endLeaseFor !== null} onClose={() => setEndLeaseFor(null)} title="End lease">
-        <Stack gap="md">
-          <Text size="sm">
-            This ends the lease and frees the unit to be re-listed. It cannot be undone.
-          </Text>
-          {endLeaseMutation.isError && (
-            <Alert color="red" title="Could not end lease" styles={dangerAlertStyles}>
-              {errorMessage(endLeaseMutation.error)}
-            </Alert>
-          )}
-          <TextInput
-            label="Effective date"
-            type="date"
-            value={effectiveDate}
-            onChange={(event) => setEffectiveDate(event.currentTarget.value)}
-          />
-          <TextInput
-            label="Reason (optional)"
-            value={endLeaseReason}
-            onChange={(event) => setEndLeaseReason(event.currentTarget.value)}
-          />
-          <Button
-            styles={dangerButtonStyles}
-            disabled={!effectiveDate}
-            loading={endLeaseMutation.isPending}
-            onClick={() =>
-              endLeaseMutation.mutate({ id: endLeaseFor!, effectiveDate, reason: endLeaseReason })
-            }
-          >
-            End lease
-          </Button>
-        </Stack>
-      </Modal>
+      <EndLeaseModal
+        opened={endLeaseFor !== null}
+        onClose={() => {
+          setEndLeaseFor(null);
+          endLeaseMutation.reset();
+        }}
+        description="This ends the lease, stops its rent schedule, and frees the unit to be re-listed."
+        loading={endLeaseMutation.isPending}
+        error={endLeaseMutation.error}
+        onConfirm={(values) => endLeaseMutation.mutate({ id: endLeaseFor!, values })}
+      />
 
       <Modal
         opened={reportModalOpened}

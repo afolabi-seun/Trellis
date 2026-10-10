@@ -113,6 +113,14 @@ public static class AuditTypes
     }
 
     /// <summary>BDR-LSE-007 — an application's lifecycle. Fires alongside, not instead of, the dedicated trellis_leasing.application_event table (Ai's OverrideLogEntry dual-write precedent).</summary>
+    /// <summary>Lease records (BDR-LSE-009/011) — whichever add-on started the lease, the lease's own lifecycle is audited here once, not by each caller.</summary>
+    public static class PropertyAsset
+    {
+        public const string LeaseStarted = "LEASE_STARTED";
+        public const string LeaseEnded = "LEASE_ENDED";
+        public const string LeaseTermRecorded = "LEASE_TERM_RECORDED";
+    }
+
     public static class Leasing
     {
         public const string VacancyListingCreated = "VACANCY_LISTING_CREATED";
@@ -122,7 +130,6 @@ public static class AuditTypes
         public const string ApplicationDeclined = "APPLICATION_DECLINED";
         public const string LeaseSentForSignature = "LEASE_SENT_FOR_SIGNATURE";
         public const string LeaseExecuted = "LEASE_EXECUTED";
-        public const string LeaseEnded = "LEASE_ENDED";
 
         /// <summary>BDR-LSE-004's "never expose full report detail" restriction — the one narrow, separately-audited exception, so viewing the decrypted report is always attributable even though nothing about the report content itself is ever written here (detail_json stays IDs-only, security_guide.md).</summary>
         public const string ScreeningReportViewed = "SCREENING_REPORT_VIEWED";

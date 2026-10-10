@@ -39,6 +39,14 @@ public sealed class UnitAsset : ITenantOwned
     public string Label { get; private set; } = null!;
     public UnitAssetStatus Status { get; private set; }
     public UnitAssetOccupancyStatus OccupancyStatus { get; private set; } = UnitAssetOccupancyStatus.Vacant;
+
+    /// <summary>
+    /// BDR-AST-005 — the date this unit most recently became vacant; null while occupied, and null
+    /// for a vacant unit whose vacancy start is genuinely unknown (units that predate lease
+    /// records). Never guessed: a unit created today is vacant since today, a unit whose lease
+    /// ended is vacant since that lease's end date, and nothing else sets it.
+    /// </summary>
+    public DateOnly? VacantSince { get; private set; }
     public decimal? SizeSqft { get; private set; }
     public decimal? AcquisitionValue { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
@@ -62,6 +70,7 @@ public sealed class UnitAsset : ITenantOwned
             PropertyId = propertyId,
             Label = label,
             Status = UnitAssetStatus.Active,
+            VacantSince = DateOnly.FromDateTime(now.UtcDateTime),
             SizeSqft = sizeSqft,
             AcquisitionValue = acquisitionValue,
             CreatedAt = now,
@@ -94,7 +103,7 @@ public sealed class UnitAsset : ITenantOwned
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
-    /// <summary>BDR-LSE-006 — fired by Leasing's e-signature completion flow via IUnitAssetService.MarkOccupiedAsync.</summary>
+    /// <summary>Only ever called by LeaseService when a lease starts — a unit is OCCUPIED exactly when it has an ACTIVE lease.</summary>
     public void MarkOccupied()
     {
         if (OccupancyStatus != UnitAssetOccupancyStatus.Vacant)
@@ -103,11 +112,12 @@ public sealed class UnitAsset : ITenantOwned
         }
 
         OccupancyStatus = UnitAssetOccupancyStatus.Occupied;
+        VacantSince = null;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
-    /// <summary>Symmetric to MarkOccupied — not exercised by Phase 9's own flow, but cheap to add now for a future lease-termination phase.</summary>
-    public void MarkVacant()
+    /// <summary>Only ever called by LeaseService when a lease ends, with that lease's end date.</summary>
+    public void MarkVacant(DateOnly vacantSince)
     {
         if (OccupancyStatus != UnitAssetOccupancyStatus.Occupied)
         {
@@ -115,6 +125,7 @@ public sealed class UnitAsset : ITenantOwned
         }
 
         OccupancyStatus = UnitAssetOccupancyStatus.Vacant;
+        VacantSince = vacantSince;
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 }

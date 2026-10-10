@@ -29,7 +29,8 @@ public sealed class ApplicationConfiguration : IEntityTypeConfiguration<LeasingA
         builder.Property(a => a.DraftDocumentId).HasColumnName("draft_document_id");
         builder.Property(a => a.SignedLeaseVersionId).HasColumnName("signed_lease_version_id");
         builder.Property(a => a.LeaseEndedDate).HasColumnName("lease_ended_date");
-        builder.Property(a => a.LeaseEndedReason).HasColumnName("lease_ended_reason").HasMaxLength(500);
+        builder.Property(a => a.LeaseStartDate).HasColumnName("lease_start_date");
+        builder.Property(a => a.LeaseEndDate).HasColumnName("lease_end_date");
 
         builder.Property(a => a.Status)
             .HasColumnName("status")

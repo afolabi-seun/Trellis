@@ -1,13 +1,23 @@
 namespace Trellis.Api.Modules.RentLedger.Application.Dtos;
 
+/// <summary>
+/// The lease term (BDR-LSE-009) is needed only when the unit has no active lease yet, which is
+/// when this also starts one: LeaseEndDate for a fixed term, or LeaseMonthToMonth true. When the
+/// unit already has an active lease (a Leasing tenant turning on Rent Collection later), the
+/// schedule attaches to it and both are ignored.
+/// </summary>
 public sealed record RentScheduleCreateRequest(
-    Guid UnitAssetId, decimal RentAmount, string Currency, DateOnly StartDate, int DueDayOfMonth, int? GracePeriodDays);
+    Guid UnitAssetId, decimal RentAmount, string Currency, DateOnly StartDate, int DueDayOfMonth, int? GracePeriodDays,
+    DateOnly? LeaseEndDate = null, bool? LeaseMonthToMonth = null);
+
+/// <summary>Required when the schedule's lease is MANUAL: ending that schedule ends the tenancy, so it needs BDR-LSE-011's reason and party. Ignored for a Leasing-started lease, which is ended through Leasing.</summary>
+public sealed record RentScheduleEndRequest(DateOnly EffectiveDate, string Reason, string EndedBy, string? Note);
 
 public sealed record RentScheduleUpdateRequest(decimal RentAmount, int DueDayOfMonth, int GracePeriodDays, string RowVersion);
 
-/// <summary>RentStatus is null for an ENDED schedule (it no longer accrues anything). TotalReceived is the sum of non-voided payment records — money recorded as received outside Trellis, never money Trellis holds.</summary>
+/// <summary>LeaseSource is MANUAL when ending this schedule also ends the tenancy (and so needs a RentScheduleEndRequest), LEASING when the lease is ended through Leasing. RentStatus is null for an ENDED schedule (it no longer accrues anything). TotalReceived is the sum of non-voided payment records — money recorded as received outside Trellis, never money Trellis holds.</summary>
 public sealed record RentScheduleResponse(
-    Guid RentScheduleId, Guid UnitAssetId, string UnitLabel, Guid? LeaseApplicationId, decimal RentAmount, string Currency,
+    Guid RentScheduleId, Guid UnitAssetId, string UnitLabel, Guid? LeaseApplicationId, Guid LeaseId, string? LeaseSource, decimal RentAmount, string Currency,
     DateOnly StartDate, int DueDayOfMonth, int GracePeriodDays, string Status, string? RentStatus, int PeriodsInArrears,
     decimal AmountShort, decimal TotalReceived, DateOnly? OldestUnpaidDueDate, string RowVersion, DateTimeOffset CreatedAt);
 

@@ -26,25 +26,30 @@ public sealed class LeasingWebhookServiceTests : IDisposable
     private readonly IApplicationEventRepository _eventRepository = Substitute.For<IApplicationEventRepository>();
     private readonly IESignatureProvider _eSignatureProvider = Substitute.For<IESignatureProvider>();
     private readonly IDocumentService _documentService = Substitute.For<IDocumentService>();
-    private readonly IUnitAssetService _unitAssetService = Substitute.For<IUnitAssetService>();
+    private readonly ILeaseService _leaseService = Substitute.For<ILeaseService>();
+    private readonly Guid _leaseId = Guid.NewGuid();
     private readonly IRentScheduleService _rentScheduleService = Substitute.For<IRentScheduleService>();
     private readonly IAuditService _auditService = Substitute.For<IAuditService>();
 
     public void Dispose() => TenantContext.Current = null;
 
     private LeasingWebhookService CreateSut() => new(
-        _applicationRepository, _listingRepository, _eventRepository, _eSignatureProvider, _documentService, _unitAssetService, _rentScheduleService, _auditService);
+        _applicationRepository, _listingRepository, _eventRepository, _eSignatureProvider, _documentService, _leaseService, _rentScheduleService, _auditService);
 
     private readonly Guid _draftId = Guid.NewGuid();
     private readonly Guid _signedVersionId = Guid.NewGuid();
 
-    private (LeasingApplication Application, VacancyListing Listing) ArrangeSentApplication(bool withDraft = true)
+    private static readonly DateOnly LeaseStart = new(2026, 11, 1);
+    private static readonly DateOnly LeaseEnd = new(2027, 10, 31);
+
+    private (LeasingApplication Application, VacancyListing Listing) ArrangeSentApplication(bool withDraft = true, bool withTerm = true)
     {
         var listing = VacancyListing.Create(_tenantId, _unitId, 1500m, "USD", new DateOnly(2026, 11, 1), null, Guid.NewGuid());
         var application = LeasingApplication.Create(
             _tenantId, listing.VacancyListingId, "a@example.com", "Ada", "1", new DateOnly(1990, 1, 1), "addr", null, null, true);
         application.Approve();
-        application.MarkSentForSignature("env-1", _staffId, withDraft ? _draftId : null);
+        application.MarkSentForSignature(
+            "env-1", _staffId, withDraft ? _draftId : null, withTerm ? LeaseStart : null, withTerm ? LeaseEnd : null);
 
         _applicationRepository.GetByEnvelopeIdAcrossTenantsAsync("env-1").Returns(application);
         _listingRepository.GetByIdAsync(listing.VacancyListingId).Returns(listing);
@@ -55,16 +60,19 @@ public sealed class LeasingWebhookServiceTests : IDisposable
         _documentService.AddVersionAsync(_draftId, Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<long>(), Arg.Any<Guid>())
             .Returns(ServiceResult<DocumentVersionResponse>.Success(
                 new DocumentVersionResponse(_signedVersionId, 2, "lease.pdf", "application/pdf", 4, "CLEAN", DateTimeOffset.UtcNow)));
-        _unitAssetService.MarkOccupiedAsync(_unitId).Returns(ServiceResult<UnitAssetResponse>.Success(
-            new UnitAssetResponse(_unitId, Guid.NewGuid(), "4B", "ACTIVE", "OCCUPIED", null, null, "AAAAAAAAAAA=", DateTimeOffset.UtcNow)));
+        _leaseService.StartAsync(Arg.Any<LeaseStartRequest>(), Arg.Any<Guid?>()).Returns(ServiceResult<LeaseResponse>.Success(Lease()));
         _rentScheduleService.EnsureScheduleForLeaseAsync(
-                Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<DateOnly>(), Arg.Any<Guid?>())
+                Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<DateOnly>(), Arg.Any<Guid?>())
             .Returns(ServiceResult<bool>.Success(true));
         return (application, listing);
     }
 
+    private LeaseResponse Lease() => new(
+        _leaseId, _unitId, "4B", Guid.NewGuid(), "1 Main St", "LEASING", null, LeaseStart, "FIXED", LeaseEnd, 365,
+        "ACTIVE", null, null, null, null, "AAAAAAAAAAA=", DateTimeOffset.UtcNow);
+
     [Fact]
-    public async Task ProcessSignatureCompletedAsync_FilesTheLease_FlipsTheUnit_AndClosesOutTheListingAndApplication()
+    public async Task ProcessSignatureCompletedAsync_FilesTheLease_StartsTheLeaseRecord_AndClosesOutTheListingAndApplication()
     {
         var (application, listing) = ArrangeSentApplication();
         var sut = CreateSut();
@@ -75,7 +83,8 @@ public sealed class LeasingWebhookServiceTests : IDisposable
         await _documentService.Received(1).AddVersionAsync(
             _draftId, Arg.Any<Stream>(), Arg.Any<string>(), "application/pdf", Arg.Any<long>(), _staffId);
         await _documentService.DidNotReceiveWithAnyArgs().CreateAsync(default!, default!, default!, default!, default, default);
-        await _unitAssetService.Received(1).MarkOccupiedAsync(_unitId);
+        await _leaseService.Received(1).StartAsync(
+            Arg.Is<LeaseStartRequest>(r => r.UnitAssetId == _unitId && r.LeaseApplicationId == application.ApplicationId), _staffId);
         listing.Status.Should().Be(VacancyListingStatus.Leased);
         application.Status.Should().Be(ApplicationStatus.Leased);
         application.SignedLeaseVersionId.Should().Be(_signedVersionId);
@@ -118,7 +127,7 @@ public sealed class LeasingWebhookServiceTests : IDisposable
         await sut.ProcessSignatureCompletedAsync("env-1", "{}");
 
         await _documentService.DidNotReceiveWithAnyArgs().AddVersionAsync(default, default!, default!, default!, default, default);
-        await _unitAssetService.DidNotReceiveWithAnyArgs().MarkOccupiedAsync(default);
+        await _leaseService.DidNotReceiveWithAnyArgs().StartAsync(default!, default);
     }
 
     [Fact]
@@ -129,7 +138,7 @@ public sealed class LeasingWebhookServiceTests : IDisposable
 
         await sut.ProcessSignatureCompletedAsync("nope", "{}");
 
-        await _unitAssetService.DidNotReceiveWithAnyArgs().MarkOccupiedAsync(default);
+        await _leaseService.DidNotReceiveWithAnyArgs().StartAsync(default!, default);
     }
 
     [Fact]
@@ -143,25 +152,54 @@ public sealed class LeasingWebhookServiceTests : IDisposable
         var act = () => sut.ProcessSignatureCompletedAsync("env-1", "{}");
 
         await act.Should().ThrowAsync<InvalidOperationException>();
-        await _unitAssetService.DidNotReceiveWithAnyArgs().MarkOccupiedAsync(default);
+        await _leaseService.DidNotReceiveWithAnyArgs().StartAsync(default!, default);
         application.Status.Should().Be(ApplicationStatus.Approved);
         listing.Status.Should().Be(VacancyListingStatus.Listed);
     }
 
     [Fact]
-    public async Task ProcessSignatureCompletedAsync_WhenTheUnitIsAlreadyOccupied_ARetryAfterAPartialFailure_StillCompletes()
+    public async Task ProcessSignatureCompletedAsync_StartsTheLeaseWithTheTermStaffSetWhenSending()
     {
-        var (application, _) = ArrangeSentApplication();
-        _unitAssetService.MarkOccupiedAsync(_unitId).Returns(ServiceResult<UnitAssetResponse>.BusinessRuleViolation("TRL-E-AST-3000"));
+        ArrangeSentApplication();
         var sut = CreateSut();
 
         await sut.ProcessSignatureCompletedAsync("env-1", "{}");
 
-        application.Status.Should().Be(ApplicationStatus.Leased);
+        // BDR-LSE-009: the term travels from send-for-signature to the lease record.
+        await _leaseService.Received(1).StartAsync(
+            Arg.Is<LeaseStartRequest>(r => r.StartDate == LeaseStart && r.TermRecorded && r.EndDate == LeaseEnd), _staffId);
     }
 
     [Fact]
-    public async Task ProcessSignatureCompletedAsync_StartsTheRentScheduleFromTheListingTerms_AsTheStaffMemberWhoSentIt()
+    public async Task ProcessSignatureCompletedAsync_ForAnApplicationSentBeforeTermCapture_StartsANotRecordedLeaseFromTheListingDate()
+    {
+        var (_, listing) = ArrangeSentApplication(withTerm: false);
+        var sut = CreateSut();
+
+        await sut.ProcessSignatureCompletedAsync("env-1", "{}");
+
+        // Never a guessed term — staff record the real one afterwards.
+        await _leaseService.Received(1).StartAsync(
+            Arg.Is<LeaseStartRequest>(r => r.StartDate == listing.AvailableFrom && !r.TermRecorded && r.EndDate == null), _staffId);
+    }
+
+    [Fact]
+    public async Task ProcessSignatureCompletedAsync_WhenStartingTheLeaseFails_Throws_SoTheProviderRetries_AndTheApplicationIsNotClosedOut()
+    {
+        var (application, _) = ArrangeSentApplication();
+        _leaseService.StartAsync(Arg.Any<LeaseStartRequest>(), Arg.Any<Guid?>())
+            .Returns(ServiceResult<LeaseResponse>.BusinessRuleViolation("TRL-E-AST-3004"));
+        var sut = CreateSut();
+
+        var act = () => sut.ProcessSignatureCompletedAsync("env-1", "{}");
+
+        await act.Should().ThrowAsync<InvalidOperationException>();
+        application.Status.Should().Be(ApplicationStatus.Approved);
+        await _rentScheduleService.DidNotReceiveWithAnyArgs().EnsureScheduleForLeaseAsync(default, default, default, default, default, default!, default, default);
+    }
+
+    [Fact]
+    public async Task ProcessSignatureCompletedAsync_StartsTheRentScheduleForTheLease_FromTheLeaseStart_AsTheStaffMemberWhoSentIt()
     {
         var (application, listing) = ArrangeSentApplication();
         var sut = CreateSut();
@@ -169,7 +207,7 @@ public sealed class LeasingWebhookServiceTests : IDisposable
         await sut.ProcessSignatureCompletedAsync("env-1", "{}");
 
         await _rentScheduleService.Received(1).EnsureScheduleForLeaseAsync(
-            _tenantId, _unitId, application.ApplicationId, listing.RentAmount, listing.Currency, listing.AvailableFrom, _staffId);
+            _tenantId, _unitId, application.ApplicationId, _leaseId, listing.RentAmount, listing.Currency, LeaseStart, _staffId);
     }
 
     [Fact]
@@ -179,7 +217,7 @@ public sealed class LeasingWebhookServiceTests : IDisposable
         ArrangeSentApplication();
         var order = new List<string>();
         _rentScheduleService.EnsureScheduleForLeaseAsync(
-                Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<DateOnly>(), Arg.Any<Guid?>())
+                Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<DateOnly>(), Arg.Any<Guid?>())
             .Returns(_ => { order.Add("rent"); return ServiceResult<bool>.Success(true); });
         _applicationRepository.SaveChangesAsync().Returns(_ => { order.Add("save"); return Task.CompletedTask; });
         var sut = CreateSut();
@@ -195,7 +233,7 @@ public sealed class LeasingWebhookServiceTests : IDisposable
     {
         var (application, listing) = ArrangeSentApplication();
         _rentScheduleService.EnsureScheduleForLeaseAsync(
-                Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<DateOnly>(), Arg.Any<Guid?>())
+                Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<DateOnly>(), Arg.Any<Guid?>())
             .Returns(ServiceResult<bool>.BusinessRuleViolation("TRL-E-RENT-12001"));
         var sut = CreateSut();
 
@@ -215,7 +253,7 @@ public sealed class LeasingWebhookServiceTests : IDisposable
         // EnsureScheduleForLeaseAsync returns Success(false) for an unentitled tenant (or an already-created schedule) — never blocks a signed lease.
         var (application, _) = ArrangeSentApplication();
         _rentScheduleService.EnsureScheduleForLeaseAsync(
-                Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<DateOnly>(), Arg.Any<Guid?>())
+                Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<DateOnly>(), Arg.Any<Guid?>())
             .Returns(ServiceResult<bool>.Success(false));
         var sut = CreateSut();
 
@@ -231,7 +269,7 @@ public sealed class LeasingWebhookServiceTests : IDisposable
         var (application, _) = ArrangeSentApplication();
         var rentAttempts = 0;
         _rentScheduleService.EnsureScheduleForLeaseAsync(
-                Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<DateOnly>(), Arg.Any<Guid?>())
+                Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<decimal>(), Arg.Any<string>(), Arg.Any<DateOnly>(), Arg.Any<Guid?>())
             .Returns(_ => ++rentAttempts == 1
                 ? ServiceResult<bool>.BusinessRuleViolation("TRL-E-RENT-12001")
                 : ServiceResult<bool>.Success(true));

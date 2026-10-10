@@ -26,6 +26,9 @@ public sealed class RentSchedule : ITenantOwned
     public Guid TenantId { get; private set; }
     public Guid UnitAssetId { get; private set; }
     public Guid? LeaseApplicationId { get; private set; }
+
+    /// <summary>The PropertyAsset lease this schedule tracks rent for — every schedule has one (BDR-LSE-009). Whether ending the schedule also ends the tenancy depends on that lease's source (MANUAL), not on this schedule.</summary>
+    public Guid LeaseId { get; private set; }
     public decimal RentAmount { get; private set; }
     public string Currency { get; private set; } = null!;
     public DateOnly StartDate { get; private set; }
@@ -44,7 +47,7 @@ public sealed class RentSchedule : ITenantOwned
     private RentSchedule() { }
 
     public static RentSchedule Create(
-        Guid tenantId, Guid unitAssetId, Guid? leaseApplicationId, decimal rentAmount, string currency,
+        Guid tenantId, Guid unitAssetId, Guid? leaseApplicationId, Guid leaseId, decimal rentAmount, string currency,
         DateOnly startDate, int dueDayOfMonth, int gracePeriodDays, Guid? createdBy)
     {
         Validate(rentAmount, dueDayOfMonth, gracePeriodDays);
@@ -60,6 +63,7 @@ public sealed class RentSchedule : ITenantOwned
             TenantId = tenantId,
             UnitAssetId = unitAssetId,
             LeaseApplicationId = leaseApplicationId,
+            LeaseId = leaseId,
             RentAmount = rentAmount,
             Currency = currency.ToUpperInvariant(),
             StartDate = startDate,

@@ -47,15 +47,18 @@ public sealed class Application : ITenantOwned
     /// <summary>The unsigned lease Document staff picked when sending for signature. The executed lease is filed as the next VERSION of this document (BDR-LSE-006: "a versioned document"), so a draft and its signed copy stay one document. Null only for applications sent before this was tracked — the webhook then falls back to filing a new document.</summary>
     public Guid? DraftDocumentId { get; private set; }
 
+    /// <summary>BDR-LSE-009 — the lease term staff set when sending for signature, carried to the lease record once signed. Both null only for applications sent before the term was captured (the lease is then NOT_RECORDED); a start date with no end date means month-to-month.</summary>
+    public DateOnly? LeaseStartDate { get; private set; }
+    public DateOnly? LeaseEndDate { get; private set; }
+
     /// <summary>Set the moment the executed lease is filed, and saved before the rest of the completion runs — so a webhook retry after a later failure never files it a second time.</summary>
     public Guid? SignedLeaseVersionId { get; private set; }
 
     public ApplicationStatus Status { get; private set; }
     public DateTimeOffset SubmittedAt { get; private set; }
 
-    /// <summary>Set only by MarkLeaseEnded — when a lease that was executed here was later ended.</summary>
+    /// <summary>Set only by MarkLeaseEnded — when a lease that was executed here was later ended. Why it ended (BDR-LSE-011) lives on the lease record in PropertyAsset, not here.</summary>
     public DateOnly? LeaseEndedDate { get; private set; }
-    public string? LeaseEndedReason { get; private set; }
 
     private Application() { }
 
@@ -111,16 +114,24 @@ public sealed class Application : ITenantOwned
     }
 
     /// <summary>Approved only. No ApplicationStatus value changes — the spec's own enum has none for "sent for signature," only the two new fields are set.</summary>
-    public void MarkSentForSignature(string envelopeId, Guid staffUserId, Guid? draftDocumentId = null)
+    public void MarkSentForSignature(
+        string envelopeId, Guid staffUserId, Guid? draftDocumentId = null, DateOnly? leaseStartDate = null, DateOnly? leaseEndDate = null)
     {
         if (Status != ApplicationStatus.Approved)
         {
             throw new InvalidStatusTransitionException(nameof(Application), Status.ToString(), Status.ToString());
         }
 
+        if (leaseEndDate is not null && (leaseStartDate is null || leaseEndDate <= leaseStartDate))
+        {
+            throw new ArgumentException("A lease end date needs a start date before it.", nameof(leaseEndDate));
+        }
+
         EnvelopeId = envelopeId;
         SentForSignatureBy = staffUserId;
         DraftDocumentId = draftDocumentId;
+        LeaseStartDate = leaseStartDate;
+        LeaseEndDate = leaseEndDate;
     }
 
     public void RecordSignedLeaseFiled(Guid signedLeaseVersionId) => SignedLeaseVersionId = signedLeaseVersionId;
@@ -136,8 +147,8 @@ public sealed class Application : ITenantOwned
         Status = ApplicationStatus.Leased;
     }
 
-    /// <summary>A staff-initiated move-out. Leased only — there is no lease entity in this schema (this row doubles as the lease record), so ending it here is what frees the unit to be re-listed.</summary>
-    public void MarkLeaseEnded(DateOnly effectiveDate, string? reason)
+    /// <summary>Closes out the application once its lease (a PropertyAsset record) has ended. Leased only.</summary>
+    public void MarkLeaseEnded(DateOnly effectiveDate)
     {
         if (Status != ApplicationStatus.Leased)
         {
@@ -146,7 +157,6 @@ public sealed class Application : ITenantOwned
 
         Status = ApplicationStatus.LeaseEnded;
         LeaseEndedDate = effectiveDate;
-        LeaseEndedReason = reason;
     }
 
     /// <summary>

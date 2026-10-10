@@ -54,7 +54,7 @@ public sealed class RentArrearsServiceTests : IDisposable
         _authService.GetUsersByRolesAsync(Arg.Any<Guid>(), Arg.Any<IEnumerable<string>>()).Returns(
             (IReadOnlyList<AppUserSummary>)[new AppUserSummary(Guid.NewGuid(), "admin@example.com", null), new AppUserSummary(Guid.NewGuid(), "staff@example.com", null)]);
         _unitAssetService.GetByIdAsync(Arg.Any<Guid>()).Returns(ServiceResult<UnitAssetResponse>.Success(
-            new UnitAssetResponse(Guid.NewGuid(), Guid.NewGuid(), "Unit 4B", "ACTIVE", "OCCUPIED", null, null, "AAAAAAAAAAA=", DateTimeOffset.UtcNow)));
+            new UnitAssetResponse(Guid.NewGuid(), Guid.NewGuid(), "Unit 4B", "ACTIVE", "OCCUPIED", null, null, null, "AAAAAAAAAAA=", DateTimeOffset.UtcNow)));
     }
 
     public void Dispose() => TenantContext.Current = null;
@@ -64,7 +64,7 @@ public sealed class RentArrearsServiceTests : IDisposable
         NullLogger<RentArrearsService>.Instance);
 
     private RentSchedule Schedule(Guid? tenantId = null) =>
-        RentSchedule.Create(tenantId ?? _tenantId, Guid.NewGuid(), null, 1000m, "USD", new DateOnly(2026, 1, 1), 5, 5, null);
+        RentSchedule.Create(tenantId ?? _tenantId, Guid.NewGuid(), null, Guid.NewGuid(), 1000m, "USD", new DateOnly(2026, 1, 1), 5, 5, null);
 
     private void Arrange(params RentSchedule[] schedules)
     {
@@ -218,7 +218,7 @@ public sealed class RentArrearsServiceTests : IDisposable
         {
             seen.Add(TenantContext.Current?.TenantId);
             return ServiceResult<UnitAssetResponse>.Success(
-                new UnitAssetResponse(schedule.UnitAssetId, Guid.NewGuid(), "Unit 4B", "ACTIVE", "OCCUPIED", null, null, "AAAAAAAAAAA=", DateTimeOffset.UtcNow));
+                new UnitAssetResponse(schedule.UnitAssetId, Guid.NewGuid(), "Unit 4B", "ACTIVE", "OCCUPIED", null, null, null, "AAAAAAAAAAA=", DateTimeOffset.UtcNow));
         });
         TenantContext.Current = null;
         var sut = CreateSut();

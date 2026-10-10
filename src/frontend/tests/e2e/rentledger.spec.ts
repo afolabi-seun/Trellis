@@ -15,6 +15,8 @@ import {
   seedTenantAdmin,
   seedUnitAsset,
   SEED_PASSWORD,
+  getLeasesForUnit,
+  getUnitOccupancyStatus,
 } from "./support/dbSeed";
 
 const KES_TENANT_ID = "f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1";
@@ -52,6 +54,12 @@ const threeMonthsAgo = (() => {
   return d.toISOString().slice(0, 10);
 })();
 const today = new Date().toISOString().slice(0, 10);
+// BDR-LSE-009: the manual lease this schedule starts ends in 20 days — inside "Within 30 days".
+const leaseEnd = (() => {
+  const d = new Date();
+  d.setUTCDate(d.getUTCDate() + 20);
+  return d.toISOString().slice(0, 10);
+})();
 
 test.describe.configure({ mode: "serial" });
 
@@ -142,11 +150,32 @@ test("BDR-RENT-001/003: staff create a schedule for an occupied unit and, three 
   await page.getByRole("option", { name: UNIT_LABEL }).click();
   await dialog.getByLabel("Rent per period").fill("1000");
   await dialog.getByLabel("Start date").fill(threeMonthsAgo);
+  // BDR-LSE-009: the unit has no lease yet, so the schedule starts one and needs its term.
+  await dialog.getByRole("button", { name: "Create schedule" }).click();
+  await expect(dialog.getByText("Lease end date is required.")).toBeVisible();
+  await dialog.getByLabel("Lease end date").fill(leaseEnd);
   await dialog.getByRole("button", { name: "Create schedule" }).click();
 
   const row = page.getByRole("row", { name: new RegExp(UNIT_LABEL) });
   await expect(row).toBeVisible();
   await expect(row.getByText("In arrears", { exact: true })).toBeVisible();
+  expect(await getUnitOccupancyStatus(UNIT_ID)).toBe("OCCUPIED");
+  expect(await getLeasesForUnit(UNIT_ID)).toEqual([
+    expect.objectContaining({
+      source: "MANUAL",
+      status: "ACTIVE",
+      termType: "FIXED",
+      endDate: leaseEnd,
+    }),
+  ]);
+
+  // A manual tenancy is a lease like any other: it shows on the Leases page.
+  await page.getByRole("link", { name: "Leases", exact: true }).click();
+  await page.getByRole("tab", { name: "Within 30 days (1)" }).click();
+  await expect(
+    page.getByRole("row", { name: new RegExp(UNIT_LABEL) }).getByText("Rent schedule"),
+  ).toBeVisible();
+  await page.getByRole("link", { name: "Rent Schedules", exact: true }).click();
 
   await page.getByRole("link", { name: "Arrears", exact: true }).click();
   await expect(page).toHaveURL(/\/admin\/rent-arrears$/);
@@ -248,10 +277,26 @@ test("BDR-RENT-001: terms can be edited, and an ended schedule accepts no more r
   await expect(dialog).toBeHidden();
   await expect(page.getByText(/Grace period: 10 days/)).toBeVisible();
 
-  page.once("dialog", (d) => d.accept());
-  await page.getByRole("button", { name: "End schedule" }).click();
+  // The schedule started its own (MANUAL) lease, so ending it ends the tenancy and asks why (BDR-LSE-011).
+  await page.getByRole("button", { name: "End tenancy" }).click();
+  const endDialog = page.getByRole("dialog");
+  await endDialog.getByLabel("Lease ended on").fill(today);
+  await endDialog.getByRole("textbox", { name: "Why did it end?" }).click();
+  await page.getByRole("option", { name: "Not renewed" }).click();
+  await endDialog.getByRole("textbox", { name: "Who ended it?" }).click();
+  await page.getByRole("option", { name: "The lessee" }).click();
+  await endDialog.getByRole("button", { name: "End tenancy" }).click();
+  await expect(endDialog).toBeHidden();
+
   await expect(page.getByText("Ended", { exact: true }).first()).toBeVisible();
   await expect(page.getByRole("button", { name: "Record payment received" })).toHaveCount(0);
+  // Ending a manual schedule used to leave its unit OCCUPIED; ending the lease vacates it.
+  expect(await getUnitOccupancyStatus(UNIT_ID)).toBe("VACANT");
+  expect((await getLeasesForUnit(UNIT_ID)).at(-1)).toMatchObject({
+    status: "ENDED",
+    endReason: "NON_RENEWAL",
+    endedBy: "LESSEE",
+  });
 });
 
 test("BDR-RENT-001: a DEPARTMENT_STAFF login reaches the rent screens", async ({ page }) => {
@@ -291,6 +336,8 @@ test("a tenant on a KES market gets KES as the default currency, not a hard-code
   await page.getByRole("option", { name: "Unit K1" }).click();
   await dialog.getByLabel("Rent per period").fill("50000");
   await dialog.getByLabel("Start date").fill(today);
+  await dialog.getByRole("textbox", { name: "Lease term" }).click();
+  await page.getByRole("option", { name: "Month-to-month" }).click();
   await dialog.getByRole("button", { name: "Create schedule" }).click();
   await expect(dialog).toBeHidden();
 

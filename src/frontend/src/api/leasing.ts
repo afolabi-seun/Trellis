@@ -19,6 +19,7 @@ type ApplicationLinkContextResponse = components["schemas"]["ApplicationLinkCont
 type ApplicationSubmitRequest = components["schemas"]["ApplicationSubmitRequest"];
 type ApplicationSubmitResponse = components["schemas"]["ApplicationSubmitResponse"];
 type EndLeaseRequest = components["schemas"]["EndLeaseRequest"];
+type SendForSignatureRequest = components["schemas"]["SendForSignatureRequest"];
 type ViewScreeningReportRequest = components["schemas"]["ViewScreeningReportRequest"];
 type ScreeningReportResponse = components["schemas"]["ScreeningReportResponse"];
 
@@ -83,13 +84,14 @@ export const applicationsApi = {
   decline: (id: string) =>
     apiFetch<ApplicationResponse>(`/api/v1/applications/${id}/decline`, { method: "POST" }),
 
-  sendForSignature: (id: string, draftDocumentId: string) =>
+  /** BDR-LSE-009 — the lease term travels with the signature request and becomes the lease record's term once signed. */
+  sendForSignature: (id: string, request: SendForSignatureRequest) =>
     apiFetch<ApplicationResponse>(`/api/v1/applications/${id}/send-for-signature`, {
       method: "POST",
-      body: { draftDocumentId },
+      body: request,
     }),
 
-  /** A staff-initiated move-out on a LEASED application — ends its rent schedule (if any) and frees the unit to be re-listed. */
+  /** A staff-initiated move-out on a LEASED application — ends its rent schedule (if any), records why the lease ended (BDR-LSE-011), and frees the unit to be re-listed. */
   endLease: (id: string, request: EndLeaseRequest) =>
     apiFetch<ApplicationResponse>(`/api/v1/applications/${id}/end-lease`, {
       method: "POST",

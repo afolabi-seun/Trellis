@@ -5,6 +5,7 @@ using Trellis.Api.Core.Helpers;
 using Trellis.Api.Core.Middleware;
 using Trellis.Api.Core.Results;
 using Trellis.Api.Modules.Billing.Application.Interfaces;
+using Trellis.Api.Modules.PropertyAsset.Application.Dtos;
 using Trellis.Api.Modules.PropertyAsset.Application.Interfaces;
 using Trellis.Api.Modules.RentLedger.Application.Dtos;
 using Trellis.Api.Modules.RentLedger.Application.Interfaces;
@@ -26,6 +27,7 @@ public sealed class RentScheduleService(
     IRentScheduleRepository scheduleRepository,
     IRentPaymentRecordRepository paymentRepository,
     IUnitAssetService unitAssetService,
+    ILeaseService leaseService,
     IModuleEntitlementService moduleEntitlementService,
     IAuditService auditService,
     IOptions<RentLedgerOptions> options) : IRentScheduleService
@@ -49,8 +51,16 @@ public sealed class RentScheduleService(
             return ServiceResult<RentScheduleResponse>.BusinessRuleViolation(ErrorCodeRegistry.RentLedger.UnitAlreadyHasActiveSchedule);
         }
 
+        var lease = await ResolveLeaseForManualScheduleAsync(request, createdBy);
+        if (lease.Outcome != ServiceResultOutcome.Success)
+        {
+            return lease.Outcome == ServiceResultOutcome.NotFound
+                ? ServiceResult<RentScheduleResponse>.NotFound()
+                : ServiceResult<RentScheduleResponse>.BusinessRuleViolation(lease.ErrorCode!);
+        }
+
         var schedule = RentSchedule.Create(
-            tenantId, request.UnitAssetId, null, request.RentAmount, request.Currency, request.StartDate,
+            tenantId, request.UnitAssetId, null, lease.Data!.LeaseId, request.RentAmount, request.Currency, request.StartDate,
             request.DueDayOfMonth, request.GracePeriodDays ?? options.Value.DefaultGracePeriodDays, createdBy);
 
         await scheduleRepository.AddAsync(schedule);
@@ -64,9 +74,6 @@ public sealed class RentScheduleService(
             // Lost a race against the one-active-schedule-per-unit partial unique index.
             return ServiceResult<RentScheduleResponse>.BusinessRuleViolation(ErrorCodeRegistry.RentLedger.UnitAlreadyHasActiveSchedule);
         }
-
-        // A schedule implies occupancy, and every unit that predates Leasing is backfilled VACANT — an already-OCCUPIED unit answers BusinessRuleViolation, which is the goal state.
-        await unitAssetService.MarkOccupiedAsync(request.UnitAssetId);
 
         await auditService.RecordAsync(
             tenantId, createdBy, AuditActorType.HumanUser, AuditTypes.RentLedger.RentScheduleCreated,
@@ -109,7 +116,7 @@ public sealed class RentScheduleService(
         return ServiceResult<RentScheduleResponse>.Success(await ToResponseAsync(schedule));
     }
 
-    public async Task<ServiceResult<RentScheduleResponse>> EndAsync(Guid rentScheduleId, Guid actorUserId)
+    public async Task<ServiceResult<RentScheduleResponse>> EndAsync(Guid rentScheduleId, RentScheduleEndRequest? request, Guid actorUserId)
     {
         var schedule = await scheduleRepository.GetByIdAsync(rentScheduleId);
         if (schedule is null)
@@ -117,20 +124,37 @@ public sealed class RentScheduleService(
             return ServiceResult<RentScheduleResponse>.NotFound();
         }
 
-        try
-        {
-            schedule.End();
-        }
-        catch (InvalidStatusTransitionException)
+        if (schedule.Status != RentScheduleStatus.Active)
         {
             return ServiceResult<RentScheduleResponse>.BusinessRuleViolation(ErrorCodeRegistry.RentLedger.InvalidStatusTransition);
         }
 
+        // A MANUAL lease exists only because of a rent schedule, so ending the schedule is ending
+        // the tenancy: the lease ends first (with BDR-LSE-011's reason, vacating the unit), and a
+        // rejected end leaves the schedule running. A LEASING lease is ended through Leasing;
+        // ending only its schedule just stops tracking rent against it.
+        var lease = await leaseService.GetByIdAsync(schedule.LeaseId);
+        if (lease.Outcome == ServiceResultOutcome.Success && lease.Data!.Source == "MANUAL" && lease.Data.Status == "ACTIVE")
+        {
+            if (request is null)
+            {
+                return ServiceResult<RentScheduleResponse>.BusinessRuleViolation(ErrorCodeRegistry.RentLedger.LeaseEndDetailsRequired);
+            }
+
+            var ended = await leaseService.EndAsync(
+                schedule.LeaseId, new LeaseEndRequest(request.EffectiveDate, request.Reason, request.EndedBy, request.Note), actorUserId);
+            if (ended.Outcome != ServiceResultOutcome.Success)
+            {
+                return ServiceResult<RentScheduleResponse>.BusinessRuleViolation(ended.ErrorCode ?? ErrorCodeRegistry.RentLedger.InvalidStatusTransition);
+            }
+        }
+
+        schedule.End();
         await scheduleRepository.SaveChangesAsync();
 
         await auditService.RecordAsync(
             schedule.TenantId, actorUserId, AuditActorType.HumanUser, AuditTypes.RentLedger.RentScheduleEnded,
-            $"{{\"rentScheduleId\":\"{schedule.RentScheduleId}\"}}");
+            $"{{\"rentScheduleId\":\"{schedule.RentScheduleId}\",\"leaseId\":\"{schedule.LeaseId}\"}}");
 
         return ServiceResult<RentScheduleResponse>.Success(await ToResponseAsync(schedule));
     }
@@ -196,7 +220,7 @@ public sealed class RentScheduleService(
     }
 
     public async Task<ServiceResult<bool>> EnsureScheduleForLeaseAsync(
-        Guid tenantId, Guid unitAssetId, Guid leaseApplicationId, decimal rentAmount, string currency, DateOnly availableFrom, Guid? actorUserId)
+        Guid tenantId, Guid unitAssetId, Guid leaseApplicationId, Guid leaseId, decimal rentAmount, string currency, DateOnly startDate, Guid? actorUserId)
     {
         if (!await moduleEntitlementService.IsEntitledAsync(tenantId, ModuleKey))
         {
@@ -223,8 +247,8 @@ public sealed class RentScheduleService(
         }
 
         var schedule = RentSchedule.Create(
-            tenantId, unitAssetId, leaseApplicationId, rentAmount, currency, availableFrom,
-            Math.Min(availableFrom.Day, MaxDerivedDueDay), options.Value.DefaultGracePeriodDays, actorUserId);
+            tenantId, unitAssetId, leaseApplicationId, leaseId, rentAmount, currency, startDate,
+            Math.Min(startDate.Day, MaxDerivedDueDay), options.Value.DefaultGracePeriodDays, actorUserId);
 
         await scheduleRepository.AddAsync(schedule);
 
@@ -307,6 +331,31 @@ public sealed class RentScheduleService(
 
     private static DateOnly Today => DateOnly.FromDateTime(DateTime.UtcNow);
 
+    /// <summary>
+    /// The unit's active lease if it has one (a Leasing tenant turning Rent Collection on later);
+    /// otherwise a new MANUAL lease from the request's term, which BDR-LSE-009 requires. If the
+    /// schedule insert later loses a race, that lease stays — but the race it lost is the same
+    /// one-per-unit race the lease's own unique index guards, so in practice the lease insert
+    /// fails first.
+    /// </summary>
+    private async Task<ServiceResult<LeaseResponse>> ResolveLeaseForManualScheduleAsync(RentScheduleCreateRequest request, Guid createdBy)
+    {
+        var active = await leaseService.GetActiveForUnitAsync(request.UnitAssetId);
+        if (active.Outcome == ServiceResultOutcome.Success)
+        {
+            return active;
+        }
+
+        var monthToMonth = request.LeaseMonthToMonth == true;
+        if (!monthToMonth && request.LeaseEndDate is null)
+        {
+            return ServiceResult<LeaseResponse>.BusinessRuleViolation(ErrorCodeRegistry.RentLedger.LeaseTermRequired);
+        }
+
+        return await leaseService.StartAsync(
+            new LeaseStartRequest(request.UnitAssetId, null, request.StartDate, true, monthToMonth ? null : request.LeaseEndDate), createdBy);
+    }
+
     private async Task<RentScheduleResponse> ToResponseAsync(RentSchedule schedule, decimal? totalReceived = null)
     {
         var received = totalReceived
@@ -315,10 +364,13 @@ public sealed class RentScheduleService(
         var unit = await unitAssetService.GetByIdAsync(schedule.UnitAssetId);
         var unitLabel = unit.Outcome == ServiceResultOutcome.Success ? unit.Data!.Label : "Unknown unit";
 
+        var lease = await leaseService.GetByIdAsync(schedule.LeaseId);
+        var leaseSource = lease.Outcome == ServiceResultOutcome.Success ? lease.Data!.Source : null;
+
         var evaluation = schedule.Status == RentScheduleStatus.Active ? schedule.Evaluate(received, Today) : null;
 
         return new RentScheduleResponse(
-            schedule.RentScheduleId, schedule.UnitAssetId, unitLabel, schedule.LeaseApplicationId, schedule.RentAmount,
+            schedule.RentScheduleId, schedule.UnitAssetId, unitLabel, schedule.LeaseApplicationId, schedule.LeaseId, leaseSource, schedule.RentAmount,
             schedule.Currency, schedule.StartDate, schedule.DueDayOfMonth, schedule.GracePeriodDays,
             schedule.Status.ToUpperSnakeCase(), evaluation?.Status.ToUpperSnakeCase(), evaluation?.PeriodsInArrears ?? 0,
             evaluation?.AmountShort ?? 0m, received, evaluation?.OldestUnpaidDueDate,

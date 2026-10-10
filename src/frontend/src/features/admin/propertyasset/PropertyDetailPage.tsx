@@ -35,6 +35,16 @@ const statusColor: Record<string, string> = { ACTIVE: "success.8", ARCHIVED: "gr
 const occupancyColor: Record<string, string> = { VACANT: "blue.8", OCCUPIED: "gray.8" };
 
 /** The third step of the exit-criterion flow (roadmap.md's Phase 2 row) — units/assets are managed from within their parent property, matching BDR-AST-001's Owner -> Property -> Unit/Asset hierarchy. */
+/** BDR-AST-005 — how long a vacant unit has been empty. "Unknown" (never a guess) for a unit whose vacancy predates lease records. */
+function vacancyLabel(occupancy?: string | null, vacantSince?: string | null) {
+  if (occupancy !== "VACANT") return "—";
+  if (!vacantSince) return "Unknown";
+  const days = Math.floor(
+    (Date.now() - new Date(`${vacantSince}T00:00:00Z`).getTime()) / 86_400_000,
+  );
+  return `${vacantSince} (${days} day${days === 1 ? "" : "s"})`;
+}
+
 export function PropertyDetailPage() {
   const { propertyId } = useParams<{ propertyId: string }>();
   const queryClient = useQueryClient();
@@ -130,6 +140,7 @@ export function PropertyDetailPage() {
             <Table.Th>Size (sq ft)</Table.Th>
             <Table.Th>Status</Table.Th>
             <Table.Th>Occupancy</Table.Th>
+            <Table.Th>Vacant since</Table.Th>
             <Table.Th />
           </Table.Tr>
         </Table.Thead>
@@ -146,6 +157,7 @@ export function PropertyDetailPage() {
                   {unit.occupancyStatus}
                 </Badge>
               </Table.Td>
+              <Table.Td>{vacancyLabel(unit.occupancyStatus, unit.vacantSince)}</Table.Td>
               <Table.Td>
                 {unit.status !== "ARCHIVED" && (
                   <Button

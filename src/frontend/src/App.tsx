@@ -13,6 +13,7 @@ import { RootRoute } from "./features/public/RootRoute";
 import { ApplicationsReviewPage } from "./features/admin/leasing/ApplicationsReviewPage";
 import { VacancyListingDetailPage } from "./features/admin/leasing/VacancyListingDetailPage";
 import { VacancyListingsPage } from "./features/admin/leasing/VacancyListingsPage";
+import { LeasesPage } from "./features/admin/leases/LeasesPage";
 import { RentArrearsPage } from "./features/admin/rentledger/RentArrearsPage";
 import { RentScheduleDetailPage } from "./features/admin/rentledger/RentScheduleDetailPage";
 import { RentSchedulesPage } from "./features/admin/rentledger/RentSchedulesPage";
@@ -73,6 +74,7 @@ export function App() {
           <Route path="vacancy-listings" element={<VacancyListingsPage />} />
           <Route path="vacancy-listings/:id" element={<VacancyListingDetailPage />} />
           <Route path="applications" element={<ApplicationsReviewPage />} />
+          <Route path="leases" element={<LeasesPage />} />
           <Route path="rent-schedules" element={<RentSchedulesPage />} />
           <Route path="rent-schedules/:id" element={<RentScheduleDetailPage />} />
           <Route path="rent-arrears" element={<RentArrearsPage />} />

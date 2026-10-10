@@ -26,12 +26,13 @@ public interface IApplicationService
 
     Task<ServiceResult<ApplicationResponse>> DeclineAsync(Guid applicationId, Guid staffUserId);
 
-    /// <summary>draftDocumentId: staff must already have uploaded the unsigned lease via the normal Document upload flow (DocumentType=LEASE, UnitAssetId set) — IESignatureProvider.SendForSignatureAsync's own required documentId parameter has nowhere else to come from.</summary>
-    Task<ServiceResult<ApplicationResponse>> SendForSignatureAsync(Guid applicationId, Guid draftDocumentId, Guid staffUserId);
+    /// <summary>request.DraftDocumentId: staff must already have uploaded the unsigned lease via the normal Document upload flow (DocumentType=LEASE, UnitAssetId set) — IESignatureProvider.SendForSignatureAsync's own required documentId parameter has nowhere else to come from. The lease term (BDR-LSE-009) is stored here and carried to the lease record once signed.</summary>
+    Task<ServiceResult<ApplicationResponse>> SendForSignatureAsync(Guid applicationId, SendForSignatureRequest request, Guid staffUserId);
 
     /// <summary>
     /// A staff-initiated move-out on a Leased application: ends the unit's rent schedule (if any),
-    /// marks the unit vacant, and closes out the application as LeaseEnded. The listing itself is
+    /// ends its lease record with a BDR-LSE-011 reason (which marks the unit vacant from that date),
+    /// and closes out the application as LeaseEnded. The listing itself is
     /// left as history (still LEASED) — re-letting the unit is a fresh listing, guarded by
     /// VacancyListingService.CreateAsync's own vacant-unit check.
     /// </summary>

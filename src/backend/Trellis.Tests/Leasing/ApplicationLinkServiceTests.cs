@@ -46,7 +46,7 @@ public sealed class ApplicationLinkServiceTests : IDisposable
         _entitlements.IsEntitledAsync(_tenantId, "LEASING").Returns(true);
         _listingRepository.GetByIdForTenantAsync(_tenantId, _listingId).Returns(listing);
         _unitAssetService.GetByIdAsync(_unitId).Returns(ServiceResult<UnitAssetResponse>.Success(
-            new UnitAssetResponse(_unitId, Guid.NewGuid(), "Unit 4B", "ACTIVE", "VACANT", null, null, "AAAAAAAAAAA=", DateTimeOffset.UtcNow)));
+            new UnitAssetResponse(_unitId, Guid.NewGuid(), "Unit 4B", "ACTIVE", "VACANT", null, null, null, "AAAAAAAAAAA=", DateTimeOffset.UtcNow)));
         return listing;
     }
 
@@ -125,7 +125,7 @@ public sealed class ApplicationLinkServiceTests : IDisposable
         {
             seen.Add(TenantContext.Current?.TenantId);
             return ServiceResult<UnitAssetResponse>.Success(
-                new UnitAssetResponse(_unitId, Guid.NewGuid(), "Unit 4B", "ACTIVE", "VACANT", null, null, "AAAAAAAAAAA=", DateTimeOffset.UtcNow));
+                new UnitAssetResponse(_unitId, Guid.NewGuid(), "Unit 4B", "ACTIVE", "VACANT", null, null, null, "AAAAAAAAAAA=", DateTimeOffset.UtcNow));
         });
         var sut = CreateSut();
         TenantContext.Current = null;

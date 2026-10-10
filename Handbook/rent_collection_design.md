@@ -74,6 +74,7 @@ trellis_rentledger.rent_payment_record    — one recorded (not processed) payme
 | tenant_id | UUID | NOT NULL | |
 | unit_asset_id | UUID | FK → `trellis_property.unit_asset` NOT NULL | |
 | lease_application_id | UUID | FK → `trellis_leasing.application` NULLABLE | Set when created via BDR-LSE-006; nullable so a schedule can also be entered manually for a unit occupied before Leasing existed |
+| lease_id | UUID | → `trellis_property.lease` NOT NULL | *Added in Phase 11.* The lease this schedule tracks rent for. A manually created schedule attaches to the unit's active lease if it has one, and otherwise starts a MANUAL lease from the term in the request (required in that case — BDR-LSE-009) |
 | rent_amount | NUMERIC(12,2) | NOT NULL | |
 | currency | CHAR(3) | NOT NULL | |
 | due_day_of_month | SMALLINT | NOT NULL CHECK (1–31) | |
@@ -83,9 +84,9 @@ trellis_rentledger.rent_payment_record    — one recorded (not processed) payme
 | last_arrears_alerted_period | DATE | NULLABLE | *Added in the Phase 10 build.* The due date of the latest past-grace unpaid period when the last arrears alert fired — a **per-period** dedupe key (see Arrears Flagging), not a once-ever timestamp |
 | ended_at, created_by, created_at, updated_at | | | Standard bookkeeping; `created_by` is null only for system-created rows |
 
-**Uniqueness (partial indexes):** at most one `ACTIVE` schedule per `unit_asset_id`, and at most one schedule per `lease_application_id` (which makes the lease-execution webhook's retry idempotent). A new lease on a unit with a still-`ACTIVE` schedule ends the prior one rather than failing — a signed lease is never blocked. A schedule created from a lease takes `due_day_of_month = min(available_from.day, 28)`; it is editable afterwards.
+**Uniqueness (partial indexes):** at most one `ACTIVE` schedule per `unit_asset_id`, and at most one schedule per `lease_application_id` (which makes the lease-execution webhook's retry idempotent). A new lease on a unit with a still-`ACTIVE` schedule ends the prior one rather than failing — a signed lease is never blocked. A schedule created from a lease starts on the lease's start date and takes `due_day_of_month = min(start_date.day, 28)` (before Phase 11: the listing's `available_from`); it is editable afterwards.
 
-**Ending a schedule** happens two ways: staff end one directly (`POST rent-schedules/{id}/end`), or Leasing ends the schedule tied to a lease it is ending (`IRentScheduleService.EndForLeaseAsync(tenantId, leaseApplicationId, actor)` — a tolerated no-op when Rent Collection isn't entitled, or when no schedule exists for that lease, since ending a lease must never be blocked by rent tracking being absent).
+**Ending a schedule** happens two ways: staff end one directly (`POST rent-schedules/{id}/end` — when its lease is MANUAL, that lease exists only because of this schedule, so ending the schedule ends the tenancy: the request then needs BDR-LSE-011's reason and party, and the lease is ended first, which vacates the unit), or Leasing ends the schedule tied to a lease it is ending (`IRentScheduleService.EndForLeaseAsync(tenantId, leaseApplicationId, actor)` — a tolerated no-op when Rent Collection isn't entitled, or when no schedule exists for that lease, since ending a lease must never be blocked by rent tracking being absent).
 
 ### trellis_rentledger.rent_payment_record
 

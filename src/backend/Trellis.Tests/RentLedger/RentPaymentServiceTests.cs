@@ -28,7 +28,7 @@ public sealed class RentPaymentServiceTests : IDisposable
 
     private RentSchedule ArrangeSchedule(bool ended = false)
     {
-        var schedule = RentSchedule.Create(_tenantId, Guid.NewGuid(), null, 1000m, "USD", new DateOnly(2026, 1, 1), 5, 5, null);
+        var schedule = RentSchedule.Create(_tenantId, Guid.NewGuid(), null, Guid.NewGuid(), 1000m, "USD", new DateOnly(2026, 1, 1), 5, 5, null);
         if (ended)
         {
             schedule.End();

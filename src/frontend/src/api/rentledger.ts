@@ -3,6 +3,7 @@ import type { components } from "./schema";
 
 type RentScheduleCreateRequest = components["schemas"]["RentScheduleCreateRequest"];
 type RentScheduleUpdateRequest = components["schemas"]["RentScheduleUpdateRequest"];
+type RentScheduleEndRequest = components["schemas"]["RentScheduleEndRequest"];
 type RentScheduleResponse = components["schemas"]["RentScheduleResponse"];
 type RentScheduleResponsePagedResponse = components["schemas"]["RentScheduleResponsePagedResponse"];
 type RentPaymentRecordCreateRequest = components["schemas"]["RentPaymentRecordCreateRequest"];
@@ -33,8 +34,12 @@ export const rentSchedulesApi = {
       body: request,
     }),
 
-  end: (id: string) =>
-    apiFetch<RentScheduleResponse>(`/api/v1/rent-schedules/${id}/end`, { method: "POST" }),
+  /** For a schedule whose lease is MANUAL, ending it ends the tenancy, so `request` (BDR-LSE-011's reason and party) is required; a LEASING lease's schedule ends without one. */
+  end: (id: string, request?: RentScheduleEndRequest) =>
+    apiFetch<RentScheduleResponse>(`/api/v1/rent-schedules/${id}/end`, {
+      method: "POST",
+      body: request,
+    }),
 
   listPaymentRecords: (id: string) =>
     apiFetch<RentPaymentRecordResponse[]>(`/api/v1/rent-schedules/${id}/payment-records`),

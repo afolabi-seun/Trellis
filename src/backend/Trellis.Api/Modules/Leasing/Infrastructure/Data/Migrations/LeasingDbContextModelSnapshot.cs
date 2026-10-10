@@ -79,14 +79,17 @@ namespace Trellis.Api.Modules.Leasing.Infrastructure.Data.Migrations
                         .HasColumnType("character varying(255)")
                         .HasColumnName("envelope_id");
 
+                    b.Property<DateOnly?>("LeaseEndDate")
+                        .HasColumnType("date")
+                        .HasColumnName("lease_end_date");
+
                     b.Property<DateOnly?>("LeaseEndedDate")
                         .HasColumnType("date")
                         .HasColumnName("lease_ended_date");
 
-                    b.Property<string>("LeaseEndedReason")
-                        .HasMaxLength(500)
-                        .HasColumnType("character varying(500)")
-                        .HasColumnName("lease_ended_reason");
+                    b.Property<DateOnly?>("LeaseStartDate")
+                        .HasColumnType("date")
+                        .HasColumnName("lease_start_date");
 
                     b.Property<Guid?>("SentForSignatureBy")
                         .HasColumnType("uuid")

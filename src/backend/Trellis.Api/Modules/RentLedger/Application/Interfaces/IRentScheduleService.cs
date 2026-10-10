@@ -8,12 +8,13 @@ public interface IRentScheduleService
 {
     // Staff (TENANT_ADMIN + DEPARTMENT_STAFF)
 
-    /// <summary>BDR-RENT-001's manual path — a unit already occupied before Leasing existed. Also marks the unit occupied (every legacy unit is backfilled VACANT, and a schedule implies occupancy).</summary>
+    /// <summary>BDR-RENT-001's manual path — a tenancy Leasing didn't start. Attaches to the unit's active lease if it has one; otherwise starts a MANUAL lease from the request's term (which marks the unit occupied).</summary>
     Task<ServiceResult<RentScheduleResponse>> CreateAsync(RentScheduleCreateRequest request, Guid createdBy);
 
     Task<ServiceResult<RentScheduleResponse>> UpdateAsync(Guid rentScheduleId, RentScheduleUpdateRequest request, Guid actorUserId);
 
-    Task<ServiceResult<RentScheduleResponse>> EndAsync(Guid rentScheduleId, Guid actorUserId);
+    /// <summary>For a schedule whose lease was started manually, also ends that lease — request then carries BDR-LSE-011's reason and party, and is required.</summary>
+    Task<ServiceResult<RentScheduleResponse>> EndAsync(Guid rentScheduleId, RentScheduleEndRequest? request, Guid actorUserId);
 
     Task<ServiceResult<PagedResponse<RentScheduleResponse>>> ListAsync(string? cursor, int limit);
 
@@ -39,7 +40,7 @@ public interface IRentScheduleService
     /// tenancy) so a signed lease is never blocked. Explicit tenantId — safe under SystemContext.
     /// </summary>
     Task<ServiceResult<bool>> EnsureScheduleForLeaseAsync(
-        Guid tenantId, Guid unitAssetId, Guid leaseApplicationId, decimal rentAmount, string currency, DateOnly availableFrom, Guid? actorUserId);
+        Guid tenantId, Guid unitAssetId, Guid leaseApplicationId, Guid leaseId, decimal rentAmount, string currency, DateOnly startDate, Guid? actorUserId);
 
     /// <summary>
     /// BDR-RENT-001's counterpart on the way out: called when Leasing ends a lease. A no-op (Success)

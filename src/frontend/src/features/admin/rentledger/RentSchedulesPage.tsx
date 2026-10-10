@@ -25,28 +25,49 @@ import { useTenantSettings } from "../settings/useTenantSettings";
 import { unitsApi } from "../../../api/units";
 import { dangerAlertStyles, infoAlertStyles } from "../../../theme/dangerStyles";
 import { formatCurrency } from "../../../utils/formatCurrency";
+import { leaseErrorMessage } from "../leases/leaseLabels";
 import { RentDisclaimer, RentStatusBadge } from "./rentStatus";
 
-const scheduleSchema = z.object({
-  propertyId: z.string().min(1, "Select a property."),
-  unitAssetId: z.string().min(1, "Select a unit."),
-  rentAmount: z
-    .number({ invalid_type_error: "Rent is required." })
-    .positive("Rent must be positive."),
-  currency: z.string().length(3, "Use a 3-letter currency code."),
-  startDate: z.string().min(1, "Start date is required."),
-  dueDayOfMonth: z
-    .number({ invalid_type_error: "Due day is required." })
-    .int()
-    .min(1, "Between 1 and 31.")
-    .max(31, "Between 1 and 31."),
-  gracePeriodDays: z
-    .number()
-    .int()
-    .min(0, "Between 0 and 60.")
-    .max(60, "Between 0 and 60.")
-    .optional(),
-});
+const scheduleSchema = z
+  .object({
+    propertyId: z.string().min(1, "Select a property."),
+    unitAssetId: z.string().min(1, "Select a unit."),
+    rentAmount: z
+      .number({ invalid_type_error: "Rent is required." })
+      .positive("Rent must be positive."),
+    currency: z.string().length(3, "Use a 3-letter currency code."),
+    startDate: z.string().min(1, "Start date is required."),
+    dueDayOfMonth: z
+      .number({ invalid_type_error: "Due day is required." })
+      .int()
+      .min(1, "Between 1 and 31.")
+      .max(31, "Between 1 and 31."),
+    gracePeriodDays: z
+      .number()
+      .int()
+      .min(0, "Between 0 and 60.")
+      .max(60, "Between 0 and 60.")
+      .optional(),
+    leaseTermType: z.enum(["FIXED", "MONTH_TO_MONTH"]),
+    leaseEndDate: z.string().optional(),
+  })
+  // BDR-LSE-009: a unit with no lease yet gets one from this schedule, and its term is required.
+  .superRefine((values, ctx) => {
+    if (values.leaseTermType !== "FIXED") return;
+    if (!values.leaseEndDate) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["leaseEndDate"],
+        message: "Lease end date is required.",
+      });
+    } else if (values.startDate && values.leaseEndDate <= values.startDate) {
+      ctx.addIssue({
+        code: "custom",
+        path: ["leaseEndDate"],
+        message: "The lease must end after it starts.",
+      });
+    }
+  });
 
 type ScheduleFormValues = z.infer<typeof scheduleSchema>;
 
@@ -73,17 +94,28 @@ export function RentSchedulesPage() {
     formState: { errors },
   } = useForm<ScheduleFormValues>({
     resolver: zodResolver(scheduleSchema),
-    defaultValues: { currency: "USD", dueDayOfMonth: 1, gracePeriodDays: 5 },
+    defaultValues: {
+      currency: "USD",
+      dueDayOfMonth: 1,
+      gracePeriodDays: 5,
+      leaseTermType: "FIXED",
+    },
   });
 
   // Settings load asynchronously; default the currency field to the tenant's own once known.
   const defaultCurrency = settingsQuery.data?.defaultCurrency ?? "USD";
   const openModalWithDefaults = () => {
-    reset({ currency: defaultCurrency, dueDayOfMonth: 1, gracePeriodDays: 5 });
+    reset({
+      currency: defaultCurrency,
+      dueDayOfMonth: 1,
+      gracePeriodDays: 5,
+      leaseTermType: "FIXED",
+    });
     openModal();
   };
 
   const selectedPropertyId = useWatch({ control, name: "propertyId" });
+  const leaseTermType = useWatch({ control, name: "leaseTermType" });
   const unitsQuery = useQuery({
     queryKey: ["propertyasset", "units", selectedPropertyId],
     queryFn: () => unitsApi.listByProperty(selectedPropertyId),
@@ -99,10 +131,18 @@ export function RentSchedulesPage() {
         startDate: values.startDate,
         dueDayOfMonth: values.dueDayOfMonth,
         gracePeriodDays: values.gracePeriodDays ?? null,
+        leaseEndDate: values.leaseTermType === "FIXED" ? values.leaseEndDate : null,
+        leaseMonthToMonth: values.leaseTermType === "MONTH_TO_MONTH",
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["rent"] });
-      reset({ currency: defaultCurrency, dueDayOfMonth: 1, gracePeriodDays: 5 });
+      queryClient.invalidateQueries({ queryKey: ["leases"] });
+      reset({
+        currency: defaultCurrency,
+        dueDayOfMonth: 1,
+        gracePeriodDays: 5,
+        leaseTermType: "FIXED",
+      });
       closeModal();
     },
   });
@@ -203,9 +243,7 @@ export function RentSchedulesPage() {
             {createMutation.error instanceof TrellisApiError &&
             createMutation.error.code === "TRL-E-RENT-12001"
               ? "That unit already has an active rent schedule."
-              : createMutation.error instanceof TrellisApiError
-                ? createMutation.error.message
-                : "Something went wrong."}
+              : leaseErrorMessage(createMutation.error)}
           </Alert>
         )}
 
@@ -296,6 +334,31 @@ export function RentSchedulesPage() {
                 />
               )}
             />
+            <Controller
+              control={control}
+              name="leaseTermType"
+              render={({ field }) => (
+                <Select
+                  label="Lease term"
+                  description="If the unit already has a lease, the schedule joins it and this is ignored."
+                  data={[
+                    { value: "FIXED", label: "Fixed term" },
+                    { value: "MONTH_TO_MONTH", label: "Month-to-month" },
+                  ]}
+                  value={field.value}
+                  onChange={(value) => field.onChange(value ?? "FIXED")}
+                  allowDeselect={false}
+                />
+              )}
+            />
+            {leaseTermType === "FIXED" && (
+              <TextInput
+                label="Lease end date"
+                type="date"
+                error={errors.leaseEndDate?.message}
+                {...register("leaseEndDate")}
+              />
+            )}
             <Button type="submit" loading={createMutation.isPending} fullWidth>
               Create schedule
             </Button>

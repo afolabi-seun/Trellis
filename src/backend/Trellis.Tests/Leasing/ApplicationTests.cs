@@ -156,17 +156,16 @@ public sealed class ApplicationTests
     }
 
     [Fact]
-    public void MarkLeaseEnded_FromLeased_Succeeds_AndRecordsTheEffectiveDateAndReason()
+    public void MarkLeaseEnded_FromLeased_Succeeds_AndRecordsTheEffectiveDate()
     {
         var application = CreateSubmitted();
         application.Approve();
         application.MarkLeased();
 
-        application.MarkLeaseEnded(new DateOnly(2026, 6, 30), "Tenant relocated");
+        application.MarkLeaseEnded(new DateOnly(2026, 6, 30));
 
         application.Status.Should().Be(ApplicationStatus.LeaseEnded);
         application.LeaseEndedDate.Should().Be(new DateOnly(2026, 6, 30));
-        application.LeaseEndedReason.Should().Be("Tenant relocated");
     }
 
     [Theory]
@@ -180,7 +179,7 @@ public sealed class ApplicationTests
             application.Approve();
         }
 
-        var act = () => application.MarkLeaseEnded(new DateOnly(2026, 6, 30), null);
+        var act = () => application.MarkLeaseEnded(new DateOnly(2026, 6, 30));
 
         act.Should().Throw<InvalidStatusTransitionException>();
     }
@@ -191,10 +190,37 @@ public sealed class ApplicationTests
         var application = CreateSubmitted();
         application.Approve();
         application.MarkLeased();
-        application.MarkLeaseEnded(new DateOnly(2026, 6, 30), null);
+        application.MarkLeaseEnded(new DateOnly(2026, 6, 30));
 
-        var act = () => application.MarkLeaseEnded(new DateOnly(2026, 7, 1), null);
+        var act = () => application.MarkLeaseEnded(new DateOnly(2026, 7, 1));
 
         act.Should().Throw<InvalidStatusTransitionException>();
+    }
+
+    [Fact]
+    public void MarkSentForSignature_RecordsTheLeaseTerm()
+    {
+        var application = CreateSubmitted();
+        application.Approve();
+
+        application.MarkSentForSignature("env-1", Guid.NewGuid(), null, new DateOnly(2026, 11, 1), new DateOnly(2027, 10, 31));
+
+        application.LeaseStartDate.Should().Be(new DateOnly(2026, 11, 1));
+        application.LeaseEndDate.Should().Be(new DateOnly(2027, 10, 31));
+    }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("2026-11-01")]
+    [InlineData("2026-12-01")]
+    public void MarkSentForSignature_WithAnEndDateButNoValidStartBeforeIt_Throws(string? start)
+    {
+        var application = CreateSubmitted();
+        application.Approve();
+
+        var act = () => application.MarkSentForSignature(
+            "env-1", Guid.NewGuid(), null, start is null ? null : DateOnly.Parse(start, System.Globalization.CultureInfo.InvariantCulture), new DateOnly(2026, 11, 1));
+
+        act.Should().Throw<ArgumentException>();
     }
 }

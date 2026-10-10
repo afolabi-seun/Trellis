@@ -42,7 +42,7 @@ public sealed class LeasingControllerRoleGateTests : IClassFixture<CustomWebAppl
             ServiceResult<PagedResponse<ApplicationResponse>>.Success(new PagedResponse<ApplicationResponse>([], null, false, 0)));
         applicationService.EndLeaseAsync(Arg.Any<Guid>(), Arg.Any<EndLeaseRequest>(), Arg.Any<Guid>()).Returns(
             ServiceResult<ApplicationResponse>.Success(
-                new ApplicationResponse(Guid.NewGuid(), Guid.NewGuid(), "a@example.com", "Ada", "LEASE_ENDED", null, DateTimeOffset.UtcNow)));
+                new ApplicationResponse(Guid.NewGuid(), Guid.NewGuid(), "a@example.com", "Ada", "LEASE_ENDED", null, DateTimeOffset.UtcNow, null, null)));
 
         var screeningReportService = Substitute.For<IScreeningReportService>();
         screeningReportService.ViewAsync(Arg.Any<Guid>(), Arg.Any<Guid>(), Arg.Any<string>()).Returns(
@@ -143,7 +143,7 @@ public sealed class LeasingControllerRoleGateTests : IClassFixture<CustomWebAppl
         await using var _ = handle;
 
         var response = await client.PostAsJsonAsync(
-            $"/api/v1/applications/{Guid.NewGuid()}/end-lease", new EndLeaseRequest(new DateOnly(2026, 6, 30), null));
+            $"/api/v1/applications/{Guid.NewGuid()}/end-lease", new EndLeaseRequest(new DateOnly(2026, 6, 30), "NON_RENEWAL", "LESSEE", null));
 
         response.StatusCode.Should().Be(HttpStatusCode.OK);
     }

@@ -8,7 +8,7 @@ namespace Trellis.Tests.RentLedger;
 public sealed class RentScheduleTests
 {
     private static RentSchedule CreateActive() =>
-        RentSchedule.Create(Guid.NewGuid(), Guid.NewGuid(), null, 1000m, "usd", new DateOnly(2026, 1, 1), 5, 5, Guid.NewGuid());
+        RentSchedule.Create(Guid.NewGuid(), Guid.NewGuid(), null, Guid.NewGuid(), 1000m, "usd", new DateOnly(2026, 1, 1), 5, 5, Guid.NewGuid());
 
     [Fact]
     public void Create_StartsActive_UppercasesTheCurrency_AndDefaultsTheAlertKeyToNull()
@@ -30,7 +30,7 @@ public sealed class RentScheduleTests
     [InlineData(1000, 5, 61)]
     public void Create_RejectsInvalidTerms(decimal amount, int dueDay, int grace)
     {
-        var act = () => RentSchedule.Create(Guid.NewGuid(), Guid.NewGuid(), null, amount, "USD", new DateOnly(2026, 1, 1), dueDay, grace, null);
+        var act = () => RentSchedule.Create(Guid.NewGuid(), Guid.NewGuid(), null, Guid.NewGuid(), amount, "USD", new DateOnly(2026, 1, 1), dueDay, grace, null);
 
         act.Should().Throw<ArgumentException>();
     }
@@ -38,7 +38,7 @@ public sealed class RentScheduleTests
     [Fact]
     public void Create_RejectsANonThreeLetterCurrency()
     {
-        var act = () => RentSchedule.Create(Guid.NewGuid(), Guid.NewGuid(), null, 1000m, "US", new DateOnly(2026, 1, 1), 5, 5, null);
+        var act = () => RentSchedule.Create(Guid.NewGuid(), Guid.NewGuid(), null, Guid.NewGuid(), 1000m, "US", new DateOnly(2026, 1, 1), 5, 5, null);
 
         act.Should().Throw<ArgumentException>();
     }

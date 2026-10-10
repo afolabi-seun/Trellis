@@ -121,6 +121,10 @@ namespace Trellis.Api.Modules.RentLedger.Infrastructure.Data.Migrations
                         .HasColumnType("uuid")
                         .HasColumnName("lease_application_id");
 
+                    b.Property<Guid>("LeaseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lease_id");
+
                     b.Property<decimal>("RentAmount")
                         .HasColumnType("numeric(12,2)")
                         .HasColumnName("rent_amount");
@@ -154,6 +158,8 @@ namespace Trellis.Api.Modules.RentLedger.Infrastructure.Data.Migrations
                         .HasColumnName("xmin");
 
                     b.HasKey("RentScheduleId");
+
+                    b.HasIndex("LeaseId");
 
                     b.HasIndex("TenantId");
 

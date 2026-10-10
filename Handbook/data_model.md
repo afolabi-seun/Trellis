@@ -15,7 +15,7 @@ it does not own — cross-module data needs go through that module's service cla
 | `trellis_tenant` | Tenant | 1 | tenant |
 | `trellis_notification` | Notification | 3 | notification_template, notification_delivery, tenant_notification_channel_pref — see `notifications_design.md` |
 | `trellis_auth` | Auth | 4 | app_user, session, password_reset_token, mfa_recovery_code — see `security_guide.md` |
-| `trellis_property` | PropertyAsset | 3 | owner, property, unit_asset |
+| `trellis_property` | PropertyAsset | 4 | owner, property, unit_asset, lease |
 | `trellis_document` | Document | 2 | document, document_version |
 | `trellis_workflow` | Workflow | 4 | department, workflow_template, workflow_instance, workflow_step |
 | `trellis_inspection` | Inspection | 3 | inspection, inspection_item, inspection_photo |
@@ -187,9 +187,37 @@ documents/workflow history attach at this record and can't be left dangling.
 | acquisition_value | NUMERIC(14,2) | NULLABLE | Added at Phase 2 implementation, same BDR-AST-002 gap — acquisition_date omitted at this level, since a unit/asset's acquisition date is rarely tracked separately from its parent property's |
 | created_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | Added at Phase 2 implementation — the originally documented schema had no timestamps at all, but keyset pagination needs a stable, meaningful ordering key |
 | updated_at | TIMESTAMPTZ | NOT NULL DEFAULT NOW() | |
+| occupancy_status | VARCHAR(20) | NOT NULL DEFAULT 'VACANT' | VACANT\|OCCUPIED. Added in Phase 9. Since Phase 11, OCCUPIED exactly when the unit has an ACTIVE `lease`, and only `LeaseService` changes it |
+| vacant_since | DATE | NULLABLE | BDR-AST-005, Phase 11. Set on creation (vacant since today) and when a lease ends (that lease's end date); cleared when one starts. Null on a vacant unit means genuinely unknown — never guessed |
 
 Documents, workflow instances, and inspections attach at the `property_id` or
 `unit_asset_id` level (BDR-AST-003). Never a hard delete, same reasoning as `property`.
+
+### trellis_property.lease (new — BDR-LSE-009/011, real as of BRD v0.6, Phase 11)
+
+The record of why a unit is occupied: one row per tenancy, whichever add-on started it. It lives
+in PropertyAsset (Core) rather than Leasing because Leasing and Rent Collection are independently
+entitled add-ons — a tenant with only Rent Collection still has tenancies whose term and end
+matter, and PropertyAsset already owned occupancy. No lessee PII: a LEASING lease points at its
+application, which owns the applicant's details and their POPIA handling.
+
+| Column | Type | Constraints | Description |
+|--------|------|-------------|-------------|
+| lease_id | UUID | PK | |
+| tenant_id | UUID | NOT NULL | RLS |
+| unit_asset_id | UUID | NOT NULL | |
+| source | VARCHAR(20) | NOT NULL | LEASING (executed through Leasing) \| MANUAL (started with a rent schedule) |
+| lease_application_id | UUID | NULLABLE, UNIQUE where set | Set exactly when source = LEASING; makes the e-signature webhook's lease creation idempotent |
+| start_date | DATE | NOT NULL | |
+| term_type | VARCHAR(20) | NOT NULL | FIXED \| MONTH_TO_MONTH \| NOT_RECORDED (leases that predate term capture — never guessed) |
+| end_date | DATE | NULLABLE | Set exactly when term_type = FIXED, after start_date (CHECK) |
+| status | VARCHAR(20) | NOT NULL | ACTIVE \| ENDED; at most one ACTIVE per unit (partial unique index) |
+| ended_on, end_reason, ended_by, end_note | | NULLABLE | Set together when ENDED (CHECK). end_reason from BDR-LSE-011's fixed list, or NOT_RECORDED for leases ended before it existed (ended_by then null); end_note ≤ 500 chars, required when the reason is OTHER |
+| created_by, created_at, updated_at, xmin | | | Standard bookkeeping and optimistic concurrency |
+
+No DELETE grant: an ended lease is history. Every `trellis_rentledger.rent_schedule` points at one
+(`lease_id`). Existing tenancies were backfilled by the Leasing and RentLedger migrations that
+introduced this table (both migrate after PropertyAsset).
 
 ### trellis_vendor.vendor
 

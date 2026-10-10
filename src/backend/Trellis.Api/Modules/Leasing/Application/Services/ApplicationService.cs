@@ -15,6 +15,7 @@ using Trellis.Api.Modules.Leasing.Infrastructure.Security;
 using Trellis.Api.Modules.Notification.Application.Dtos;
 using Trellis.Api.Modules.Notification.Application.Interfaces;
 using Trellis.Api.Modules.Notification.Domain.Entities;
+using Trellis.Api.Modules.PropertyAsset.Application.Dtos;
 using Trellis.Api.Modules.PropertyAsset.Application.Interfaces;
 using Trellis.Api.Modules.RentLedger.Application.Interfaces;
 using Trellis.Api.Modules.Reporting.Application.Interfaces;
@@ -38,7 +39,7 @@ public sealed class ApplicationService(
     ITenantSettingsService tenantSettingsService,
     INotificationService notificationService,
     IDocumentService documentService,
-    IUnitAssetService unitAssetService,
+    ILeaseService leaseService,
     IRentScheduleService rentScheduleService,
     IEncryptionService encryptionService,
     IAuditService auditService) : IApplicationService
@@ -204,8 +205,9 @@ public sealed class ApplicationService(
         return ServiceResult<ApplicationResponse>.Success(await ToResponseAsync(application));
     }
 
-    public async Task<ServiceResult<ApplicationResponse>> SendForSignatureAsync(Guid applicationId, Guid draftDocumentId, Guid staffUserId)
+    public async Task<ServiceResult<ApplicationResponse>> SendForSignatureAsync(Guid applicationId, SendForSignatureRequest request, Guid staffUserId)
     {
+        var draftDocumentId = request.DraftDocumentId;
         var application = await repository.GetByIdAsync(applicationId);
         if (application is null)
         {
@@ -243,7 +245,9 @@ public sealed class ApplicationService(
         };
 
         var envelopeId = await eSignatureProvider.SendForSignatureAsync(draftDocumentId, signers);
-        application.MarkSentForSignature(envelopeId, staffUserId, draftDocumentId);
+        // The validator has already rejected an end date on/before the start, so this can't throw.
+        application.MarkSentForSignature(
+            envelopeId, staffUserId, draftDocumentId, request.LeaseStartDate, request.MonthToMonth ? null : request.LeaseEndDate);
 
         await AddEventAsync(application, ApplicationEventTypes.SentForSignature, ApplicationEventActorType.HumanUser, staffUserId,
             $"{{\"draftDocumentId\":\"{draftDocumentId}\",\"envelopeId\":\"{envelopeId}\"}}");
@@ -269,27 +273,41 @@ public sealed class ApplicationService(
             return ServiceResult<ApplicationResponse>.BusinessRuleViolation(ErrorCodeRegistry.Leasing.InvalidStatusTransition);
         }
 
-        var listing = await listingRepository.GetByIdAsync(application.VacancyListingId)
-            ?? throw new InvalidOperationException($"Vacancy listing {application.VacancyListingId} not found for application {application.ApplicationId}.");
-
-        // Ending the schedule and vacating the unit both tolerate "already done" — a retry after a
-        // partial failure must still be able to complete, same posture as the lease-execution webhook.
-        await rentScheduleService.EndForLeaseAsync(application.TenantId, application.ApplicationId, staffUserId);
-
-        var vacated = await unitAssetService.MarkVacantAsync(listing.UnitAssetId);
-        if (vacated.Outcome is not (ServiceResultOutcome.Success or ServiceResultOutcome.BusinessRuleViolation))
+        // Every Leased application has a lease record — lease execution creates one, and the
+        // migration that introduced lease records backfilled the rest.
+        var leaseResult = await leaseService.GetByLeaseApplicationIdAsync(application.ApplicationId);
+        if (leaseResult.Outcome != ServiceResultOutcome.Success)
         {
-            throw new InvalidOperationException($"Marking the unit vacant failed: {vacated.Outcome}.");
+            throw new InvalidOperationException($"No lease record found for leased application {application.ApplicationId}.");
         }
 
-        application.MarkLeaseEnded(request.EffectiveDate, request.Reason);
-        await AddEventAsync(application, ApplicationEventTypes.LeaseEnded, ApplicationEventActorType.HumanUser, staffUserId,
-            $"{{\"effectiveDate\":\"{request.EffectiveDate:O}\"}}");
-        await repository.SaveChangesAsync();
+        var lease = leaseResult.Data!;
 
-        await auditService.RecordAsync(
-            application.TenantId, staffUserId, AuditActorType.HumanUser, AuditTypes.Leasing.LeaseEnded,
-            $"{{\"applicationId\":\"{application.ApplicationId}\",\"unitAssetId\":\"{listing.UnitAssetId}\"}}");
+        // Checked here, before anything changes, so a rejected end leaves the rent schedule running.
+        if (request.EffectiveDate < lease.StartDate)
+        {
+            return ServiceResult<ApplicationResponse>.BusinessRuleViolation(ErrorCodeRegistry.PropertyAsset.InvalidLeaseEnd);
+        }
+
+        // Ending the schedule and the lease both tolerate "already done" — a retry after a partial
+        // failure must still be able to complete, same posture as the lease-execution webhook.
+        await rentScheduleService.EndForLeaseAsync(application.TenantId, application.ApplicationId, staffUserId);
+
+        if (lease.Status == "ACTIVE")
+        {
+            // Ending the lease is what vacates the unit (BDR-AST-005) and records why it ended (BDR-LSE-011).
+            var ended = await leaseService.EndAsync(
+                lease.LeaseId, new LeaseEndRequest(request.EffectiveDate, request.Reason, request.EndedBy, request.Note), staffUserId);
+            if (ended.Outcome != ServiceResultOutcome.Success)
+            {
+                throw new InvalidOperationException($"Ending lease {lease.LeaseId} failed: {ended.Outcome} {ended.ErrorCode}.");
+            }
+        }
+
+        application.MarkLeaseEnded(request.EffectiveDate);
+        await AddEventAsync(application, ApplicationEventTypes.LeaseEnded, ApplicationEventActorType.HumanUser, staffUserId,
+            $"{{\"effectiveDate\":\"{request.EffectiveDate:O}\",\"leaseId\":\"{lease.LeaseId}\"}}");
+        await repository.SaveChangesAsync();
 
         return ServiceResult<ApplicationResponse>.Success(await ToResponseAsync(application));
     }
@@ -364,6 +382,7 @@ public sealed class ApplicationService(
         var screening = await screeningResultRepository.GetLatestForApplicationAsync(application.ApplicationId);
         return new ApplicationResponse(
             application.ApplicationId, application.VacancyListingId, application.ApplicantEmail, application.ApplicantFullName,
-            application.Status.ToUpperSnakeCase(), screening?.OutcomeSummary.ToUpperSnakeCase(), application.SubmittedAt);
+            application.Status.ToUpperSnakeCase(), screening?.OutcomeSummary.ToUpperSnakeCase(), application.SubmittedAt,
+            application.LeaseStartDate, application.LeaseEndDate);
     }
 }

@@ -23,6 +23,7 @@ public sealed class RentScheduleConfiguration : IEntityTypeConfiguration<RentSch
         builder.Property(s => s.TenantId).HasColumnName("tenant_id");
         builder.Property(s => s.UnitAssetId).HasColumnName("unit_asset_id");
         builder.Property(s => s.LeaseApplicationId).HasColumnName("lease_application_id");
+        builder.Property(s => s.LeaseId).HasColumnName("lease_id");
         builder.Property(s => s.RentAmount).HasColumnName("rent_amount").HasColumnType("numeric(12,2)");
         builder.Property(s => s.Currency).HasColumnName("currency").HasMaxLength(3);
         builder.Property(s => s.StartDate).HasColumnName("start_date");
@@ -41,6 +42,7 @@ public sealed class RentScheduleConfiguration : IEntityTypeConfiguration<RentSch
         builder.Property(s => s.UpdatedAt).HasColumnName("updated_at");
 
         builder.HasIndex(s => s.TenantId);
+        builder.HasIndex(s => s.LeaseId);
         builder.HasIndex(s => s.UnitAssetId);
     }
 }

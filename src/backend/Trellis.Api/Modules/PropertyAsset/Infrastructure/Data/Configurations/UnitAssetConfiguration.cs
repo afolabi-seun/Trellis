@@ -30,6 +30,7 @@ public sealed class UnitAssetConfiguration : IEntityTypeConfiguration<UnitAsset>
             .HasMaxLength(20)
             .HasDefaultValue(UnitAssetOccupancyStatus.Vacant);
 
+        builder.Property(u => u.VacantSince).HasColumnName("vacant_since");
         builder.Property(u => u.SizeSqft).HasColumnName("size_sqft").HasColumnType("numeric");
         builder.Property(u => u.AcquisitionValue).HasColumnName("acquisition_value").HasColumnType("numeric(14,2)");
         builder.Property(u => u.CreatedAt).HasColumnName("created_at");

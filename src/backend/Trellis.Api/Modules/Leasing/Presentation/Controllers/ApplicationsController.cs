@@ -53,7 +53,7 @@ public sealed class ApplicationsController(
     [HttpPost("{id:guid}/send-for-signature")]
     [ProducesResponseType(typeof(ApiResponse<ApplicationResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> SendForSignature(Guid id, [FromBody] SendForSignatureRequest request) =>
-        (await applicationService.SendForSignatureAsync(id, request.DraftDocumentId, CurrentUserId())).ToActionResult(HttpContext);
+        (await applicationService.SendForSignatureAsync(id, request, CurrentUserId())).ToActionResult(HttpContext);
 
     /// <summary>A staff-initiated move-out on a Leased application — ends its rent schedule (if any) and frees the unit to be re-listed.</summary>
     [HttpPost("{id:guid}/end-lease")]

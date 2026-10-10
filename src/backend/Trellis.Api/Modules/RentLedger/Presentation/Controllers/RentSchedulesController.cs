@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.Mvc.ModelBinding;
 using Trellis.Api.Core.Dtos;
 using Trellis.Api.Core.Results;
 using Trellis.Api.Modules.Billing.Presentation.Filters;
@@ -47,10 +48,11 @@ public sealed class RentSchedulesController(IRentScheduleService scheduleService
     public async Task<IActionResult> Update(Guid id, [FromBody] RentScheduleUpdateRequest request) =>
         (await scheduleService.UpdateAsync(id, request, CurrentUserId())).ToActionResult(HttpContext);
 
+    /// <summary>The body is optional: required only when the schedule's lease was started manually, since ending that schedule ends the tenancy (BDR-LSE-011).</summary>
     [HttpPost("{id:guid}/end")]
     [ProducesResponseType(typeof(ApiResponse<RentScheduleResponse>), StatusCodes.Status200OK)]
-    public async Task<IActionResult> End(Guid id) =>
-        (await scheduleService.EndAsync(id, CurrentUserId())).ToActionResult(HttpContext);
+    public async Task<IActionResult> End(Guid id, [FromBody(EmptyBodyBehavior = EmptyBodyBehavior.Allow)] RentScheduleEndRequest? request) =>
+        (await scheduleService.EndAsync(id, request, CurrentUserId())).ToActionResult(HttpContext);
 
     [HttpGet("{id:guid}/payment-records")]
     [ProducesResponseType(typeof(ApiResponse<IReadOnlyList<RentPaymentRecordResponse>>), StatusCodes.Status200OK)]

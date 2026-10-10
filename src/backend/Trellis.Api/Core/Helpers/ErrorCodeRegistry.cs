@@ -91,6 +91,15 @@ public static class ErrorCodeRegistry
 
         /// <summary>TRL-E-AST-3002 — can't archive a Property while it still has an active UnitAsset (BDR-AST-003: documents/workflow attach at this level).</summary>
         public const string PropertyHasActiveUnitAssets = "TRL-E-AST-3002";
+
+        /// <summary>TRL-E-AST-3003 — starting a lease on a unit that already has an ACTIVE lease (friendly pre-check ahead of the partial unique index).</summary>
+        public const string UnitAlreadyLeased = "TRL-E-AST-3003";
+
+        /// <summary>TRL-E-AST-3004 — a lease term that doesn't hold together: a fixed term without an end date or ending on/before its start, an end date on a month-to-month term, or recording NOT_RECORDED as a term.</summary>
+        public const string InvalidLeaseTerm = "TRL-E-AST-3004";
+
+        /// <summary>TRL-E-AST-3005 — ending a lease without a valid BDR-LSE-011 reason and party, before its start date, or with reason OTHER and no note.</summary>
+        public const string InvalidLeaseEnd = "TRL-E-AST-3005";
     }
 
     public static class Document
@@ -232,5 +241,11 @@ public static class ErrorCodeRegistry
 
         /// <summary>TRL-E-RENT-12002 — RecordAsync/UpdateAsync against an ENDED schedule.</summary>
         public const string ScheduleNotActive = "TRL-E-RENT-12002";
+
+        /// <summary>TRL-E-RENT-12003 — CreateAsync on a unit with no active lease, without a lease term: the schedule would start a lease, and BDR-LSE-009 needs its term.</summary>
+        public const string LeaseTermRequired = "TRL-E-RENT-12003";
+
+        /// <summary>TRL-E-RENT-12004 — EndAsync on a schedule whose lease was started manually, without the BDR-LSE-011 end details that ending its tenancy needs.</summary>
+        public const string LeaseEndDetailsRequired = "TRL-E-RENT-12004";
     }
 }

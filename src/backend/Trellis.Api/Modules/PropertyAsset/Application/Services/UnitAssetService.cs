@@ -108,50 +108,6 @@ public sealed class UnitAssetService(IUnitAssetRepository repository, IPropertyR
         return ServiceResult<UnitAssetResponse>.Success(ToResponse(unitAsset));
     }
 
-    public async Task<ServiceResult<UnitAssetResponse>> MarkOccupiedAsync(Guid unitAssetId)
-    {
-        var unitAsset = await repository.GetByIdAsync(unitAssetId);
-        if (unitAsset is null)
-        {
-            return ServiceResult<UnitAssetResponse>.NotFound();
-        }
-
-        try
-        {
-            unitAsset.MarkOccupied();
-        }
-        catch (InvalidStatusTransitionException)
-        {
-            return ServiceResult<UnitAssetResponse>.BusinessRuleViolation(ErrorCodeRegistry.PropertyAsset.InvalidStatusTransition);
-        }
-
-        await repository.SaveChangesAsync();
-
-        return ServiceResult<UnitAssetResponse>.Success(ToResponse(unitAsset));
-    }
-
-    public async Task<ServiceResult<UnitAssetResponse>> MarkVacantAsync(Guid unitAssetId)
-    {
-        var unitAsset = await repository.GetByIdAsync(unitAssetId);
-        if (unitAsset is null)
-        {
-            return ServiceResult<UnitAssetResponse>.NotFound();
-        }
-
-        try
-        {
-            unitAsset.MarkVacant();
-        }
-        catch (InvalidStatusTransitionException)
-        {
-            return ServiceResult<UnitAssetResponse>.BusinessRuleViolation(ErrorCodeRegistry.PropertyAsset.InvalidStatusTransition);
-        }
-
-        await repository.SaveChangesAsync();
-
-        return ServiceResult<UnitAssetResponse>.Success(ToResponse(unitAsset));
-    }
-
     public Task<IReadOnlyList<Guid>> ListUnitAssetIdsByPropertiesAsync(IReadOnlyCollection<Guid> propertyIds) =>
         repository.ListIdsByPropertiesAsync(propertyIds);
 
@@ -163,6 +119,7 @@ public sealed class UnitAssetService(IUnitAssetRepository repository, IPropertyR
         unitAsset.Label,
         unitAsset.Status.ToString().ToUpperInvariant(),
         unitAsset.OccupancyStatus.ToString().ToUpperInvariant(),
+        unitAsset.VacantSince,
         unitAsset.SizeSqft,
         unitAsset.AcquisitionValue,
         repository.GetRowVersion(unitAsset),

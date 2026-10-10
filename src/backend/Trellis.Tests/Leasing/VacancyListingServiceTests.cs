@@ -35,7 +35,7 @@ public sealed class VacancyListingServiceTests : IDisposable
         _repository.GetRowVersion(Arg.Any<VacancyListing>()).Returns("AAAAAAAAAAA=");
         _photoRepository.ListByListingAsync(Arg.Any<Guid>()).Returns([]);
         _unitAssetService.GetByIdAsync(_unitId).Returns(ServiceResult<UnitAssetResponse>.Success(
-            new UnitAssetResponse(_unitId, Guid.NewGuid(), "Unit 4B", "ACTIVE", "VACANT", null, null, "AAAAAAAAAAA=", DateTimeOffset.UtcNow)));
+            new UnitAssetResponse(_unitId, Guid.NewGuid(), "Unit 4B", "ACTIVE", "VACANT", null, null, null, "AAAAAAAAAAA=", DateTimeOffset.UtcNow)));
     }
 
     public void Dispose() => TenantContext.Current = null;
@@ -83,7 +83,7 @@ public sealed class VacancyListingServiceTests : IDisposable
     public async Task CreateAsync_ForAnOccupiedUnit_IsRejected_AUnitWithALiveLeaseCannotBeRelisted()
     {
         _unitAssetService.GetByIdAsync(_unitId).Returns(ServiceResult<UnitAssetResponse>.Success(
-            new UnitAssetResponse(_unitId, Guid.NewGuid(), "Unit 4B", "ACTIVE", "OCCUPIED", null, null, "AAAAAAAAAAA=", DateTimeOffset.UtcNow)));
+            new UnitAssetResponse(_unitId, Guid.NewGuid(), "Unit 4B", "ACTIVE", "OCCUPIED", null, null, null, "AAAAAAAAAAA=", DateTimeOffset.UtcNow)));
         var sut = CreateSut();
 
         var result = await sut.CreateAsync(new VacancyListingCreateRequest(_unitId, 1500m, "USD", new DateOnly(2026, 11, 1), null), Guid.NewGuid());

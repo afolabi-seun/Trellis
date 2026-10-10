@@ -23,6 +23,8 @@ import { TrellisApiError } from "../../../api/client";
 import { rentSchedulesApi } from "../../../api/rentledger";
 import { dangerAlertStyles, dangerButtonStyles } from "../../../theme/dangerStyles";
 import { formatCurrency } from "../../../utils/formatCurrency";
+import { EndLeaseModal, type EndLeaseValues } from "../leases/EndLeaseModal";
+import { leaseErrorMessage } from "../leases/leaseLabels";
 import { RentDisclaimer, RentStatusBadge } from "./rentStatus";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -61,7 +63,7 @@ function messageFor(error: unknown): string {
     if (error.code === "TRL-E-RENT-12002")
       return "This schedule has ended, so it can't be changed.";
     if (error.code === "TRL-E-RENT-12000") return "That has already been done.";
-    return error.message;
+    return leaseErrorMessage(error);
   }
   return "Something went wrong.";
 }
@@ -117,9 +119,15 @@ export function RentScheduleDetailPage() {
     },
   });
 
+  const [endLeaseOpened, { open: openEndLease, close: closeEndLease }] = useDisclosure(false);
   const endMutation = useMutation({
-    mutationFn: () => rentSchedulesApi.end(id!),
-    onSuccess: refresh,
+    mutationFn: (values?: EndLeaseValues) => rentSchedulesApi.end(id!, values),
+    onSuccess: () => {
+      refresh();
+      queryClient.invalidateQueries({ queryKey: ["leases"] });
+      queryClient.invalidateQueries({ queryKey: ["propertyasset", "units"] });
+      closeEndLease();
+    },
   });
 
   const voidMutation = useMutation({
@@ -134,6 +142,9 @@ export function RentScheduleDetailPage() {
 
   const schedule = scheduleQuery.data;
   const isActive = schedule?.status === "ACTIVE";
+  // A MANUAL lease exists only because of this schedule: ending the schedule ends the tenancy, so
+  // it asks why (BDR-LSE-011). A LEASING lease is ended from Applications; this just stops rent.
+  const endsTenancy = schedule?.leaseSource === "MANUAL";
   const currency = schedule?.currency ?? "USD";
 
   return (
@@ -152,7 +163,7 @@ export function RentScheduleDetailPage() {
 
       <RentDisclaimer />
 
-      {(scheduleQuery.isError || endMutation.isError) && (
+      {(scheduleQuery.isError || (endMutation.isError && !endLeaseOpened)) && (
         <Alert color="red" title="Something went wrong" styles={dangerAlertStyles}>
           {messageFor(scheduleQuery.error ?? endMutation.error)}
         </Alert>
@@ -200,14 +211,17 @@ export function RentScheduleDetailPage() {
                 styles={dangerButtonStyles}
                 loading={endMutation.isPending}
                 onClick={() => {
-                  if (
+                  if (endsTenancy) {
+                    endMutation.reset();
+                    openEndLease();
+                  } else if (
                     confirm("End this rent schedule? No further rent will be tracked against it.")
                   ) {
-                    endMutation.mutate();
+                    endMutation.mutate(undefined);
                   }
                 }}
               >
-                End schedule
+                {endsTenancy ? "End tenancy" : "End schedule"}
               </Button>
             </Group>
           )}
@@ -405,6 +419,15 @@ export function RentScheduleDetailPage() {
           </Button>
         </Stack>
       </Modal>
+      <EndLeaseModal
+        opened={endLeaseOpened}
+        onClose={closeEndLease}
+        description="This lease was started with this rent schedule, so ending it ends the tenancy, stops tracking rent, and marks the unit vacant from that date."
+        confirmLabel="End tenancy"
+        loading={endMutation.isPending}
+        error={endMutation.error}
+        onConfirm={(values) => endMutation.mutate(values)}
+      />
     </Stack>
   );
 }

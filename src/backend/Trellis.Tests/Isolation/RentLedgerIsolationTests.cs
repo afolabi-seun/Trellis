@@ -33,10 +33,10 @@ public sealed class RentLedgerIsolationTests(PostgresIsolationFixture fixture) :
         await using var seed = connection.CreateCommand();
         seed.CommandText = """
             insert into trellis_rentledger.rent_schedule
-                (rent_schedule_id, tenant_id, unit_asset_id, rent_amount, currency, start_date, due_day_of_month, grace_period_days, status, created_at, updated_at)
+                (rent_schedule_id, tenant_id, unit_asset_id, lease_id, rent_amount, currency, start_date, due_day_of_month, grace_period_days, status, created_at, updated_at)
             values
-                (@scheduleA, @tenantA, gen_random_uuid(), 1000, 'USD', '2026-01-01', 5, 5, 'ACTIVE', now(), now()),
-                (@scheduleB, @tenantB, gen_random_uuid(), 900, 'USD', '2026-01-01', 5, 5, 'ACTIVE', now(), now());
+                (@scheduleA, @tenantA, gen_random_uuid(), gen_random_uuid(), 1000, 'USD', '2026-01-01', 5, 5, 'ACTIVE', now(), now()),
+                (@scheduleB, @tenantB, gen_random_uuid(), gen_random_uuid(), 900, 'USD', '2026-01-01', 5, 5, 'ACTIVE', now(), now());
 
             insert into trellis_rentledger.rent_payment_record
                 (rent_payment_record_id, tenant_id, rent_schedule_id, amount_received, date_received, recorded_by_user_id, recorded_at)
@@ -175,8 +175,8 @@ public sealed class RentLedgerIsolationTests(PostgresIsolationFixture fixture) :
             await using var insert = connection.CreateCommand();
             insert.CommandText = """
                 insert into trellis_rentledger.rent_schedule
-                    (rent_schedule_id, tenant_id, unit_asset_id, lease_application_id, rent_amount, currency, start_date, due_day_of_month, grace_period_days, status, created_at, updated_at)
-                values (gen_random_uuid(), @tenant, @unit, @lease, 1000, 'USD', '2026-01-01', 5, 5, @status, now(), now());
+                    (rent_schedule_id, tenant_id, unit_asset_id, lease_application_id, lease_id, rent_amount, currency, start_date, due_day_of_month, grace_period_days, status, created_at, updated_at)
+                values (gen_random_uuid(), @tenant, @unit, @lease, gen_random_uuid(), 1000, 'USD', '2026-01-01', 5, 5, @status, now(), now());
                 """;
             insert.Parameters.AddWithValue("tenant", TenantA);
             insert.Parameters.AddWithValue("unit", unitId);
@@ -215,8 +215,8 @@ public sealed class RentLedgerIsolationTests(PostgresIsolationFixture fixture) :
             await using var insert = connection.CreateCommand();
             insert.CommandText = """
                 insert into trellis_rentledger.rent_schedule
-                    (rent_schedule_id, tenant_id, unit_asset_id, lease_application_id, rent_amount, currency, start_date, due_day_of_month, grace_period_days, status, created_at, updated_at)
-                values (gen_random_uuid(), @tenant, gen_random_uuid(), @lease, 1000, 'USD', '2026-01-01', 5, 5, @status, now(), now());
+                    (rent_schedule_id, tenant_id, unit_asset_id, lease_application_id, lease_id, rent_amount, currency, start_date, due_day_of_month, grace_period_days, status, created_at, updated_at)
+                values (gen_random_uuid(), @tenant, gen_random_uuid(), @lease, gen_random_uuid(), 1000, 'USD', '2026-01-01', 5, 5, @status, now(), now());
                 """;
             insert.Parameters.AddWithValue("tenant", TenantA);
             insert.Parameters.AddWithValue("lease", leaseApplicationId);
@@ -242,8 +242,8 @@ public sealed class RentLedgerIsolationTests(PostgresIsolationFixture fixture) :
         await using var insert = connection.CreateCommand();
         insert.CommandText = """
             insert into trellis_rentledger.rent_schedule
-                (rent_schedule_id, tenant_id, unit_asset_id, rent_amount, currency, start_date, due_day_of_month, grace_period_days, status, created_at, updated_at)
-            values (gen_random_uuid(), @tenant, gen_random_uuid(), @amount, 'USD', '2026-01-01', @dueDay, @grace, 'ACTIVE', now(), now());
+                (rent_schedule_id, tenant_id, unit_asset_id, lease_id, rent_amount, currency, start_date, due_day_of_month, grace_period_days, status, created_at, updated_at)
+            values (gen_random_uuid(), @tenant, gen_random_uuid(), gen_random_uuid(), @amount, 'USD', '2026-01-01', @dueDay, @grace, 'ACTIVE', now(), now());
             """;
         insert.Parameters.AddWithValue("tenant", TenantA);
         insert.Parameters.AddWithValue("dueDay", dueDay);

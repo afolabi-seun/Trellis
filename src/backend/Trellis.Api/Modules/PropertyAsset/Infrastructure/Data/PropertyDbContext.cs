@@ -8,6 +8,7 @@ public sealed class PropertyDbContext(DbContextOptions<PropertyDbContext> option
     public DbSet<Owner> Owners => Set<Owner>();
     public DbSet<Property> Properties => Set<Property>();
     public DbSet<UnitAsset> UnitAssets => Set<UnitAsset>();
+    public DbSet<Lease> Leases => Set<Lease>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) =>
         // Scoped by namespace — an unscoped ApplyConfigurationsFromAssembly(assembly) call would

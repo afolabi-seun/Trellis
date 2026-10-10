@@ -11,7 +11,9 @@ import {
   deleteTenantByName,
   getDocumentsForUnit,
   getEnvelopeIdForTenant,
+  getLeasesForUnit,
   getRentSchedulesForUnit,
+  getUnitVacantSince,
   getUnitOccupancyStatus,
   seedApplicationLinkToken,
   seedDepartmentStaff,
@@ -95,6 +97,18 @@ test.afterAll(async () => {
   await deleteBillingDataForTenant(UNENTITLED_TENANT_ID);
   await deleteTenantByName(UNENTITLED_TENANT_NAME);
 });
+
+/** yyyy-mm-dd, offset from today — lease dates must sit relative to the day the suite runs. */
+function isoDay(offsetDays: number): string {
+  const date = new Date();
+  date.setUTCDate(date.getUTCDate() + offsetDays);
+  return date.toISOString().slice(0, 10);
+}
+
+// BDR-LSE-009: a lease that started a month ago and ends in 45 days lands in "31–60 days".
+const LEASE_START = isoDay(-30);
+const LEASE_END = isoDay(45);
+const LEASE_ENDED_ON = isoDay(0);
 
 async function login(page: import("@playwright/test").Page, username: string) {
   await page.goto("/login");
@@ -216,6 +230,10 @@ test("BDR-LSE-004/005: staff review the application, approve it, and a completed
   const dialog = page.getByRole("dialog");
   await dialog.getByRole("textbox", { name: "Lease draft" }).click();
   await page.getByRole("option", { name: /Lease draft/ }).click();
+  // BDR-LSE-009: the send needs the lease term.
+  await expect(dialog.getByRole("button", { name: "Send for signature" })).toBeDisabled();
+  await dialog.getByLabel("Lease starts on").fill(LEASE_START);
+  await dialog.getByLabel("Lease ends on").fill(LEASE_END);
   await dialog.getByRole("button", { name: "Send for signature" }).click();
   await expect(dialog).toBeHidden();
 
@@ -232,11 +250,24 @@ test("BDR-LSE-004/005: staff review the application, approve it, and a completed
 
   expect(await getUnitOccupancyStatus(UNIT_ID)).toBe("OCCUPIED");
 
+  // BDR-LSE-009: the signed lease is recorded with the term staff set, and the unit's earlier,
+  // manually started tenancy is superseded rather than blocking it.
+  const leases = await getLeasesForUnit(UNIT_ID);
+  expect(leases).toHaveLength(2);
+  expect(leases[0]).toMatchObject({ source: "MANUAL", status: "ENDED", endReason: "OTHER" });
+  expect(leases[1]).toMatchObject({
+    source: "LEASING",
+    status: "ACTIVE",
+    termType: "FIXED",
+    endDate: LEASE_END,
+  });
+
   // BDR-LSE-006: the executed lease is the next VERSION of the draft staff sent — one document, two versions.
   const documents = await getDocumentsForUnit(UNIT_ID);
   expect(documents).toEqual([{ documentType: "LEASE", versionCount: 2, currentVersionNumber: 2 }]);
 
-  // BDR-RENT-001: the previous tenancy's schedule is ended and a new one starts from the listing's terms.
+  // BDR-RENT-001: the previous tenancy's schedule is ended and a new one starts from the listing's
+  // rent on the lease's start date, its due day taken from that date (capped at 28).
   const schedules = await getRentSchedulesForUnit(UNIT_ID);
   expect(schedules).toHaveLength(2);
   expect(schedules[0]).toMatchObject({
@@ -247,12 +278,20 @@ test("BDR-LSE-004/005: staff review the application, approve it, and a completed
   expect(schedules[1]).toMatchObject({
     status: "ACTIVE",
     rentAmount: 1500,
-    dueDayOfMonth: 1,
+    dueDayOfMonth: Math.min(Number(LEASE_START.slice(8)), 28),
     hasLeaseApplication: true,
   });
 
   await page.reload();
   await expect(page.getByText("LEASED", { exact: true }).first()).toBeVisible();
+
+  // BDR-LSE-009: it shows on the Leases page in the 31–60 day horizon.
+  await page.getByRole("link", { name: "Leases", exact: true }).click();
+  await expect(page).toHaveURL(/\/admin\/leases$/);
+  await page.getByRole("tab", { name: "31–60 days (1)" }).click();
+  await expect(page.getByRole("cell", { name: UNIT_LABEL })).toBeVisible();
+  await expect(page.getByRole("cell", { name: LEASE_END })).toBeVisible();
+  await expectNoAxeViolations(page);
 
   await page.goto(`/vacancies/${tenantSlugFor(TENANT_ID)}`);
   await expect(page.getByRole("link", { name: UNIT_LABEL })).toHaveCount(0);
@@ -306,8 +345,15 @@ test("BDR-LSE: staff end a lease, freeing the unit and its rent schedule so the 
   await row.getByRole("button", { name: "End lease" }).click();
   const dialog = page.getByRole("dialog");
   await expect(dialog.getByText("This ends the lease")).toBeVisible();
-  await dialog.getByLabel("Effective date").fill("2026-06-30");
-  await dialog.getByLabel("Reason (optional)").fill("Tenant relocated");
+  await dialog.getByLabel("Lease ended on").fill(LEASE_ENDED_ON);
+  // BDR-LSE-011: why and by whom, from fixed lists — and Other needs a note.
+  await dialog.getByRole("textbox", { name: "Why did it end?" }).click();
+  await page.getByRole("option", { name: "Other (add a note)" }).click();
+  await dialog.getByRole("textbox", { name: "Who ended it?" }).click();
+  await page.getByRole("option", { name: "The lessee" }).click();
+  await expect(dialog.getByRole("button", { name: "End lease" })).toBeDisabled();
+  await dialog.getByRole("textbox", { name: "Note" }).fill("Relocated for work");
+  await expectNoAxeViolations(page);
   await dialog.getByRole("button", { name: "End lease" }).click();
   await expect(dialog).toBeHidden();
 
@@ -316,15 +362,24 @@ test("BDR-LSE: staff end a lease, freeing the unit and its rent schedule so the 
   await expectNoAxeViolations(page);
 
   expect(await getUnitOccupancyStatus(UNIT_ID)).toBe("VACANT");
+  // BDR-AST-005: vacant from the lease's end date.
+  expect(await getUnitVacantSince(UNIT_ID)).toBe(LEASE_ENDED_ON);
+  expect((await getLeasesForUnit(UNIT_ID)).at(-1)).toMatchObject({
+    source: "LEASING",
+    status: "ENDED",
+    endReason: "OTHER",
+    endedBy: "LESSEE",
+    endNote: "Relocated for work",
+  });
   const schedules = await getRentSchedulesForUnit(UNIT_ID);
   expect(schedules.at(-1)).toMatchObject({ status: "ENDED", hasLeaseApplication: true });
 
   // The occupancy column on the property page reflects the vacated unit.
   await page.getByRole("link", { name: "Properties", exact: true }).click();
   await page.getByRole("link", { name: PROPERTY_ADDRESS }).click();
-  await expect(
-    page.getByRole("row", { name: UNIT_LABEL }).getByText("VACANT", { exact: true }),
-  ).toBeVisible();
+  const unitRow = page.getByRole("row", { name: UNIT_LABEL });
+  await expect(unitRow.getByText("VACANT", { exact: true })).toBeVisible();
+  await expect(unitRow.getByText(`${LEASE_ENDED_ON} (0 days)`)).toBeVisible();
 
   // The now-vacant unit can be re-listed.
   await page.getByRole("link", { name: "Vacancy Listings", exact: true }).click();

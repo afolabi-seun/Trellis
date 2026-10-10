@@ -28,15 +28,17 @@ public sealed record ApplicationSubmitRequest(
 
 public sealed record ApplicationSubmitResponse(Guid ApplicationId, string Status);
 
-public sealed record SendForSignatureRequest(Guid DraftDocumentId);
+/// <summary>BDR-LSE-009 — the lease term travels with the signature request: an end date for a fixed term, or MonthToMonth true and no end date.</summary>
+public sealed record SendForSignatureRequest(Guid DraftDocumentId, DateOnly LeaseStartDate, DateOnly? LeaseEndDate, bool MonthToMonth);
 
 public sealed record ApplicationResponse(
     Guid ApplicationId, Guid VacancyListingId, string ApplicantEmail, string ApplicantFullName,
-    string Status, string? ScreeningOutcomeSummary, DateTimeOffset SubmittedAt);
+    string Status, string? ScreeningOutcomeSummary, DateTimeOffset SubmittedAt, DateOnly? LeaseStartDate, DateOnly? LeaseEndDate);
 
 public sealed record ApplicationEventResponse(Guid ApplicationEventId, string EventType, string ActorType, string? DetailJson, DateTimeOffset CreatedAt);
 
-public sealed record EndLeaseRequest(DateOnly EffectiveDate, string? Reason);
+/// <summary>BDR-LSE-011 — same shape and rules as PropertyAsset's LeaseEndRequest: Reason from the fixed list, EndedBy PM_COMPANY or LESSEE, Note required when Reason is OTHER.</summary>
+public sealed record EndLeaseRequest(DateOnly EffectiveDate, string Reason, string EndedBy, string? Note);
 
 public sealed record ViewScreeningReportRequest(string CurrentPassword);
 

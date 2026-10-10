@@ -2640,6 +2640,166 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/leases/expiring": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    withinDays?: number;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["LeaseResponseIReadOnlyListApiResponse"];
+                        "application/json": components["schemas"]["LeaseResponseIReadOnlyListApiResponse"];
+                        "text/json": components["schemas"]["LeaseResponseIReadOnlyListApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leases/term-not-recorded": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["LeaseResponseIReadOnlyListApiResponse"];
+                        "application/json": components["schemas"]["LeaseResponseIReadOnlyListApiResponse"];
+                        "text/json": components["schemas"]["LeaseResponseIReadOnlyListApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leases/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["LeaseResponseApiResponse"];
+                        "application/json": components["schemas"]["LeaseResponseApiResponse"];
+                        "text/json": components["schemas"]["LeaseResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/leases/{id}/term": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["LeaseTermRequest"];
+                    "text/json": components["schemas"]["LeaseTermRequest"];
+                    "application/*+json": components["schemas"]["LeaseTermRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["LeaseResponseApiResponse"];
+                        "application/json": components["schemas"]["LeaseResponseApiResponse"];
+                        "text/json": components["schemas"]["LeaseResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/owners": {
         parameters: {
             query?: never;
@@ -3709,7 +3869,13 @@ export interface paths {
                 };
                 cookie?: never;
             };
-            requestBody?: never;
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RentScheduleEndRequest"];
+                    "text/json": components["schemas"]["RentScheduleEndRequest"];
+                    "application/*+json": components["schemas"]["RentScheduleEndRequest"];
+                };
+            };
             responses: {
                 /** @description OK */
                 200: {
@@ -6090,6 +6256,10 @@ export interface components {
             screeningOutcomeSummary?: string | null;
             /** Format: date-time */
             submittedAt?: string;
+            /** Format: date */
+            leaseStartDate?: string | null;
+            /** Format: date */
+            leaseEndDate?: string | null;
         };
         ApplicationResponseApiResponse: {
             readonly status?: string | null;
@@ -6284,6 +6454,8 @@ export interface components {
             /** Format: date */
             effectiveDate?: string;
             reason?: string | null;
+            endedBy?: string | null;
+            note?: string | null;
         };
         EraseDataSubjectRequest: {
             subjectEmail?: string | null;
@@ -6511,6 +6683,53 @@ export interface components {
             data?: components["schemas"]["InvoiceResponsePagedResponse"];
             error?: components["schemas"]["ApiError"];
             meta: components["schemas"]["ApiMeta"];
+        };
+        LeaseResponse: {
+            /** Format: uuid */
+            leaseId?: string;
+            /** Format: uuid */
+            unitAssetId?: string;
+            unitLabel?: string | null;
+            /** Format: uuid */
+            propertyId?: string;
+            propertyAddress?: string | null;
+            source?: string | null;
+            /** Format: uuid */
+            leaseApplicationId?: string | null;
+            /** Format: date */
+            startDate?: string;
+            termType?: string | null;
+            /** Format: date */
+            endDate?: string | null;
+            /** Format: int32 */
+            daysUntilEnd?: number | null;
+            status?: string | null;
+            /** Format: date */
+            endedOn?: string | null;
+            endReason?: string | null;
+            endedBy?: string | null;
+            endNote?: string | null;
+            rowVersion?: string | null;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        LeaseResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["LeaseResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        LeaseResponseIReadOnlyListApiResponse: {
+            readonly status?: string | null;
+            readonly data?: components["schemas"]["LeaseResponse"][] | null;
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        LeaseTermRequest: {
+            termType?: string | null;
+            /** Format: date */
+            endDate?: string | null;
+            rowVersion?: string | null;
         };
         LoginRequest: {
             username?: string | null;
@@ -6963,6 +7182,16 @@ export interface components {
             dueDayOfMonth?: number;
             /** Format: int32 */
             gracePeriodDays?: number | null;
+            /** Format: date */
+            leaseEndDate?: string | null;
+            leaseMonthToMonth?: boolean | null;
+        };
+        RentScheduleEndRequest: {
+            /** Format: date */
+            effectiveDate?: string;
+            reason?: string | null;
+            endedBy?: string | null;
+            note?: string | null;
         };
         RentScheduleResponse: {
             /** Format: uuid */
@@ -6972,6 +7201,9 @@ export interface components {
             unitLabel?: string | null;
             /** Format: uuid */
             leaseApplicationId?: string | null;
+            /** Format: uuid */
+            leaseId?: string;
+            leaseSource?: string | null;
             /** Format: double */
             rentAmount?: number;
             currency?: string | null;
@@ -7112,6 +7344,11 @@ export interface components {
         SendForSignatureRequest: {
             /** Format: uuid */
             draftDocumentId?: string;
+            /** Format: date */
+            leaseStartDate?: string;
+            /** Format: date */
+            leaseEndDate?: string | null;
+            monthToMonth?: boolean;
         };
         SubscriptionResponse: {
             /** Format: uuid */
@@ -7289,6 +7526,8 @@ export interface components {
             label?: string | null;
             status?: string | null;
             occupancyStatus?: string | null;
+            /** Format: date */
+            vacantSince?: string | null;
             /** Format: double */
             sizeSqft?: number | null;
             /** Format: double */
