@@ -7,6 +7,7 @@ public sealed class RentLedgerDbContext(DbContextOptions<RentLedgerDbContext> op
 {
     public DbSet<RentSchedule> RentSchedules => Set<RentSchedule>();
     public DbSet<RentPaymentRecord> RentPaymentRecords => Set<RentPaymentRecord>();
+    public DbSet<RentChange> RentChanges => Set<RentChange>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) =>
         modelBuilder.ApplyConfigurationsFromAssembly(

@@ -68,6 +68,33 @@ test("a Tenant Admin sees the defaults, changes who is notified about rent arrea
   expect(results.violations).toEqual([]);
 });
 
+test("BDR-LSE-010: a Tenant Admin adds a renewal decline reason, and the notification settings beside it survive", async ({
+  page,
+}) => {
+  await login(page, ADMIN);
+  await page.getByRole("link", { name: "Settings", exact: true }).click();
+
+  // The defaults are offered until a tenant sets its own.
+  await expect(page.getByText("Rent too high", { exact: true })).toBeVisible();
+  await page.getByRole("textbox", { name: "Reasons" }).fill("Relocating for work");
+  await page.getByRole("textbox", { name: "Reasons" }).press("Enter");
+  await page.getByRole("button", { name: "Save decline reasons" }).click();
+  await expect(page.getByRole("button", { name: "Save decline reasons" })).toBeDisabled();
+
+  await page.reload();
+  await expect(page.getByText("Relocating for work", { exact: true })).toBeVisible();
+  await expect(page.getByText("Rent too high", { exact: true })).toBeVisible();
+  // Stored under its own key — the earlier test's notification change is still there.
+  await expect(
+    page
+      .getByRole("group", { name: "Rent arrears" })
+      .getByRole("checkbox", { name: "Department staff" }),
+  ).not.toBeChecked();
+
+  const results = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
+  expect(results.violations).toEqual([]);
+});
+
 test("at least one role must stay selected for each alert", async ({ page }) => {
   await login(page, ADMIN);
   await page.goto("/admin/settings");

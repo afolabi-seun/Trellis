@@ -182,6 +182,13 @@ export function RentScheduleDetailPage() {
             Due on day {schedule.dueDayOfMonth} of each month, from {schedule.startDate}. Grace
             period: {schedule.gracePeriodDays} days.
           </Text>
+          {schedule.upcomingRentAmount != null && (
+            <Text>
+              Rent changes to {formatCurrency(schedule.upcomingRentAmount, currency)} from{" "}
+              {schedule.upcomingRentFrom} (an accepted renewal). Earlier periods keep the current
+              rent.
+            </Text>
+          )}
           <Text>Recorded as received: {formatCurrency(schedule.totalReceived ?? 0, currency)}</Text>
           {isActive && (schedule.periodsInArrears ?? 0) > 0 && (
             <Text>

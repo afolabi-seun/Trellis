@@ -41,6 +41,10 @@ public sealed class RentScheduleConfiguration : IEntityTypeConfiguration<RentSch
         builder.Property(s => s.CreatedAt).HasColumnName("created_at");
         builder.Property(s => s.UpdatedAt).HasColumnName("updated_at");
 
+        // Every query for a schedule needs its rent changes to evaluate it, so they always come with it.
+        builder.HasMany(s => s.RentChanges).WithOne().HasForeignKey(c => c.RentScheduleId);
+        builder.Navigation(s => s.RentChanges).HasField("_rentChanges").AutoInclude();
+
         builder.HasIndex(s => s.TenantId);
         builder.HasIndex(s => s.LeaseId);
         builder.HasIndex(s => s.UnitAssetId);

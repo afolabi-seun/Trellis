@@ -27,4 +27,11 @@ public sealed class SettingsController(ITenantSettingsService settingsService) :
     [ProducesResponseType(typeof(ApiResponse<TenantSettingsResponse>), StatusCodes.Status200OK)]
     public async Task<IActionResult> UpdateNotifications([FromBody] NotificationSettingsDto request) =>
         (await settingsService.UpdateNotificationsAsync(request, Guid.Parse(User.FindFirstValue("sub")!))).ToActionResult(HttpContext);
+
+    /// <summary>BDR-LSE-010 — the reasons offered when recording a declined renewal.</summary>
+    [HttpPut("renewal-decline-reasons")]
+    [Authorize(Roles = "TENANT_ADMIN")]
+    [ProducesResponseType(typeof(ApiResponse<TenantSettingsResponse>), StatusCodes.Status200OK)]
+    public async Task<IActionResult> UpdateRenewalDeclineReasons([FromBody] RenewalDeclineReasonsDto request) =>
+        (await settingsService.UpdateRenewalDeclineReasonsAsync(request, Guid.Parse(User.FindFirstValue("sub")!))).ToActionResult(HttpContext);
 }

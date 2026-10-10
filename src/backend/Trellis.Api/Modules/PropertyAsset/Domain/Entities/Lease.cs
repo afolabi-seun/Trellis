@@ -128,6 +128,35 @@ public sealed class Lease : ITenantOwned
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
+    /// <summary>
+    /// BDR-LSE-010 — an accepted renewal extends this same lease rather than starting a new one.
+    /// A fixed renewal must end after the current end (or after the start, when there is no fixed
+    /// end yet); a renewal can also move the lease onto month-to-month, but not from month-to-month
+    /// onto month-to-month, which would change nothing.
+    /// </summary>
+    public void Renew(LeaseTermType termType, DateOnly? newEndDate)
+    {
+        RequireActive(LeaseStatus.Active);
+
+        switch (termType)
+        {
+            case LeaseTermType.Fixed when newEndDate is null:
+                throw new ArgumentException("A fixed-term renewal needs an end date.", nameof(newEndDate));
+            case LeaseTermType.Fixed when newEndDate <= (EndDate ?? StartDate):
+                throw new ArgumentException("A renewal must end after the current term.", nameof(newEndDate));
+            case LeaseTermType.MonthToMonth when newEndDate is not null:
+                throw new ArgumentException("A month-to-month renewal has no end date.", nameof(newEndDate));
+            case LeaseTermType.MonthToMonth when TermType == LeaseTermType.MonthToMonth:
+                throw new ArgumentException("The lease is already month-to-month.", nameof(termType));
+            case LeaseTermType.NotRecorded:
+                throw new ArgumentException("A renewal must set a fixed or month-to-month term.", nameof(termType));
+        }
+
+        TermType = termType;
+        EndDate = newEndDate;
+        UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
     public void End(DateOnly effectiveDate, LeaseEndReason reason, LeaseEndedBy endedBy, string? note)
     {
         RequireActive(LeaseStatus.Ended);

@@ -13,12 +13,32 @@ import {
 } from "@mantine/core";
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 import { useState } from "react";
+import { TrellisApiError } from "../../../api/client";
+import { renewalOffersApi } from "../../../api/leasing";
 import type { components } from "../../../api/schema";
 import { leasesApi } from "../../../api/leases";
+import { formatCurrency } from "../../../utils/formatCurrency";
+import { useTenantSettings } from "../settings/useTenantSettings";
 import { dangerAlertStyles } from "../../../theme/dangerStyles";
 import { leaseErrorMessage, termLabel } from "./leaseLabels";
+import { OfferRenewalForm, RecordRenewalAnswerForm } from "./RenewalForms";
 
 type Lease = components["schemas"]["LeaseResponse"];
+type RenewalOffer = components["schemas"]["RenewalOfferResponse"];
+
+const RENEWAL_STATUS: Record<string, { label: string; color: string }> = {
+  OFFERED: { label: "Offered", color: "blue.8" },
+  ACCEPTED: { label: "Accepted", color: "success.8" },
+  DECLINED: { label: "Declined", color: "gray.8" },
+  EXPIRED: { label: "No answer", color: "gray.8" },
+};
+
+/** Renewal actions for one lease row, when the tenant has Leasing (BDR-LSE-010). */
+interface RenewalActions {
+  openOfferFor: (leaseId?: string) => RenewalOffer | undefined;
+  onOffer: (lease: Lease) => void;
+  onAnswer: (offer: RenewalOffer) => void;
+}
 
 /** BDR-LSE-009's three horizons, plus leases already past their end date and still active. */
 const BUCKETS = [
@@ -48,6 +68,9 @@ export function LeasesPage() {
   const queryClient = useQueryClient();
   const [tab, setTab] = useState<string | null>("30");
   const [termFor, setTermFor] = useState<Lease | null>(null);
+  const [offerFor, setOfferFor] = useState<Lease | null>(null);
+  const [answerFor, setAnswerFor] = useState<RenewalOffer | null>(null);
+  const settingsQuery = useTenantSettings();
 
   const expiringQuery = useQuery({
     queryKey: ["leases", "expiring"],
@@ -58,9 +81,31 @@ export function LeasesPage() {
     queryFn: () => leasesApi.listTermNotRecorded(),
   });
 
+  // Renewal offers are part of the Leasing add-on; without it the API answers TRL-E-BIL-10000
+  // and the page simply shows no renewal features.
+  const renewalsQuery = useQuery({
+    queryKey: ["leases", "renewals"],
+    queryFn: () => renewalOffersApi.list(),
+    retry: false,
+  });
+  const renewalsEnabled = !(
+    renewalsQuery.error instanceof TrellisApiError && renewalsQuery.error.code === "TRL-E-BIL-10000"
+  );
+
   const expiring = expiringQuery.data ?? [];
   const notRecorded = notRecordedQuery.data ?? [];
-  const loadError = expiringQuery.error ?? notRecordedQuery.error;
+  const renewals = renewalsQuery.data ?? [];
+  const openRenewals = renewals.filter((o) => o.status === "OFFERED");
+  const currency = settingsQuery.data?.defaultCurrency ?? "USD";
+  const loadError =
+    expiringQuery.error ?? notRecordedQuery.error ?? (renewalsEnabled ? renewalsQuery.error : null);
+  const renewalActions: RenewalActions | null = renewalsEnabled
+    ? {
+        openOfferFor: (leaseId) => openRenewals.find((o) => o.leaseId === leaseId),
+        onOffer: setOfferFor,
+        onAnswer: setAnswerFor,
+      }
+    : null;
 
   return (
     <Stack gap="lg" p="lg">
@@ -84,11 +129,17 @@ export function LeasesPage() {
             </Tabs.Tab>
           ))}
           <Tabs.Tab value="not-recorded">Term not recorded ({notRecorded.length})</Tabs.Tab>
+          {renewalsEnabled && (
+            <Tabs.Tab value="renewals">Renewal offers ({openRenewals.length} open)</Tabs.Tab>
+          )}
         </Tabs.List>
 
         {BUCKETS.map((bucket) => (
           <Tabs.Panel key={bucket.value} value={bucket.value} pt="md">
-            <ExpiringTable leases={expiring.filter((l) => bucket.test(l.daysUntilEnd ?? 0))} />
+            <ExpiringTable
+              leases={expiring.filter((l) => bucket.test(l.daysUntilEnd ?? 0))}
+              renewal={renewalActions}
+            />
           </Tabs.Panel>
         ))}
 
@@ -129,7 +180,26 @@ export function LeasesPage() {
             )}
           </Stack>
         </Tabs.Panel>
+        {renewalsEnabled && (
+          <Tabs.Panel value="renewals" pt="md">
+            <RenewalsTable offers={renewals} currency={currency} onAnswer={setAnswerFor} />
+          </Tabs.Panel>
+        )}
       </Tabs>
+
+      <Modal opened={offerFor !== null} onClose={() => setOfferFor(null)} title="Offer a renewal">
+        {offerFor && <OfferRenewalForm lease={offerFor} onDone={() => setOfferFor(null)} />}
+      </Modal>
+
+      <Modal
+        opened={answerFor !== null}
+        onClose={() => setAnswerFor(null)}
+        title="Record the lessee's answer"
+      >
+        {answerFor && (
+          <RecordRenewalAnswerForm offer={answerFor} onDone={() => setAnswerFor(null)} />
+        )}
+      </Modal>
 
       <Modal opened={termFor !== null} onClose={() => setTermFor(null)} title="Record lease term">
         {termFor && (
@@ -146,7 +216,7 @@ export function LeasesPage() {
   );
 }
 
-function ExpiringTable({ leases }: { leases: Lease[] }) {
+function ExpiringTable({ leases, renewal }: { leases: Lease[]; renewal: RenewalActions | null }) {
   if (leases.length === 0) {
     return <Text c="gray.7">No leases in this range.</Text>;
   }
@@ -161,6 +231,7 @@ function ExpiringTable({ leases }: { leases: Lease[] }) {
           <Table.Th>Ends</Table.Th>
           <Table.Th>Time left</Table.Th>
           <Table.Th>Started from</Table.Th>
+          {renewal && <Table.Th>Renewal</Table.Th>}
         </Table.Tr>
       </Table.Thead>
       <Table.Tbody>
@@ -178,8 +249,110 @@ function ExpiringTable({ leases }: { leases: Lease[] }) {
               )}
             </Table.Td>
             <Table.Td>{sourceLabel(lease.source)}</Table.Td>
+            {renewal && (
+              <Table.Td>
+                <RenewalCell lease={lease} renewal={renewal} />
+              </Table.Td>
+            )}
           </Table.Tr>
         ))}
+      </Table.Tbody>
+    </Table>
+  );
+}
+
+function RenewalCell({ lease, renewal }: { lease: Lease; renewal: RenewalActions }) {
+  const open = renewal.openOfferFor(lease.leaseId);
+  if (!open) {
+    return (
+      <Button size="xs" variant="outline" onClick={() => renewal.onOffer(lease)}>
+        Offer renewal
+      </Button>
+    );
+  }
+
+  return (
+    <Stack gap={4} align="flex-start">
+      <Badge color={open.respondByPassed ? "red.8" : "blue.8"}>
+        {open.respondByPassed ? "Reply overdue" : `Offered · reply by ${open.respondBy}`}
+      </Badge>
+      <Button size="xs" variant="subtle" onClick={() => renewal.onAnswer(open)}>
+        Record answer
+      </Button>
+    </Stack>
+  );
+}
+
+function RenewalsTable({
+  offers,
+  currency,
+  onAnswer,
+}: {
+  offers: RenewalOffer[];
+  currency: string;
+  onAnswer: (offer: RenewalOffer) => void;
+}) {
+  if (offers.length === 0) {
+    return <Text c="gray.7">No renewal offers yet. Offer one from a lease above.</Text>;
+  }
+
+  return (
+    <Table striped highlightOnHover>
+      <Table.Thead>
+        <Table.Tr>
+          <Table.Th>Unit</Table.Th>
+          <Table.Th>Offered</Table.Th>
+          <Table.Th>New rent</Table.Th>
+          <Table.Th>Reply by</Table.Th>
+          <Table.Th>Answer</Table.Th>
+          <Table.Th />
+        </Table.Tr>
+      </Table.Thead>
+      <Table.Tbody>
+        {offers.map((offer) => {
+          const status = RENEWAL_STATUS[offer.status ?? ""] ?? {
+            label: offer.status,
+            color: "gray.8",
+          };
+          return (
+            <Table.Tr key={offer.renewalOfferId}>
+              <Table.Td>
+                {offer.unitLabel}
+                <Text size="xs" c="gray.7">
+                  {offer.propertyAddress}
+                </Text>
+              </Table.Td>
+              <Table.Td>
+                {offer.proposedTerm === "FIXED" ? `To ${offer.proposedEndDate}` : "Month-to-month"}
+              </Table.Td>
+              <Table.Td>
+                {offer.proposedRentAmount != null
+                  ? `${formatCurrency(offer.proposedRentAmount, currency)} from ${offer.proposedRentFrom}`
+                  : "Unchanged"}
+              </Table.Td>
+              <Table.Td>{offer.respondBy}</Table.Td>
+              <Table.Td>
+                <Badge color={offer.respondByPassed ? "red.8" : status.color}>
+                  {offer.respondByPassed ? "Reply overdue" : status.label}
+                </Badge>
+                {offer.outcomeOn && (
+                  <Text size="xs" c="gray.7">
+                    {offer.outcomeOn}
+                    {offer.declineReason ? ` · ${offer.declineReason}` : ""}
+                    {offer.rentChangeApplied === false ? " · no rent schedule to change" : ""}
+                  </Text>
+                )}
+              </Table.Td>
+              <Table.Td>
+                {offer.status === "OFFERED" && (
+                  <Button size="xs" variant="subtle" onClick={() => onAnswer(offer)}>
+                    Record answer
+                  </Button>
+                )}
+              </Table.Td>
+            </Table.Tr>
+          );
+        })}
       </Table.Tbody>
     </Table>
   );

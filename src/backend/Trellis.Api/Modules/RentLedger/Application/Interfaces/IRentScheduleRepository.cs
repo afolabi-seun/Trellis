@@ -21,6 +21,11 @@ public interface IRentScheduleRepository
 
     Task<RentSchedule?> GetActiveForUnitAsync(Guid tenantId, Guid unitAssetId);
 
+    /// <summary>Explicit tenantId, like GetActiveForUnitAsync — Leasing calls through to it when accepting a renewal.</summary>
+    Task<RentSchedule?> GetActiveForLeaseAsync(Guid tenantId, Guid leaseId);
+
+    Task AddRentChangeAsync(RentChange change);
+
     /// <summary>The arrears job's cross-tenant keyset batch (no Scoped(), runs under SystemContext) — ordered by id so a failing row can't be re-fetched forever.</summary>
     Task<IReadOnlyList<RentSchedule>> ListActiveAcrossTenantsAsync(Guid? afterScheduleId, int batchSize);
 

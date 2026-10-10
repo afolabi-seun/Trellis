@@ -38,6 +38,11 @@ public sealed class RentScheduleRepository(RentLedgerDbContext dbContext) : Tena
     public Task<RentSchedule?> GetByLeaseApplicationIdAsync(Guid tenantId, Guid leaseApplicationId) =>
         dbContext.RentSchedules.FirstOrDefaultAsync(s => s.TenantId == tenantId && s.LeaseApplicationId == leaseApplicationId);
 
+    public Task<RentSchedule?> GetActiveForLeaseAsync(Guid tenantId, Guid leaseId) =>
+        dbContext.RentSchedules.FirstOrDefaultAsync(s => s.TenantId == tenantId && s.LeaseId == leaseId && s.Status == RentScheduleStatus.Active);
+
+    public async Task AddRentChangeAsync(RentChange change) => await dbContext.RentChanges.AddAsync(change);
+
     public Task<RentSchedule?> GetActiveForUnitAsync(Guid tenantId, Guid unitAssetId) =>
         dbContext.RentSchedules.FirstOrDefaultAsync(s =>
             s.TenantId == tenantId && s.UnitAssetId == unitAssetId && s.Status == RentScheduleStatus.Active);

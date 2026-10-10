@@ -37,8 +37,12 @@ public sealed record TenantDomainResponse(
 
 public sealed record NotificationSettingsDto(IReadOnlyList<string> ApplicationSubmittedRoles, IReadOnlyList<string> RentArrearsRoles);
 
+/// <summary>BDR-LSE-010 — the tenant's own list; "Other" (with a note) is always offered as well and is never part of it.</summary>
+public sealed record RenewalDeclineReasonsDto(IReadOnlyList<string> Reasons);
+
 /// <summary>What staff can read about their own tenant's settings. DefaultCurrency comes from the tenant's country and defaults the currency on listing and rent-schedule forms.</summary>
-public sealed record TenantSettingsResponse(string DefaultCurrency, string CountryCode, NotificationSettingsDto Notifications);
+public sealed record TenantSettingsResponse(
+    string DefaultCurrency, string CountryCode, NotificationSettingsDto Notifications, IReadOnlyList<string> RenewalDeclineReasons);
 
 public sealed record DataSubjectExportRequest(string SubjectEmail);
 

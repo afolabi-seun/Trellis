@@ -1,6 +1,7 @@
 import { Stack, Title } from "@mantine/core";
 import { CustomDomainCard } from "./CustomDomainCard";
 import { NotificationsCard } from "./NotificationsCard";
+import { RenewalDeclineReasonsCard } from "./RenewalDeclineReasonsCard";
 
 /** Tenant-level settings (TENANT_ADMIN). */
 export function SettingsPage() {
@@ -8,6 +9,7 @@ export function SettingsPage() {
     <Stack gap="lg" p="lg">
       <Title order={2}>Settings</Title>
       <NotificationsCard />
+      <RenewalDeclineReasonsCard />
       <CustomDomainCard />
     </Stack>
   );

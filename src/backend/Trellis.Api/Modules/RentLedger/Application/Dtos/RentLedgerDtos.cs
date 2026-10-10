@@ -15,11 +15,12 @@ public sealed record RentScheduleEndRequest(DateOnly EffectiveDate, string Reaso
 
 public sealed record RentScheduleUpdateRequest(decimal RentAmount, int DueDayOfMonth, int GracePeriodDays, string RowVersion);
 
-/// <summary>LeaseSource is MANUAL when ending this schedule also ends the tenancy (and so needs a RentScheduleEndRequest), LEASING when the lease is ended through Leasing. RentStatus is null for an ENDED schedule (it no longer accrues anything). TotalReceived is the sum of non-voided payment records — money recorded as received outside Trellis, never money Trellis holds.</summary>
+/// <summary>RentAmount is the rent in effect today; UpcomingRentAmount/UpcomingRentFrom are the next dated change, if one is scheduled (BDR-LSE-010). LeaseSource is MANUAL when ending this schedule also ends the tenancy (and so needs a RentScheduleEndRequest), LEASING when the lease is ended through Leasing. RentStatus is null for an ENDED schedule (it no longer accrues anything). TotalReceived is the sum of non-voided payment records — money recorded as received outside Trellis, never money Trellis holds.</summary>
 public sealed record RentScheduleResponse(
     Guid RentScheduleId, Guid UnitAssetId, string UnitLabel, Guid? LeaseApplicationId, Guid LeaseId, string? LeaseSource, decimal RentAmount, string Currency,
     DateOnly StartDate, int DueDayOfMonth, int GracePeriodDays, string Status, string? RentStatus, int PeriodsInArrears,
-    decimal AmountShort, decimal TotalReceived, DateOnly? OldestUnpaidDueDate, string RowVersion, DateTimeOffset CreatedAt);
+    decimal AmountShort, decimal TotalReceived, DateOnly? OldestUnpaidDueDate, string RowVersion, DateTimeOffset CreatedAt,
+    decimal? UpcomingRentAmount, DateOnly? UpcomingRentFrom);
 
 public sealed record RentPaymentRecordCreateRequest(decimal AmountReceived, DateOnly DateReceived, string? MethodReference);
 

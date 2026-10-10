@@ -14,6 +14,13 @@ export const tenantSettingsApi = {
       method: "PUT",
       body: settings,
     }),
+
+  /** BDR-LSE-010 — the reasons offered when a renewal is declined. "Other" is always offered too and isn't part of the list. */
+  updateRenewalDeclineReasons: (reasons: string[]) =>
+    apiFetch<TenantSettingsResponse>("/api/v1/settings/renewal-decline-reasons", {
+      method: "PUT",
+      body: { reasons },
+    }),
 };
 
 /** A tenant's own custom domains (ENTERPRISE tier; TENANT_ADMIN only). A domain is unusable until DNS proves control. */

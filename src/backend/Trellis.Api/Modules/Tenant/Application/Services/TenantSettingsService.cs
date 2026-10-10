@@ -53,6 +53,38 @@ public sealed class TenantSettingsService(ITenantRepository repository, IAuditSe
         return ServiceResult<TenantSettingsResponse>.Success(ToResponse(tenant.CountryCode, tenant.ConfigJson));
     }
 
+    public async Task<ServiceResult<TenantSettingsResponse>> UpdateRenewalDeclineReasonsAsync(RenewalDeclineReasonsDto request, Guid actorUserId)
+    {
+        var tenant = await repository.GetByIdAsync(TenantContext.Current!.TenantId);
+        if (tenant is null)
+        {
+            return ServiceResult<TenantSettingsResponse>.NotFound();
+        }
+
+        tenant.SetConfigJson(TenantSettingsSerializer.WriteRenewalDeclineReasons(tenant.ConfigJson, request.Reasons));
+
+        try
+        {
+            await repository.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return ServiceResult<TenantSettingsResponse>.ConcurrencyConflict();
+        }
+
+        await auditService.RecordAsync(
+            tenant.TenantId, actorUserId, AuditActorType.HumanUser, AuditTypes.Tenant.TenantSettingsUpdated,
+            $"{{\"renewalDeclineReasonCount\":{request.Reasons.Count}}}");
+
+        return ServiceResult<TenantSettingsResponse>.Success(ToResponse(tenant.CountryCode, tenant.ConfigJson));
+    }
+
+    public async Task<IReadOnlyList<string>> GetRenewalDeclineReasonsAsync(Guid tenantId)
+    {
+        var tenant = await repository.GetByIdAsync(tenantId);
+        return TenantSettingsSerializer.ReadRenewalDeclineReasons(tenant?.ConfigJson);
+    }
+
     public async Task<NotificationSettingsDto> GetNotificationSettingsAsync(Guid tenantId)
     {
         var tenant = await repository.GetByIdAsync(tenantId);
@@ -65,6 +97,7 @@ public sealed class TenantSettingsService(ITenantRepository repository, IAuditSe
         var notifications = TenantSettingsSerializer.ReadNotifications(configJson);
         return new TenantSettingsResponse(
             CurrencyDefaults.ForCountry(countryCode), countryCode,
-            new NotificationSettingsDto(notifications.ApplicationSubmittedRoles, notifications.RentArrearsRoles));
+            new NotificationSettingsDto(notifications.ApplicationSubmittedRoles, notifications.RentArrearsRoles),
+            TenantSettingsSerializer.ReadRenewalDeclineReasons(configJson));
     }
 }

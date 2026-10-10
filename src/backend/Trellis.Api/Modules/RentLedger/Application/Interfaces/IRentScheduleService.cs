@@ -51,6 +51,16 @@ public interface IRentScheduleService
     Task<ServiceResult<bool>> EndForLeaseAsync(Guid tenantId, Guid leaseApplicationId, Guid? actorUserId);
 
     /// <summary>
+    /// BDR-LSE-010 — called when a renewal with a new rent is accepted: from <paramref name="effectiveFrom"/>,
+    /// the lease's active schedule charges <paramref name="rentAmount"/>; earlier periods keep theirs.
+    /// Success(false), changing nothing, when the tenant isn't entitled to RENT_COLLECTION or the lease
+    /// has no active schedule — a renewal must never be blocked by rent tracking being absent.
+    /// Idempotent by date, so a retried acceptance is safe.
+    /// </summary>
+    Task<ServiceResult<bool>> ScheduleRentChangeForLeaseAsync(
+        Guid tenantId, Guid leaseId, DateOnly effectiveFrom, decimal rentAmount, Guid? renewalOfferId, Guid actorUserId);
+
+    /// <summary>
     /// BDR-RENT-005 — the Owner report's rollup across the given units. Null when the current tenant
     /// isn't entitled to RENT_COLLECTION (the report then omits rent rather than showing a
     /// misleading zero). Requires the caller's TenantContext.Current (Scoped()).

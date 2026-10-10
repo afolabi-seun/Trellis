@@ -22,6 +22,50 @@ namespace Trellis.Api.Modules.RentLedger.Infrastructure.Data.Migrations
 
             NpgsqlModelBuilderExtensions.UseIdentityByDefaultColumns(modelBuilder);
 
+            modelBuilder.Entity("Trellis.Api.Modules.RentLedger.Domain.Entities.RentChange", b =>
+                {
+                    b.Property<Guid>("RentChangeId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("rent_change_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<Guid>("CreatedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("created_by");
+
+                    b.Property<DateOnly>("EffectiveFrom")
+                        .HasColumnType("date")
+                        .HasColumnName("effective_from");
+
+                    b.Property<Guid?>("RenewalOfferId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("renewal_offer_id");
+
+                    b.Property<decimal>("RentAmount")
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("rent_amount");
+
+                    b.Property<Guid>("RentScheduleId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("rent_schedule_id");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.HasKey("RentChangeId");
+
+                    b.HasIndex("TenantId");
+
+                    b.HasIndex("RentScheduleId", "EffectiveFrom")
+                        .IsUnique();
+
+                    b.ToTable("rent_change", "trellis_rentledger");
+                });
+
             modelBuilder.Entity("Trellis.Api.Modules.RentLedger.Domain.Entities.RentPaymentRecord", b =>
                 {
                     b.Property<Guid>("RentPaymentRecordId")
@@ -166,6 +210,20 @@ namespace Trellis.Api.Modules.RentLedger.Infrastructure.Data.Migrations
                     b.HasIndex("UnitAssetId");
 
                     b.ToTable("rent_schedule", "trellis_rentledger");
+                });
+
+            modelBuilder.Entity("Trellis.Api.Modules.RentLedger.Domain.Entities.RentChange", b =>
+                {
+                    b.HasOne("Trellis.Api.Modules.RentLedger.Domain.Entities.RentSchedule", null)
+                        .WithMany("RentChanges")
+                        .HasForeignKey("RentScheduleId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+                });
+
+            modelBuilder.Entity("Trellis.Api.Modules.RentLedger.Domain.Entities.RentSchedule", b =>
+                {
+                    b.Navigation("RentChanges");
                 });
 #pragma warning restore 612, 618
         }

@@ -598,4 +598,77 @@ public sealed class RentScheduleServiceTests : IDisposable
 
         result!.ReceivedByCurrency.Should().BeEquivalentTo([new CurrencyAmount("USD", 1000m), new CurrencyAmount("ZAR", 15000m)]);
     }
+
+    // ---- ScheduleRentChangeForLeaseAsync (BDR-LSE-010) ----
+
+    [Fact]
+    public async Task ScheduleRentChangeForLeaseAsync_AddsADatedChangeToTheLeasesActiveSchedule_AndAudits()
+    {
+        var schedule = ActiveSchedule(start: new DateOnly(2026, 1, 1));
+        _scheduleRepository.GetActiveForLeaseAsync(_tenantId, _leaseId).Returns(schedule);
+        var offerId = Guid.NewGuid();
+        var sut = CreateSut();
+
+        var result = await sut.ScheduleRentChangeForLeaseAsync(_tenantId, _leaseId, new DateOnly(2027, 1, 1), 1200m, offerId, _staffId);
+
+        result.Data.Should().BeTrue();
+        schedule.RentChanges.Should().ContainSingle().Which.RenewalOfferId.Should().Be(offerId);
+        await _scheduleRepository.Received(1).AddRentChangeAsync(Arg.Is<RentChange>(c => c.RentAmount == 1200m));
+        await _scheduleRepository.Received(1).SaveChangesAsync();
+        await _auditService.Received(1).RecordAsync(_tenantId, _staffId, AuditActorType.HumanUser, "RENT_CHANGE_SCHEDULED", Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task ScheduleRentChangeForLeaseAsync_ARetryOnTheSameDate_AddsNoSecondRow()
+    {
+        var schedule = ActiveSchedule(start: new DateOnly(2026, 1, 1));
+        schedule.ScheduleRentChange(new DateOnly(2027, 1, 1), 1200m, null, _staffId);
+        _scheduleRepository.GetActiveForLeaseAsync(_tenantId, _leaseId).Returns(schedule);
+        var sut = CreateSut();
+
+        var result = await sut.ScheduleRentChangeForLeaseAsync(_tenantId, _leaseId, new DateOnly(2027, 1, 1), 1200m, null, _staffId);
+
+        result.Data.Should().BeTrue();
+        await _scheduleRepository.DidNotReceiveWithAnyArgs().AddRentChangeAsync(default!);
+    }
+
+    [Fact]
+    public async Task ScheduleRentChangeForLeaseAsync_WithNoRentCollection_OrNoSchedule_ChangesNothing()
+    {
+        var sut = CreateSut();
+        _scheduleRepository.GetActiveForLeaseAsync(_tenantId, _leaseId).Returns((RentSchedule?)null);
+        (await sut.ScheduleRentChangeForLeaseAsync(_tenantId, _leaseId, new DateOnly(2027, 1, 1), 1200m, null, _staffId)).Data.Should().BeFalse();
+
+        _entitlements.IsEntitledAsync(_tenantId, "RENT_COLLECTION").Returns(false);
+        (await sut.ScheduleRentChangeForLeaseAsync(_tenantId, _leaseId, new DateOnly(2027, 1, 1), 1200m, null, _staffId)).Data.Should().BeFalse();
+
+        await _scheduleRepository.DidNotReceiveWithAnyArgs().SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task ScheduleRentChangeForLeaseAsync_BeforeTheScheduleStarts_IsRejected()
+    {
+        _scheduleRepository.GetActiveForLeaseAsync(_tenantId, _leaseId).Returns(ActiveSchedule(start: new DateOnly(2026, 1, 1)));
+        var sut = CreateSut();
+
+        var result = await sut.ScheduleRentChangeForLeaseAsync(_tenantId, _leaseId, new DateOnly(2025, 12, 1), 1200m, null, _staffId);
+
+        result.ErrorCode.Should().Be("TRL-E-RENT-12005");
+    }
+
+    [Fact]
+    public async Task GetByIdAsync_ShowsTheRentInEffectToday_AndTheUpcomingChange()
+    {
+        var today = DateOnly.FromDateTime(DateTime.UtcNow);
+        var schedule = ActiveSchedule(start: today.AddMonths(-3));
+        schedule.ScheduleRentChange(today.AddMonths(2), 1400m, null, _staffId);
+        _scheduleRepository.GetByIdAsync(schedule.RentScheduleId).Returns(schedule);
+        var sut = CreateSut();
+
+        var result = await sut.GetByIdAsync(schedule.RentScheduleId);
+
+        result.Data!.RentAmount.Should().Be(1000m);
+        result.Data.UpcomingRentAmount.Should().Be(1400m);
+        result.Data.UpcomingRentFrom.Should().Be(today.AddMonths(2));
+    }
 }

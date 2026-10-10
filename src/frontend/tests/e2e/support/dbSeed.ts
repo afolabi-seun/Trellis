@@ -574,6 +574,22 @@ export async function getLeasesForUnit(unitAssetId: string): Promise<LeaseRow[]>
   }
 }
 
+/** BDR-LSE-010 — a lease's end date as yyyy-mm-dd, looked up by unit (the unit's most recent lease). */
+export async function getLatestLeaseEndDate(unitAssetId: string): Promise<string | null> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    const result = await client.query(
+      `select to_char(end_date, 'YYYY-MM-DD') as end_date from trellis_property.lease
+       where unit_asset_id = $1 order by created_at desc limit 1`,
+      [unitAssetId],
+    );
+    return result.rows[0]?.end_date ?? null;
+  } finally {
+    await client.end();
+  }
+}
+
 /** BDR-AST-005 — yyyy-mm-dd, or null while occupied or when the vacancy start is unknown. */
 export async function getUnitVacantSince(unitAssetId: string): Promise<string | null> {
   const client = new Client({ connectionString: CONNECTION_STRING });
@@ -683,6 +699,7 @@ export async function deleteLeasingDataForTenant(tenantId: string): Promise<void
       [tenantId],
     );
     for (const table of [
+      "renewal_offer",
       "screening_result",
       "application_event",
       "application_link_token",

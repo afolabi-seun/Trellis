@@ -3679,6 +3679,241 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/api/v1/renewal-offers": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: {
+                    leaseId?: string;
+                    status?: string;
+                };
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RenewalOfferResponseIReadOnlyListApiResponse"];
+                        "application/json": components["schemas"]["RenewalOfferResponseIReadOnlyListApiResponse"];
+                        "text/json": components["schemas"]["RenewalOfferResponseIReadOnlyListApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RenewalOfferCreateRequest"];
+                    "text/json": components["schemas"]["RenewalOfferCreateRequest"];
+                    "application/*+json": components["schemas"]["RenewalOfferCreateRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RenewalOfferResponseApiResponse"];
+                        "application/json": components["schemas"]["RenewalOfferResponseApiResponse"];
+                        "text/json": components["schemas"]["RenewalOfferResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/renewal-offers/{id}": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RenewalOfferResponseApiResponse"];
+                        "application/json": components["schemas"]["RenewalOfferResponseApiResponse"];
+                        "text/json": components["schemas"]["RenewalOfferResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        put?: never;
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/renewal-offers/{id}/accept": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RenewalOfferAcceptRequest"];
+                    "text/json": components["schemas"]["RenewalOfferAcceptRequest"];
+                    "application/*+json": components["schemas"]["RenewalOfferAcceptRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RenewalOfferResponseApiResponse"];
+                        "application/json": components["schemas"]["RenewalOfferResponseApiResponse"];
+                        "text/json": components["schemas"]["RenewalOfferResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/renewal-offers/{id}/decline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RenewalOfferDeclineRequest"];
+                    "text/json": components["schemas"]["RenewalOfferDeclineRequest"];
+                    "application/*+json": components["schemas"]["RenewalOfferDeclineRequest"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RenewalOfferResponseApiResponse"];
+                        "application/json": components["schemas"]["RenewalOfferResponseApiResponse"];
+                        "text/json": components["schemas"]["RenewalOfferResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/renewal-offers/{id}/expire": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        post: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path: {
+                    id: string;
+                };
+                cookie?: never;
+            };
+            requestBody?: never;
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["RenewalOfferResponseApiResponse"];
+                        "application/json": components["schemas"]["RenewalOfferResponseApiResponse"];
+                        "text/json": components["schemas"]["RenewalOfferResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/api/v1/rent-schedules": {
         parameters: {
             query?: never;
@@ -4431,6 +4666,49 @@ export interface paths {
                     "application/json": components["schemas"]["NotificationSettingsDto"];
                     "text/json": components["schemas"]["NotificationSettingsDto"];
                     "application/*+json": components["schemas"]["NotificationSettingsDto"];
+                };
+            };
+            responses: {
+                /** @description OK */
+                200: {
+                    headers: {
+                        [name: string]: unknown;
+                    };
+                    content: {
+                        "text/plain": components["schemas"]["TenantSettingsResponseApiResponse"];
+                        "application/json": components["schemas"]["TenantSettingsResponseApiResponse"];
+                        "text/json": components["schemas"]["TenantSettingsResponseApiResponse"];
+                    };
+                };
+            };
+        };
+        post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/api/v1/settings/renewal-decline-reasons": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put: {
+            parameters: {
+                query?: never;
+                header?: never;
+                path?: never;
+                cookie?: never;
+            };
+            requestBody?: {
+                content: {
+                    "application/json": components["schemas"]["RenewalDeclineReasonsDto"];
+                    "text/json": components["schemas"]["RenewalDeclineReasonsDto"];
+                    "application/*+json": components["schemas"]["RenewalDeclineReasonsDto"];
                 };
             };
             responses: {
@@ -7129,6 +7407,74 @@ export interface components {
             error?: components["schemas"]["ApiError"];
             meta: components["schemas"]["ApiMeta"];
         };
+        RenewalDeclineReasonsDto: {
+            reasons?: string[] | null;
+        };
+        RenewalOfferAcceptRequest: {
+            /** Format: date */
+            respondedOn?: string;
+        };
+        RenewalOfferCreateRequest: {
+            /** Format: uuid */
+            leaseId?: string;
+            proposedTerm?: string | null;
+            /** Format: date */
+            proposedEndDate?: string | null;
+            /** Format: double */
+            proposedRentAmount?: number | null;
+            /** Format: date */
+            proposedRentFrom?: string | null;
+            /** Format: date */
+            respondBy?: string;
+        };
+        RenewalOfferDeclineRequest: {
+            /** Format: date */
+            respondedOn?: string;
+            reason?: string | null;
+            note?: string | null;
+        };
+        RenewalOfferResponse: {
+            /** Format: uuid */
+            renewalOfferId?: string;
+            /** Format: uuid */
+            leaseId?: string;
+            /** Format: uuid */
+            unitAssetId?: string;
+            unitLabel?: string | null;
+            propertyAddress?: string | null;
+            /** Format: date */
+            currentLeaseEndDate?: string | null;
+            proposedTerm?: string | null;
+            /** Format: date */
+            proposedEndDate?: string | null;
+            /** Format: double */
+            proposedRentAmount?: number | null;
+            /** Format: date */
+            proposedRentFrom?: string | null;
+            /** Format: date */
+            respondBy?: string;
+            respondByPassed?: boolean;
+            status?: string | null;
+            /** Format: date */
+            outcomeOn?: string | null;
+            declineReason?: string | null;
+            declineNote?: string | null;
+            rentChangeApplied?: boolean | null;
+            /** Format: date-time */
+            createdAt?: string;
+        };
+        RenewalOfferResponseApiResponse: {
+            readonly status?: string | null;
+            data?: components["schemas"]["RenewalOfferResponse"];
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
+        RenewalOfferResponseIReadOnlyListApiResponse: {
+            readonly status?: string | null;
+            readonly data?: components["schemas"]["RenewalOfferResponse"][] | null;
+            error?: components["schemas"]["ApiError"];
+            meta: components["schemas"]["ApiMeta"];
+        };
         RentPaymentRecordCreateRequest: {
             /** Format: double */
             amountReceived?: number;
@@ -7226,6 +7572,10 @@ export interface components {
             rowVersion?: string | null;
             /** Format: date-time */
             createdAt?: string;
+            /** Format: double */
+            upcomingRentAmount?: number | null;
+            /** Format: date */
+            upcomingRentFrom?: string | null;
         };
         RentScheduleResponseApiResponse: {
             readonly status?: string | null;
@@ -7456,6 +7806,7 @@ export interface components {
             defaultCurrency?: string | null;
             countryCode?: string | null;
             notifications?: components["schemas"]["NotificationSettingsDto"];
+            renewalDeclineReasons?: string[] | null;
         };
         TenantSettingsResponseApiResponse: {
             readonly status?: string | null;

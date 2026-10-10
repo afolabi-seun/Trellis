@@ -16,4 +16,10 @@ public interface ITenantSettingsService
     /// A tenant with nothing configured (or unreadable config) gets the defaults, so an alert is never silenced by absence.
     /// </summary>
     Task<NotificationSettingsDto> GetNotificationSettingsAsync(Guid tenantId);
+
+    /// <summary>TENANT_ADMIN. Replaces the list of renewal decline reasons (BDR-LSE-010); other keys already stored in the tenant's config are preserved.</summary>
+    Task<ServiceResult<TenantSettingsResponse>> UpdateRenewalDeclineReasonsAsync(RenewalDeclineReasonsDto request, Guid actorUserId);
+
+    /// <summary>Explicit tenantId. The default list when nothing (or nothing valid) is configured.</summary>
+    Task<IReadOnlyList<string>> GetRenewalDeclineReasonsAsync(Guid tenantId);
 }

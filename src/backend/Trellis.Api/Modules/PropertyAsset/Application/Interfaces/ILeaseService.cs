@@ -17,6 +17,9 @@ public interface ILeaseService
 
     Task<ServiceResult<LeaseResponse>> RecordTermAsync(Guid leaseId, LeaseTermRequest request, Guid actorUserId);
 
+    /// <summary>BDR-LSE-010 — extends an active lease's term for an accepted renewal. Never called from a controller: renewals are recorded through Leasing.</summary>
+    Task<ServiceResult<LeaseResponse>> RenewAsync(Guid leaseId, LeaseRenewRequest request, Guid actorUserId);
+
     Task<ServiceResult<LeaseResponse>> GetByIdAsync(Guid leaseId);
 
     Task<ServiceResult<LeaseResponse>> GetByLeaseApplicationIdAsync(Guid leaseApplicationId);

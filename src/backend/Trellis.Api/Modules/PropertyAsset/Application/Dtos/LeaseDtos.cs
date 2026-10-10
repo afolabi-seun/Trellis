@@ -13,6 +13,9 @@ public sealed record LeaseStartRequest(
 /// <summary>BDR-LSE-011. Reason: NON_RENEWAL, LESSEE_BREACH, MUTUAL_AGREEMENT, PROPERTY_SALE, RENOVATION, or OTHER (which needs a Note). EndedBy: PM_COMPANY or LESSEE.</summary>
 public sealed record LeaseEndRequest(DateOnly EffectiveDate, string Reason, string EndedBy, string? Note);
 
+/// <summary>BDR-LSE-010, called by Leasing when a renewal is accepted. TermType: FIXED (NewEndDate after the current term) or MONTH_TO_MONTH.</summary>
+public sealed record LeaseRenewRequest(string TermType, DateOnly? NewEndDate);
+
 /// <summary>TermType: FIXED (EndDate required) or MONTH_TO_MONTH (no EndDate).</summary>
 public sealed record LeaseTermRequest(string TermType, DateOnly? EndDate, string RowVersion);
 

@@ -23,7 +23,7 @@ public sealed class SettingsControllerRoleGateTests : IClassFixture<CustomWebApp
     private HttpClient CreateClient(UserRole role, out IAsyncDisposable handle, ITenantSettingsService? settings = null)
     {
         var service = settings ?? Substitute.For<ITenantSettingsService>();
-        var response = new TenantSettingsResponse("USD", "US", new NotificationSettingsDto(["TENANT_ADMIN"], ["TENANT_ADMIN"]));
+        var response = new TenantSettingsResponse("USD", "US", new NotificationSettingsDto(["TENANT_ADMIN"], ["TENANT_ADMIN"]), ["Rent too high"]);
         if (settings is null)
         {
             service.GetAsync().Returns(ServiceResult<TenantSettingsResponse>.Success(response));

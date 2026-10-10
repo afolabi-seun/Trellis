@@ -179,6 +179,42 @@ public sealed class LeaseService(
         return ServiceResult<LeaseResponse>.Success(await ToResponseAsync(lease));
     }
 
+    public async Task<ServiceResult<LeaseResponse>> RenewAsync(Guid leaseId, LeaseRenewRequest request, Guid actorUserId)
+    {
+        var lease = await repository.GetByIdAsync(leaseId);
+        if (lease is null)
+        {
+            return ServiceResult<LeaseResponse>.NotFound();
+        }
+
+        if (!EnumStringConverter.TryParseUpperSnakeCase<LeaseTermType>(request.TermType, out var termType))
+        {
+            return ServiceResult<LeaseResponse>.BusinessRuleViolation(ErrorCodeRegistry.PropertyAsset.InvalidLeaseTerm);
+        }
+
+        var previousEnd = lease.EndDate;
+        try
+        {
+            lease.Renew(termType, request.NewEndDate);
+        }
+        catch (InvalidStatusTransitionException)
+        {
+            return ServiceResult<LeaseResponse>.BusinessRuleViolation(ErrorCodeRegistry.PropertyAsset.InvalidStatusTransition);
+        }
+        catch (ArgumentException)
+        {
+            return ServiceResult<LeaseResponse>.BusinessRuleViolation(ErrorCodeRegistry.PropertyAsset.InvalidLeaseTerm);
+        }
+
+        await repository.SaveChangesAsync();
+
+        await auditService.RecordAsync(
+            lease.TenantId, actorUserId, AuditActorType.HumanUser, AuditTypes.PropertyAsset.LeaseRenewed,
+            $"{{\"leaseId\":\"{lease.LeaseId}\",\"previousEndDate\":\"{previousEnd:O}\",\"termType\":\"{lease.TermType.ToUpperSnakeCase()}\",\"endDate\":\"{lease.EndDate:O}\"}}");
+
+        return ServiceResult<LeaseResponse>.Success(await ToResponseAsync(lease));
+    }
+
     public async Task<ServiceResult<LeaseResponse>> GetByIdAsync(Guid leaseId) =>
         await ToResultAsync(await repository.GetByIdAsync(leaseId));
 

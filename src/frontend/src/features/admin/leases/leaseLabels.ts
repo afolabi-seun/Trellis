@@ -53,3 +53,24 @@ export function leaseErrorMessage(error: unknown): string {
   }
   return "Something went wrong.";
 }
+
+/** BDR-LSE-010's renewal error codes in plain words; anything else falls back to the lease messages. */
+export function renewalErrorMessage(error: unknown): string {
+  if (error instanceof TrellisApiError) {
+    switch (error.code) {
+      case "TRL-E-LSE-11007":
+        return "This lease is no longer active.";
+      case "TRL-E-LSE-11008":
+        return "This lease already has an open renewal offer — record its answer first.";
+      case "TRL-E-LSE-11009":
+        return "The renewal must extend the lease: end after the current term, and any new rent must start after the lease began.";
+      case "TRL-E-LSE-11010":
+        return "Choose one of the listed reasons, or Other with a note.";
+      case "TRL-E-LSE-11011":
+        return "The lessee still has until the respond-by date to answer.";
+      case "TRL-E-RENT-12005":
+        return "The new rent must start after the rent schedule began.";
+    }
+  }
+  return leaseErrorMessage(error);
+}

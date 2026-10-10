@@ -119,11 +119,16 @@ public static class AuditTypes
         public const string LeaseStarted = "LEASE_STARTED";
         public const string LeaseEnded = "LEASE_ENDED";
         public const string LeaseTermRecorded = "LEASE_TERM_RECORDED";
+        public const string LeaseRenewed = "LEASE_RENEWED";
     }
 
     public static class Leasing
     {
         public const string VacancyListingCreated = "VACANCY_LISTING_CREATED";
+        public const string RenewalOffered = "RENEWAL_OFFERED";
+        public const string RenewalAccepted = "RENEWAL_ACCEPTED";
+        public const string RenewalDeclined = "RENEWAL_DECLINED";
+        public const string RenewalExpired = "RENEWAL_EXPIRED";
         public const string VacancyListingWithdrawn = "VACANCY_LISTING_WITHDRAWN";
         public const string ApplicationSubmitted = "APPLICATION_SUBMITTED";
         public const string ApplicationApproved = "APPLICATION_APPROVED";
@@ -144,5 +149,6 @@ public static class AuditTypes
         public const string RentPaymentRecorded = "RENT_PAYMENT_RECORDED";
         public const string RentPaymentVoided = "RENT_PAYMENT_VOIDED";
         public const string RentArrearsFlagged = "RENT_ARREARS_FLAGGED";
+        public const string RentChangeScheduled = "RENT_CHANGE_SCHEDULED";
     }
 }

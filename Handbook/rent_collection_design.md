@@ -88,6 +88,20 @@ trellis_rentledger.rent_payment_record    — one recorded (not processed) payme
 
 **Ending a schedule** happens two ways: staff end one directly (`POST rent-schedules/{id}/end` — when its lease is MANUAL, that lease exists only because of this schedule, so ending the schedule ends the tenancy: the request then needs BDR-LSE-011's reason and party, and the lease is ended first, which vacates the unit), or Leasing ends the schedule tied to a lease it is ending (`IRentScheduleService.EndForLeaseAsync(tenantId, leaseApplicationId, actor)` — a tolerated no-op when Rent Collection isn't entitled, or when no schedule exists for that lease, since ending a lease must never be blocked by rent tracking being absent).
 
+### trellis_rentledger.rent_change (Phase 11 — BDR-LSE-010)
+
+A dated change to a schedule's rent, today only from an accepted lease renewal. The schedule's own
+`rent_amount` covers every period before the first change; each change covers periods due on or
+after its `effective_from` until the next one, and the arrears calculation uses, for each period,
+the rent in effect on its due date — so a renewal at a higher rent never reprices periods already
+past. Columns: `rent_change_id`, `tenant_id` (RLS), `rent_schedule_id`, `effective_from` (after the
+schedule's `start_date`), `rent_amount` (> 0), `renewal_offer_id` (plain column), `created_by`,
+`created_at`. Unique on (`rent_schedule_id`, `effective_from`), which makes a retried acceptance
+idempotent. Loaded with its schedule on every query. "Edit terms" corrects the amount **in effect
+today** — the base amount, or the latest change already in effect — never a future change or a
+past period's amount. The schedule response's `rentAmount` is the rent in effect today, with
+`upcomingRentAmount`/`upcomingRentFrom` for the next change.
+
 ### trellis_rentledger.rent_payment_record
 
 | Column | Type | Constraints | Description |

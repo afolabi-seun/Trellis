@@ -11,6 +11,7 @@ import {
   deleteTenantByName,
   getDocumentsForUnit,
   getEnvelopeIdForTenant,
+  getLatestLeaseEndDate,
   getLeasesForUnit,
   getRentSchedulesForUnit,
   getUnitVacantSince,
@@ -109,6 +110,13 @@ function isoDay(offsetDays: number): string {
 const LEASE_START = isoDay(-30);
 const LEASE_END = isoDay(45);
 const LEASE_ENDED_ON = isoDay(0);
+// BDR-LSE-010: the accepted renewal runs a year past the current end, at a new rent from the day after it.
+const RENEWED_END = (() => {
+  const d = new Date(`${LEASE_END}T00:00:00Z`);
+  d.setUTCFullYear(d.getUTCFullYear() + 1);
+  return d.toISOString().slice(0, 10);
+})();
+const NEW_RENT_FROM = isoDay(46);
 
 async function login(page: import("@playwright/test").Page, username: string) {
   await page.goto("/login");
@@ -328,6 +336,73 @@ test("BDR-LSE-004: only a Tenant Admin sees the full screening report, behind a 
 
   await page.keyboard.press("Escape");
   await expect(dialog).toBeHidden();
+});
+
+test("BDR-LSE-010: staff offer a renewal, record a decline, then an acceptance that extends the lease and changes the rent from its date", async ({
+  page,
+}) => {
+  await login(page, TENANT_ADMIN_USERNAME);
+  await page.getByRole("link", { name: "Leases", exact: true }).click();
+  await page.getByRole("tab", { name: "31–60 days (1)" }).click();
+  const leaseRow = page.getByRole("row", { name: new RegExp(UNIT_LABEL) });
+
+  async function offerRenewal({ checkAccessibility }: { checkAccessibility: boolean }) {
+    await leaseRow.getByRole("button", { name: "Offer renewal" }).click();
+    const dialog = page.getByRole("dialog");
+    await expect(dialog.getByLabel("New end date")).toHaveValue(RENEWED_END);
+    await dialog.getByLabel("Change the rent").check();
+    await dialog.getByLabel("New rent per period").fill("1650");
+    await expect(dialog.getByLabel("New rent applies from")).toHaveValue(NEW_RENT_FROM);
+    // Once is enough: axe on a dialog still animating in can misread its colours under load.
+    if (checkAccessibility) {
+      await expectNoAxeViolations(page);
+    }
+    await dialog.getByRole("button", { name: "Record offer" }).click();
+    await expect(dialog).toBeHidden();
+    await expect(leaseRow.getByText(/Offered · reply by/)).toBeVisible();
+  }
+
+  async function recordAnswer(answer: string, reason?: string) {
+    await leaseRow.getByRole("button", { name: "Record answer" }).click();
+    const dialog = page.getByRole("dialog");
+    await dialog.getByRole("textbox", { name: "Answer" }).click();
+    await page.getByRole("option", { name: answer }).click();
+    if (reason) {
+      await dialog.getByRole("textbox", { name: "Why?" }).click();
+      await page.getByRole("option", { name: reason }).click();
+    }
+    await dialog.getByRole("button", { name: "Save answer" }).click();
+    await expect(dialog).toBeHidden();
+  }
+
+  // Declined: the lease is untouched, and the tenant's own reason list supplies the reason.
+  await offerRenewal({ checkAccessibility: true });
+  await recordAnswer("Declined", "Rent too high");
+  await expect(leaseRow.getByRole("button", { name: "Offer renewal" })).toBeVisible();
+  expect(await getLatestLeaseEndDate(UNIT_ID)).toBe(LEASE_END);
+
+  // Accepted: the same lease is extended, so it leaves the 90-day horizon.
+  await offerRenewal({ checkAccessibility: false });
+  await recordAnswer("Accepted — extend the lease");
+  await expect(page.getByRole("tab", { name: "31–60 days (0)" })).toBeVisible();
+  expect(await getLatestLeaseEndDate(UNIT_ID)).toBe(RENEWED_END);
+  expect(await getLeasesForUnit(UNIT_ID)).toHaveLength(2);
+
+  await page.getByRole("tab", { name: "Renewal offers (0 open)" }).click();
+  await expect(page.getByText("Accepted", { exact: true })).toBeVisible();
+  await expect(page.getByText(/Rent too high/)).toBeVisible();
+  await expectNoAxeViolations(page);
+
+  // The rent changes only from the renewal's date; the current rent stays as it is.
+  await page.getByRole("link", { name: "Rent Schedules", exact: true }).click();
+  await page
+    .getByRole("row", { name: new RegExp(`${UNIT_LABEL}.*1,500`) })
+    .getByRole("link")
+    .click();
+  await expect(page.getByText(/1,500\.00 per period/)).toBeVisible();
+  await expect(
+    page.getByText(new RegExp(`Rent changes to .*1,650\\.00 from ${NEW_RENT_FROM}`)),
+  ).toBeVisible();
 });
 
 test("BDR-LSE: staff end a lease, freeing the unit and its rent schedule so the unit can be re-listed", async ({

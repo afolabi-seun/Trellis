@@ -221,6 +221,30 @@ still `OCCUPIED` (a signed lease must be ended first).
 
 ---
 
+## Lease Renewals (BDR-LSE-010, Phase 11)
+
+Staff record a renewal offer on any ACTIVE lease — LEASING or MANUAL, since renewing a tenancy
+doesn't depend on how it was won — and then the lessee's answer, because lessees have no platform
+access. `trellis_leasing.renewal_offer` holds the proposed term (a fixed end date after the current
+term, or month-to-month), an optional new rent with the date it applies from, a respond-by date,
+and the outcome: ACCEPTED, DECLINED (with a reason), or EXPIRED (recordable only once the
+respond-by date has passed). At most one OFFERED offer per lease (partial unique index).
+
+**Accepting extends the same lease** (`ILeaseService.RenewAsync`) rather than creating a new one or
+a new application, and — for a new rent — adds a dated `rent_change` to the lease's active
+schedule (`IRentScheduleService.ScheduleRentChangeForLeaseAsync`; see `rent_collection_design.md`),
+so periods before that date keep the old rent. The rent step runs first because it is idempotent by
+date: if the lease step then fails, a retry repeats it harmlessly. Both are re-validated against the
+lease as it is at acceptance (its term may have been recorded since the offer). When the tenant
+has no Rent Collection, or the lease has no schedule, the rent step is a no-op and the offer records
+`rent_change_applied = false`, so staff aren't told the rent moved when nothing tracks it.
+
+**Decline reasons are configurable per tenant** (BRD: "a configurable list"), stored in
+`tenant.config_json` under `leasing.renewalDeclineReasons` and edited on the Settings page, with
+defaults until a tenant sets its own. "Other" is never in the list — it is always offered, and needs
+a note. The chosen reason is copied onto the offer as text, so editing the list later never rewrites
+history.
+
 ## POPIA and Screening Data
 
 `screening_result.full_report_ciphertext` is the single most sensitive piece of data in the

@@ -118,4 +118,54 @@ public sealed class LeaseTests
         unit.MarkVacant(new DateOnly(2026, 6, 30));
         unit.VacantSince.Should().Be(new DateOnly(2026, 6, 30));
     }
+
+    // ---- Renew (BDR-LSE-010) ----
+
+    [Fact]
+    public void Renew_ExtendsAFixedTerm_OrMovesItOntoMonthToMonth()
+    {
+        var lease = Fixed();
+        lease.Renew(LeaseTermType.Fixed, new DateOnly(2027, 12, 31));
+        lease.EndDate.Should().Be(new DateOnly(2027, 12, 31));
+
+        lease.Renew(LeaseTermType.MonthToMonth, null);
+        lease.TermType.Should().Be(LeaseTermType.MonthToMonth);
+        lease.EndDate.Should().BeNull();
+    }
+
+    [Fact]
+    public void Renew_GivesANotRecordedLeaseAFixedTerm_FromItsStart()
+    {
+        var lease = Lease.Start(Guid.NewGuid(), Guid.NewGuid(), Guid.NewGuid(), Start, LeaseTermType.NotRecorded, null, null);
+
+        lease.Renew(LeaseTermType.Fixed, new DateOnly(2026, 6, 30));
+
+        lease.TermType.Should().Be(LeaseTermType.Fixed);
+    }
+
+    [Theory]
+    [InlineData(LeaseTermType.Fixed, "2026-12-31")]
+    [InlineData(LeaseTermType.Fixed, "2026-06-30")]
+    [InlineData(LeaseTermType.Fixed, null)]
+    [InlineData(LeaseTermType.MonthToMonth, "2027-12-31")]
+    [InlineData(LeaseTermType.NotRecorded, null)]
+    public void Renew_ThatDoesntExtendTheTerm_Throws(LeaseTermType termType, string? end)
+    {
+        var act = () => Fixed().Renew(termType, end is null ? null : DateOnly.Parse(end, System.Globalization.CultureInfo.InvariantCulture));
+
+        act.Should().Throw<ArgumentException>();
+    }
+
+    [Fact]
+    public void Renew_MonthToMonthOntoMonthToMonth_Throws_AndAnEndedLeaseCantBeRenewed()
+    {
+        var monthly = Lease.Start(Guid.NewGuid(), Guid.NewGuid(), null, Start, LeaseTermType.MonthToMonth, null, null);
+        var same = () => monthly.Renew(LeaseTermType.MonthToMonth, null);
+        same.Should().Throw<ArgumentException>();
+
+        var ended = Fixed();
+        ended.End(new DateOnly(2026, 6, 30), LeaseEndReason.NonRenewal, LeaseEndedBy.Lessee, null);
+        var renewEnded = () => ended.Renew(LeaseTermType.Fixed, new DateOnly(2027, 12, 31));
+        renewEnded.Should().Throw<InvalidStatusTransitionException>();
+    }
 }

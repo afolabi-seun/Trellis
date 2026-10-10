@@ -31,12 +31,14 @@ public static class LeasingModuleExtensions
         services.AddScoped<IApplicationEventRepository, ApplicationEventRepository>();
         services.AddScoped<IApplicationLinkTokenRepository, ApplicationLinkTokenRepository>();
         services.AddScoped<ILeasingWebhookEventRepository, LeasingWebhookEventRepository>();
+        services.AddScoped<IRenewalOfferRepository, RenewalOfferRepository>();
 
         services.AddScoped<IVacancyListingService, VacancyListingService>();
         services.AddScoped<IApplicationLinkService, ApplicationLinkService>();
         services.AddScoped<IApplicationService, ApplicationService>();
         services.AddScoped<ILeasingWebhookService, LeasingWebhookService>();
         services.AddScoped<IScreeningReportService, ScreeningReportService>();
+        services.AddScoped<IRenewalOfferService, RenewalOfferService>();
         services.AddScoped<IPersonalDataHandler, LeasingPersonalDataHandler>();
 
         // No real screening bureau or e-signature vendor is fixed for this phase (leasing_design.md

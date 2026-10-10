@@ -295,6 +295,45 @@ public sealed class RentScheduleService(
         return ServiceResult<bool>.Success(true);
     }
 
+    public async Task<ServiceResult<bool>> ScheduleRentChangeForLeaseAsync(
+        Guid tenantId, Guid leaseId, DateOnly effectiveFrom, decimal rentAmount, Guid? renewalOfferId, Guid actorUserId)
+    {
+        if (!await moduleEntitlementService.IsEntitledAsync(tenantId, ModuleKey))
+        {
+            return ServiceResult<bool>.Success(false);
+        }
+
+        var schedule = await scheduleRepository.GetActiveForLeaseAsync(tenantId, leaseId);
+        if (schedule is null)
+        {
+            return ServiceResult<bool>.Success(false);
+        }
+
+        var before = schedule.RentChanges.Count;
+        RentChange change;
+        try
+        {
+            change = schedule.ScheduleRentChange(effectiveFrom, rentAmount, renewalOfferId, actorUserId);
+        }
+        catch (ArgumentException)
+        {
+            return ServiceResult<bool>.BusinessRuleViolation(ErrorCodeRegistry.RentLedger.InvalidRentChange);
+        }
+
+        if (schedule.RentChanges.Count > before)
+        {
+            await scheduleRepository.AddRentChangeAsync(change);
+        }
+
+        await scheduleRepository.SaveChangesAsync();
+
+        await auditService.RecordAsync(
+            tenantId, actorUserId, AuditActorType.HumanUser, AuditTypes.RentLedger.RentChangeScheduled,
+            $"{{\"rentScheduleId\":\"{schedule.RentScheduleId}\",\"effectiveFrom\":\"{effectiveFrom:O}\",\"renewalOfferId\":\"{renewalOfferId}\"}}");
+
+        return ServiceResult<bool>.Success(true);
+    }
+
     public async Task<OwnerRentSummary?> GetOwnerRentSummaryAsync(
         IReadOnlyList<Guid> unitAssetIds, DateOnly periodStart, DateOnly periodEnd, DateOnly asOf)
     {
@@ -368,12 +407,14 @@ public sealed class RentScheduleService(
         var leaseSource = lease.Outcome == ServiceResultOutcome.Success ? lease.Data!.Source : null;
 
         var evaluation = schedule.Status == RentScheduleStatus.Active ? schedule.Evaluate(received, Today) : null;
+        var upcoming = schedule.Status == RentScheduleStatus.Active ? schedule.NextRentChangeAfter(Today) : null;
 
         return new RentScheduleResponse(
-            schedule.RentScheduleId, schedule.UnitAssetId, unitLabel, schedule.LeaseApplicationId, schedule.LeaseId, leaseSource, schedule.RentAmount,
+            schedule.RentScheduleId, schedule.UnitAssetId, unitLabel, schedule.LeaseApplicationId, schedule.LeaseId, leaseSource, schedule.RentAmountOn(Today),
             schedule.Currency, schedule.StartDate, schedule.DueDayOfMonth, schedule.GracePeriodDays,
             schedule.Status.ToUpperSnakeCase(), evaluation?.Status.ToUpperSnakeCase(), evaluation?.PeriodsInArrears ?? 0,
             evaluation?.AmountShort ?? 0m, received, evaluation?.OldestUnpaidDueDate,
-            scheduleRepository.GetRowVersion(schedule), schedule.CreatedAt);
+            scheduleRepository.GetRowVersion(schedule), schedule.CreatedAt,
+            upcoming?.RentAmount, upcoming?.EffectiveFrom);
     }
 }

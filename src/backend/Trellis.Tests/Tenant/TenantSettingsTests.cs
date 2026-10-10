@@ -208,3 +208,57 @@ public sealed class NotificationSettingsValidatorTests
         _validator.Validate(new NotificationSettingsDto(["TENANT_ADMIN"], roles)).IsValid.Should().BeFalse();
     }
 }
+
+/// <summary>BDR-LSE-010's configurable decline reasons — stored under its own key, never at the cost of the notification settings beside it.</summary>
+public sealed class RenewalDeclineReasonsSettingsTests : IDisposable
+{
+    private readonly TenantEntity _tenant = TenantEntity.Create("Acme PM", "ZA", "acme");
+    private readonly ITenantRepository _repository = Substitute.For<ITenantRepository>();
+    private readonly IAuditService _auditService = Substitute.For<IAuditService>();
+
+    public RenewalDeclineReasonsSettingsTests()
+    {
+        TenantContext.Current = new TenantContext(_tenant.TenantId);
+        _repository.GetByIdAsync(_tenant.TenantId).Returns(_tenant);
+    }
+
+    public void Dispose() => TenantContext.Current = null;
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("not json")]
+    [InlineData("{\"leasing\":{\"renewalDeclineReasons\":[]}}")]
+    [InlineData("{\"leasing\":{\"renewalDeclineReasons\":[\"Other\"]}}")]
+    [InlineData("{\"leasing\":{\"renewalDeclineReasons\":[1,2]}}")]
+    public void Read_WithNothingUsable_FallsBackToTheDefaults(string? json) =>
+        TenantSettingsSerializer.ReadRenewalDeclineReasons(json).Should().Equal(RenewalDeclineReasons.Default);
+
+    [Fact]
+    public async Task Update_StoresTheTrimmedList_KeepsTheNotificationSettings_AndAudits()
+    {
+        var sut = new TenantSettingsService(_repository, _auditService);
+        await sut.UpdateNotificationsAsync(new NotificationSettingsDto(["TENANT_ADMIN"], ["TENANT_ADMIN"]), Guid.NewGuid());
+
+        var result = await sut.UpdateRenewalDeclineReasonsAsync(new RenewalDeclineReasonsDto(["  Relocating ", "Price"]), Guid.NewGuid());
+
+        result.Data!.RenewalDeclineReasons.Should().Equal("Relocating", "Price");
+        result.Data.Notifications.ApplicationSubmittedRoles.Should().Equal("TENANT_ADMIN");
+        (await sut.GetRenewalDeclineReasonsAsync(_tenant.TenantId)).Should().Equal("Relocating", "Price");
+        await _auditService.Received(1).RecordAsync(
+            _tenant.TenantId, Arg.Any<Guid>(), AuditActorType.HumanUser, "TENANT_SETTINGS_UPDATED", Arg.Is<string>(d => d.Contains("renewalDeclineReasonCount")));
+    }
+
+    public static TheoryData<string[], bool> ValidatorCases => new()
+    {
+        { ["Price"], true },
+        { [], false },
+        { ["Price", "price"], false },
+        { ["Other"], false },
+        { [" "], false },
+    };
+
+    [Theory]
+    [MemberData(nameof(ValidatorCases))]
+    public void TheValidator_AcceptsOnlyAUsableList(string[] reasons, bool valid) =>
+        new RenewalDeclineReasonsDtoValidator().Validate(new RenewalDeclineReasonsDto(reasons)).IsValid.Should().Be(valid);
+}

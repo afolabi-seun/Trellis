@@ -13,6 +13,7 @@ public sealed class LeasingDbContext(DbContextOptions<LeasingDbContext> options)
     public DbSet<ApplicationEvent> ApplicationEvents => Set<ApplicationEvent>();
     public DbSet<ApplicationLinkToken> ApplicationLinkTokens => Set<ApplicationLinkToken>();
     public DbSet<LeasingWebhookEvent> LeasingWebhookEvents => Set<LeasingWebhookEvent>();
+    public DbSet<RenewalOffer> RenewalOffers => Set<RenewalOffer>();
 
     protected override void OnModelCreating(ModelBuilder modelBuilder) =>
         modelBuilder.ApplyConfigurationsFromAssembly(

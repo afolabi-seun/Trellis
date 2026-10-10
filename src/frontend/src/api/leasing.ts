@@ -159,3 +159,35 @@ export const publicTenantApi = {
       query: { host },
     }),
 };
+
+type RenewalOfferResponse = components["schemas"]["RenewalOfferResponse"];
+type RenewalOfferCreateRequest = components["schemas"]["RenewalOfferCreateRequest"];
+
+/**
+ * BDR-LSE-010 — renewal offers and the lessee's answer, recorded by staff. Part of the Leasing
+ * add-on; an offer can be made on any active lease. Accepting extends the same lease and, for a
+ * new rent, changes the rent schedule from that date only.
+ */
+export const renewalOffersApi = {
+  list: (filter: { leaseId?: string; status?: string } = {}) =>
+    apiFetch<RenewalOfferResponse[]>("/api/v1/renewal-offers", { query: filter }),
+
+  create: (request: RenewalOfferCreateRequest) =>
+    apiFetch<RenewalOfferResponse>("/api/v1/renewal-offers", { method: "POST", body: request }),
+
+  accept: (id: string, respondedOn: string) =>
+    apiFetch<RenewalOfferResponse>(`/api/v1/renewal-offers/${id}/accept`, {
+      method: "POST",
+      body: { respondedOn },
+    }),
+
+  decline: (id: string, respondedOn: string, reason: string, note: string | null) =>
+    apiFetch<RenewalOfferResponse>(`/api/v1/renewal-offers/${id}/decline`, {
+      method: "POST",
+      body: { respondedOn, reason, note },
+    }),
+
+  /** Only once the respond-by date has passed with no answer. */
+  expire: (id: string) =>
+    apiFetch<RenewalOfferResponse>(`/api/v1/renewal-offers/${id}/expire`, { method: "POST" }),
+};

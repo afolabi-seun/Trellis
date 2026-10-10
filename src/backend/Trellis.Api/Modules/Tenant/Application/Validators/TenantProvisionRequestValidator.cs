@@ -46,6 +46,15 @@ public sealed class NotificationSettingsDtoValidator : AbstractValidator<Notific
     }
 }
 
+public sealed class RenewalDeclineReasonsDtoValidator : AbstractValidator<RenewalDeclineReasonsDto>
+{
+    public RenewalDeclineReasonsDtoValidator()
+    {
+        RuleFor(x => x.Reasons).Must(r => RenewalDeclineReasons.IsValidList(r?.ToList()))
+            .WithMessage($"Give 1–{RenewalDeclineReasons.MaxReasons} distinct reasons of at most {RenewalDeclineReasons.MaxReasonLength} characters, not including \"Other\" (always offered).");
+    }
+}
+
 public sealed class DataSubjectExportRequestValidator : AbstractValidator<DataSubjectExportRequest>
 {
     public DataSubjectExportRequestValidator()

@@ -287,6 +287,102 @@ namespace Trellis.Api.Modules.Leasing.Infrastructure.Data.Migrations
                     b.ToTable("leasing_webhook_event", "trellis_leasing");
                 });
 
+            modelBuilder.Entity("Trellis.Api.Modules.Leasing.Domain.Entities.RenewalOffer", b =>
+                {
+                    b.Property<Guid>("RenewalOfferId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid")
+                        .HasColumnName("renewal_offer_id");
+
+                    b.Property<DateTimeOffset>("CreatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("created_at");
+
+                    b.Property<string>("DeclineNote")
+                        .HasMaxLength(500)
+                        .HasColumnType("character varying(500)")
+                        .HasColumnName("decline_note");
+
+                    b.Property<string>("DeclineReason")
+                        .HasMaxLength(100)
+                        .HasColumnType("character varying(100)")
+                        .HasColumnName("decline_reason");
+
+                    b.Property<Guid>("LeaseId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("lease_id");
+
+                    b.Property<Guid>("OfferedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("offered_by");
+
+                    b.Property<DateOnly?>("OutcomeOn")
+                        .HasColumnType("date")
+                        .HasColumnName("outcome_on");
+
+                    b.Property<Guid?>("OutcomeRecordedBy")
+                        .HasColumnType("uuid")
+                        .HasColumnName("outcome_recorded_by");
+
+                    b.Property<DateOnly?>("ProposedEndDate")
+                        .HasColumnType("date")
+                        .HasColumnName("proposed_end_date");
+
+                    b.Property<decimal?>("ProposedRentAmount")
+                        .HasColumnType("numeric(12,2)")
+                        .HasColumnName("proposed_rent_amount");
+
+                    b.Property<DateOnly?>("ProposedRentFrom")
+                        .HasColumnType("date")
+                        .HasColumnName("proposed_rent_from");
+
+                    b.Property<string>("ProposedTerm")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("proposed_term");
+
+                    b.Property<bool?>("RentChangeApplied")
+                        .HasColumnType("boolean")
+                        .HasColumnName("rent_change_applied");
+
+                    b.Property<DateOnly>("RespondBy")
+                        .HasColumnType("date")
+                        .HasColumnName("respond_by");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasMaxLength(20)
+                        .HasColumnType("character varying(20)")
+                        .HasColumnName("status");
+
+                    b.Property<Guid>("TenantId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("tenant_id");
+
+                    b.Property<Guid>("UnitAssetId")
+                        .HasColumnType("uuid")
+                        .HasColumnName("unit_asset_id");
+
+                    b.Property<DateTimeOffset>("UpdatedAt")
+                        .HasColumnType("timestamp with time zone")
+                        .HasColumnName("updated_at");
+
+                    b.Property<uint>("xmin")
+                        .IsConcurrencyToken()
+                        .ValueGeneratedOnAddOrUpdate()
+                        .HasColumnType("xid")
+                        .HasColumnName("xmin");
+
+                    b.HasKey("RenewalOfferId");
+
+                    b.HasIndex("LeaseId");
+
+                    b.HasIndex("TenantId");
+
+                    b.ToTable("renewal_offer", "trellis_leasing");
+                });
+
             modelBuilder.Entity("Trellis.Api.Modules.Leasing.Domain.Entities.ScreeningResult", b =>
                 {
                     b.Property<Guid>("ScreeningResultId")

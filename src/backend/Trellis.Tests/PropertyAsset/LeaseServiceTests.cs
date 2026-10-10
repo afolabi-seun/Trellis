@@ -247,4 +247,31 @@ public sealed class LeaseServiceTests : IDisposable
 
         await _repository.Received(1).ListActiveFixedEndingOnOrBeforeAsync(today.AddDays(60));
     }
+
+    // ---- RenewAsync (BDR-LSE-010) ----
+
+    [Fact]
+    public async Task RenewAsync_ExtendsTheLease_AndAuditsTheOldAndNewEnd()
+    {
+        var lease = ActiveLease();
+        var sut = CreateSut();
+
+        var result = await sut.RenewAsync(lease.LeaseId, new LeaseRenewRequest("FIXED", new DateOnly(2026, 12, 31)), _staffId);
+
+        result.Data!.EndDate.Should().Be(new DateOnly(2026, 12, 31));
+        await _auditService.Received(1).RecordAsync(
+            _tenantId, _staffId, AuditActorType.HumanUser, "LEASE_RENEWED", Arg.Is<string>(d => d.Contains("2025-12-31") && d.Contains("2026-12-31")));
+    }
+
+    [Fact]
+    public async Task RenewAsync_ThatDoesntExtendTheTerm_IsRejected()
+    {
+        var lease = ActiveLease();
+        var sut = CreateSut();
+
+        var result = await sut.RenewAsync(lease.LeaseId, new LeaseRenewRequest("FIXED", new DateOnly(2025, 6, 30)), _staffId);
+
+        result.ErrorCode.Should().Be("TRL-E-AST-3004");
+        await _repository.DidNotReceiveWithAnyArgs().SaveChangesAsync();
+    }
 }

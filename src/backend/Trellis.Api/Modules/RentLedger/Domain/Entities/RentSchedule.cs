@@ -44,6 +44,11 @@ public sealed class RentSchedule : ITenantOwned
     public DateTimeOffset CreatedAt { get; private set; }
     public DateTimeOffset UpdatedAt { get; private set; }
 
+    private readonly List<RentChange> _rentChanges = [];
+
+    /// <summary>Dated rent changes (BDR-LSE-010 renewals), loaded with the schedule. See <see cref="RentChange"/>.</summary>
+    public IReadOnlyCollection<RentChange> RentChanges => _rentChanges;
+
     private RentSchedule() { }
 
     public static RentSchedule Create(
@@ -76,12 +81,25 @@ public sealed class RentSchedule : ITenantOwned
         };
     }
 
+    /// <summary>
+    /// A correction to the terms. The rent amount corrected is the one in effect today: the base
+    /// amount, or the latest rent change already in effect — never a future change, and never a
+    /// period's amount from before that.
+    /// </summary>
     public void Update(decimal rentAmount, int dueDayOfMonth, int gracePeriodDays)
     {
         RequireActive(RentScheduleStatus.Active);
         Validate(rentAmount, dueDayOfMonth, gracePeriodDays);
 
-        RentAmount = rentAmount;
+        if (ChangeInEffectOn(DateOnly.FromDateTime(DateTime.UtcNow)) is { } inEffect)
+        {
+            inEffect.Correct(rentAmount);
+        }
+        else
+        {
+            RentAmount = rentAmount;
+        }
+
         DueDayOfMonth = dueDayOfMonth;
         GracePeriodDays = gracePeriodDays;
         UpdatedAt = DateTimeOffset.UtcNow;
@@ -96,6 +114,48 @@ public sealed class RentSchedule : ITenantOwned
         UpdatedAt = EndedAt.Value;
     }
 
+    /// <summary>
+    /// BDR-LSE-010 — rent changes to <paramref name="rentAmount"/> for every period due on or after
+    /// <paramref name="effectiveFrom"/>. Idempotent by date: a second change on the same date
+    /// replaces the first, so a retried renewal acceptance never stacks two.
+    /// </summary>
+    public RentChange ScheduleRentChange(DateOnly effectiveFrom, decimal rentAmount, Guid? renewalOfferId, Guid createdBy)
+    {
+        RequireActive(RentScheduleStatus.Active);
+        if (rentAmount <= 0)
+        {
+            throw new ArgumentException("Rent amount must be positive.", nameof(rentAmount));
+        }
+
+        if (effectiveFrom <= StartDate)
+        {
+            throw new ArgumentException("A rent change must take effect after the schedule starts.", nameof(effectiveFrom));
+        }
+
+        var existing = _rentChanges.FirstOrDefault(c => c.EffectiveFrom == effectiveFrom);
+        if (existing is not null)
+        {
+            existing.Correct(rentAmount);
+            UpdatedAt = DateTimeOffset.UtcNow;
+            return existing;
+        }
+
+        var change = RentChange.Create(TenantId, RentScheduleId, effectiveFrom, rentAmount, renewalOfferId, createdBy);
+        _rentChanges.Add(change);
+        UpdatedAt = DateTimeOffset.UtcNow;
+        return change;
+    }
+
+    /// <summary>The rent for a period due on <paramref name="dueDate"/>.</summary>
+    public decimal RentAmountOn(DateOnly dueDate) => ChangeInEffectOn(dueDate)?.RentAmount ?? RentAmount;
+
+    /// <summary>The earliest change still to come after <paramref name="asOf"/>, if any.</summary>
+    public RentChange? NextRentChangeAfter(DateOnly asOf) =>
+        _rentChanges.Where(c => c.EffectiveFrom > asOf).OrderBy(c => c.EffectiveFrom).FirstOrDefault();
+
+    private RentChange? ChangeInEffectOn(DateOnly date) =>
+        _rentChanges.Where(c => c.EffectiveFrom <= date).OrderByDescending(c => c.EffectiveFrom).FirstOrDefault();
+
     public void MarkArrearsAlerted(DateOnly period)
     {
         LastArrearsAlertedPeriod = period;
@@ -104,7 +164,7 @@ public sealed class RentSchedule : ITenantOwned
 
     /// <summary>Current / overdue / in-arrears as of a date, given the total recorded as received against this schedule (non-voided payments only).</summary>
     public RentEvaluation Evaluate(decimal totalReceived, DateOnly asOf) =>
-        RentStatusCalculator.Evaluate(StartDate, DueDayOfMonth, GracePeriodDays, RentAmount, totalReceived, asOf);
+        RentStatusCalculator.Evaluate(StartDate, DueDayOfMonth, GracePeriodDays, RentAmountOn, totalReceived, asOf);
 
     private void RequireActive(RentScheduleStatus target)
     {

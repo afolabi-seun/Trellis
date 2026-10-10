@@ -228,6 +228,21 @@ public static class ErrorCodeRegistry
 
         /// <summary>TRL-E-LSE-11006 — CreateAsync (VacancyListing): the target unit is still OCCUPIED, so it can't be listed until its current lease is ended.</summary>
         public const string UnitNotVacant = "TRL-E-LSE-11006";
+
+        /// <summary>TRL-E-LSE-11007 — a renewal offered on, or accepted for, a lease that is no longer ACTIVE.</summary>
+        public const string LeaseNotActive = "TRL-E-LSE-11007";
+
+        /// <summary>TRL-E-LSE-11008 — the lease already has an open (OFFERED) renewal offer; record its outcome first (friendly pre-check ahead of the partial unique index).</summary>
+        public const string RenewalAlreadyOffered = "TRL-E-LSE-11008";
+
+        /// <summary>TRL-E-LSE-11009 — renewal terms that don't extend the lease: a fixed end not after the current term, month-to-month onto month-to-month, or a new rent starting on/before the lease started.</summary>
+        public const string InvalidRenewalTerms = "TRL-E-LSE-11009";
+
+        /// <summary>TRL-E-LSE-11010 — a decline reason not in the tenant's list (and not Other), or Other without a note.</summary>
+        public const string InvalidDeclineReason = "TRL-E-LSE-11010";
+
+        /// <summary>TRL-E-LSE-11011 — recording an offer as expired before its respond-by date has passed.</summary>
+        public const string RespondByNotPassed = "TRL-E-LSE-11011";
     }
 
     /// <summary>api_standards.md's registry table: Rent Collection | TRL-E-RENT | 12000–12999 — the doc reserves the block but enumerates no individual codes.</summary>
@@ -247,5 +262,8 @@ public static class ErrorCodeRegistry
 
         /// <summary>TRL-E-RENT-12004 — EndAsync on a schedule whose lease was started manually, without the BDR-LSE-011 end details that ending its tenancy needs.</summary>
         public const string LeaseEndDetailsRequired = "TRL-E-RENT-12004";
+
+        /// <summary>TRL-E-RENT-12005 — a rent change that doesn't hold together: a non-positive amount, or one taking effect on/before the schedule's start.</summary>
+        public const string InvalidRentChange = "TRL-E-RENT-12005";
     }
 }
