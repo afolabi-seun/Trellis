@@ -10,6 +10,8 @@ public interface ILeaseRepository
 
     Task<Lease?> GetByLeaseApplicationIdAsync(Guid leaseApplicationId);
 
+    Task<IReadOnlyList<Lease>> ListByLeaseApplicationIdsAsync(IReadOnlyCollection<Guid> leaseApplicationIds);
+
     Task<Lease?> GetActiveForUnitAsync(Guid unitAssetId);
 
     /// <summary>BDR-LSE-009 — active fixed-term leases ending on or before <paramref name="endingOnOrBefore"/>, including any whose end date has already passed, soonest first.</summary>

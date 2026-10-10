@@ -574,6 +574,66 @@ export async function getLeasesForUnit(unitAssetId: string): Promise<LeaseRow[]>
   }
 }
 
+/** data-subjects.spec.ts — a submitted application seeded directly, so an applicant subject exists without walking the public apply flow (leasing.spec.ts covers that). The listing id needn't exist: application has no FK to it. */
+export async function seedApplication(
+  applicationId: string,
+  tenantId: string,
+  vacancyListingId: string,
+  applicantEmail: string,
+): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(
+      `insert into trellis_leasing.application
+         (application_id, tenant_id, vacancy_listing_id, applicant_email, applicant_full_name, applicant_phone,
+          applicant_date_of_birth, applicant_current_address, consent_to_screening, status, submitted_at)
+       values ($1, $2, $3, $4, 'Erasable Applicant', '+27821234567', '1990-01-01', '1 Main Rd', true, 'LEASE_ENDED', now())`,
+      [applicationId, tenantId, vacancyListingId, applicantEmail],
+    );
+  } finally {
+    await client.end();
+  }
+}
+
+/** data-subjects.spec.ts — an ENDED, Leasing-sourced lease whose staff-written end note mentions the lessee. */
+export async function seedEndedLeasingLease(
+  leaseId: string,
+  tenantId: string,
+  unitAssetId: string,
+  applicationId: string,
+  endNote: string,
+): Promise<void> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    await client.query(
+      `insert into trellis_property.lease
+         (lease_id, tenant_id, unit_asset_id, source, lease_application_id, start_date, term_type, status,
+          ended_on, end_reason, ended_by, end_note, created_at, updated_at)
+       values ($1, $2, $3, 'LEASING', $4, '2025-01-01', 'MONTH_TO_MONTH', 'ENDED',
+          '2025-06-30', 'OTHER', 'LESSEE', $5, now(), now())`,
+      [leaseId, tenantId, unitAssetId, applicationId, endNote],
+    );
+  } finally {
+    await client.end();
+  }
+}
+
+export async function getLeaseEndNote(leaseId: string): Promise<string | null> {
+  const client = new Client({ connectionString: CONNECTION_STRING });
+  await client.connect();
+  try {
+    const result = await client.query(
+      `select end_note from trellis_property.lease where lease_id = $1`,
+      [leaseId],
+    );
+    return result.rows[0].end_note as string | null;
+  } finally {
+    await client.end();
+  }
+}
+
 /** BDR-AST-005 — yyyy-mm-dd, or null while occupied or when the vacancy start is unknown. */
 export async function getUnitVacantSince(unitAssetId: string): Promise<string | null> {
   const client = new Client({ connectionString: CONNECTION_STRING });

@@ -1,6 +1,7 @@
 using Trellis.Api.Core.Middleware;
 using Trellis.Api.Core.Privacy;
 using Trellis.Api.Modules.Leasing.Application.Interfaces;
+using Trellis.Api.Modules.PropertyAsset.Application.Interfaces;
 
 namespace Trellis.Api.Modules.Leasing.Application.Services;
 
@@ -10,13 +11,16 @@ namespace Trellis.Api.Modules.Leasing.Application.Services;
 /// deliberately untouched (IDs-only by design, security_guide.md); the executed lease Document
 /// itself and rent schedules/payment records are also untouched — POPIA permits retention where
 /// the law requires it, and neither embeds the applicant's email or free-text PII the way a
-/// screening report or webhook payload can.
+/// screening report or webhook payload can. The one exception is the lease's end note — staff
+/// free text that may describe the lessee — which PropertyAsset's ILeaseService exports and
+/// tombstones for these applications' leases (Leasing never touches trellis_property itself).
 /// </summary>
 public sealed class LeasingPersonalDataHandler(
     IApplicationRepository applicationRepository,
     IApplicationLinkTokenRepository tokenRepository,
     IScreeningResultRepository screeningResultRepository,
-    ILeasingWebhookEventRepository webhookEventRepository) : IPersonalDataHandler
+    ILeasingWebhookEventRepository webhookEventRepository,
+    ILeaseService leaseService) : IPersonalDataHandler
 {
     public string ModuleName => "Leasing";
 
@@ -27,6 +31,10 @@ public sealed class LeasingPersonalDataHandler(
         {
             return null;
         }
+
+        var endNotes = (await leaseService.ListEndNotesForApplicationsAsync(
+                applications.Select(a => a.ApplicationId).ToList()))
+            .ToDictionary(n => n.LeaseApplicationId, n => n.EndNote);
 
         return applications.Select(a => new
         {
@@ -39,6 +47,7 @@ public sealed class LeasingPersonalDataHandler(
             a.ApplicantMonthlyIncome,
             Status = a.Status.ToString(),
             a.SubmittedAt,
+            LeaseEndNote = endNotes.GetValueOrDefault(a.ApplicationId),
         }).ToList();
     }
 
@@ -68,6 +77,9 @@ public sealed class LeasingPersonalDataHandler(
         await applicationRepository.SaveChangesAsync();
         await screeningResultRepository.SaveChangesAsync();
 
+        var leaseEndNotes = await leaseService.RedactEndNotesForApplicationsAsync(
+            applications.Select(a => a.ApplicationId).ToList());
+
         var tokens = await tokenRepository.ListByApplicantEmailAsync(subjectEmail);
         foreach (var token in tokens)
         {
@@ -76,6 +88,6 @@ public sealed class LeasingPersonalDataHandler(
 
         await tokenRepository.SaveChangesAsync();
 
-        return new ErasureSummary(ModuleName, applications.Count + tokens.Count);
+        return new ErasureSummary(ModuleName, applications.Count + tokens.Count + leaseEndNotes);
     }
 }

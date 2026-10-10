@@ -247,4 +247,66 @@ public sealed class LeaseServiceTests : IDisposable
 
         await _repository.Received(1).ListActiveFixedEndingOnOrBeforeAsync(today.AddDays(60));
     }
+
+    // ---- ListEndNotesForApplicationsAsync / RedactEndNotesForApplicationsAsync ----
+
+    [Fact]
+    public async Task ListEndNotesForApplicationsAsync_ReturnsOnlyLeasesWithANote_KeyedByApplication()
+    {
+        var applicationIds = new[] { Guid.NewGuid(), Guid.NewGuid() };
+        var withNote = ActiveLease(applicationIds[0]);
+        withNote.End(new DateOnly(2025, 6, 30), LeaseEndReason.Other, LeaseEndedBy.Lessee, "Lessee's personal circumstances");
+        var withoutNote = ActiveLease(applicationIds[1]);
+        _repository.ListByLeaseApplicationIdsAsync(applicationIds).Returns([withNote, withoutNote]);
+        var sut = CreateSut();
+
+        var notes = await sut.ListEndNotesForApplicationsAsync(applicationIds);
+
+        notes.Should().ContainSingle().Which.Should().Be(
+            new LeaseEndNote(withNote.LeaseId, applicationIds[0], "Lessee's personal circumstances"));
+    }
+
+    [Fact]
+    public async Task ListEndNotesForApplicationsAsync_WithNoApplications_DoesntQuery()
+    {
+        var sut = CreateSut();
+
+        (await sut.ListEndNotesForApplicationsAsync([])).Should().BeEmpty();
+        await _repository.DidNotReceiveWithAnyArgs().ListByLeaseApplicationIdsAsync(default!);
+    }
+
+    [Fact]
+    public async Task RedactEndNotesForApplicationsAsync_TombstonesEveryNote_CountsOnlyChangedOnes_AndSavesOnce()
+    {
+        var applicationIds = new[] { Guid.NewGuid(), Guid.NewGuid() };
+        var withNote = ActiveLease(applicationIds[0]);
+        withNote.End(new DateOnly(2025, 6, 30), LeaseEndReason.Other, LeaseEndedBy.Lessee, "Lessee's personal circumstances");
+        var withoutNote = ActiveLease(applicationIds[1]);
+        withoutNote.End(new DateOnly(2025, 6, 30), LeaseEndReason.NonRenewal, LeaseEndedBy.Lessee, null);
+        _repository.ListByLeaseApplicationIdsAsync(applicationIds).Returns([withNote, withoutNote]);
+        var sut = CreateSut();
+
+        var redacted = await sut.RedactEndNotesForApplicationsAsync(applicationIds);
+
+        redacted.Should().Be(1);
+        withNote.EndNote.Should().Be(Lease.ErasedEndNote);
+        withoutNote.EndNote.Should().BeNull();
+        await _repository.Received(1).SaveChangesAsync();
+        await _auditService.DidNotReceiveWithAnyArgs().RecordAsync(default, default, default, default!, default!);
+    }
+
+    [Fact]
+    public async Task RedactEndNotesForApplicationsAsync_WithNothingToRedact_ReturnsZero_AndDoesntSave()
+    {
+        var sut = CreateSut();
+
+        (await sut.RedactEndNotesForApplicationsAsync([])).Should().Be(0);
+        await _repository.DidNotReceiveWithAnyArgs().ListByLeaseApplicationIdsAsync(default!);
+
+        var applicationId = Guid.NewGuid();
+        var stillActive = ActiveLease(applicationId);
+        _repository.ListByLeaseApplicationIdsAsync(Arg.Any<IReadOnlyCollection<Guid>>()).Returns([stillActive]);
+        (await sut.RedactEndNotesForApplicationsAsync([applicationId])).Should().Be(0);
+        await _repository.DidNotReceive().SaveChangesAsync();
+    }
 }

@@ -107,6 +107,33 @@ public sealed class LeaseTests
     }
 
     [Fact]
+    public void RedactEndNote_TombstonesANote_AndReportsNothingToDoWithoutOneOrASecondTime()
+    {
+        var lease = Fixed();
+        lease.End(new DateOnly(2026, 6, 30), LeaseEndReason.Other, LeaseEndedBy.Lessee, "Ada moved to her mother's in Durban");
+
+        lease.RedactEndNote().Should().BeTrue();
+        lease.EndNote.Should().Be(Lease.ErasedEndNote);
+        lease.EndReason.Should().Be(LeaseEndReason.Other);
+        lease.RedactEndNote().Should().BeFalse();
+
+        var noNote = Fixed();
+        noNote.End(new DateOnly(2026, 6, 30), LeaseEndReason.NonRenewal, LeaseEndedBy.Lessee, null);
+        noNote.RedactEndNote().Should().BeFalse();
+        noNote.EndNote.Should().BeNull();
+    }
+
+    [Fact]
+    public void RedactEndNote_LeavesTheSystemsOwnSupersededNoteAlone()
+    {
+        var lease = Fixed();
+        lease.End(new DateOnly(2026, 6, 30), LeaseEndReason.Other, LeaseEndedBy.PmCompany, Lease.SupersededEndNote);
+
+        lease.RedactEndNote().Should().BeFalse();
+        lease.EndNote.Should().Be(Lease.SupersededEndNote);
+    }
+
+    [Fact]
     public void UnitAsset_IsVacantSinceItsCreation_ClearsItWhenOccupied_AndTakesTheLeaseEndWhenVacated()
     {
         var unit = UnitAsset.Create(Guid.NewGuid(), Guid.NewGuid(), "4B", null, null);

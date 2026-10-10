@@ -52,13 +52,18 @@ public enum LeaseEndedBy
 /// term and end matter (BDR-LSE-009/011), and a tenant with only Leasing still has leases with no
 /// rent schedule. PropertyAsset already owned occupancy, so the invariant is simply "a unit is
 /// OCCUPIED exactly when it has an ACTIVE lease", enforced by LeaseService
-/// and a partial unique index (one ACTIVE lease per unit). No lessee PII is held here: a
+/// and a partial unique index (one ACTIVE lease per unit). No lessee identity is held here: a
 /// Leasing-sourced lease points at its application, which already owns the applicant's details
-/// and their POPIA handling.
+/// and their POPIA handling. The one exception is EndNote — staff free text that may describe the
+/// lessee — which Leasing's POPIA erasure tombstones through ILeaseService (RedactEndNote).
 /// </summary>
 public sealed class Lease : ITenantOwned
 {
     public const int MaxEndNoteLength = 500;
+    public const string ErasedEndNote = "[erased]";
+
+    /// <summary>The system-written note on a lease ended because a signed lease replaced it — fixed text, never about the lessee.</summary>
+    public const string SupersededEndNote = "Superseded by a lease signed through Leasing.";
 
     public Guid LeaseId { get; private set; }
     public Guid TenantId { get; private set; }
@@ -159,6 +164,24 @@ public sealed class Lease : ITenantOwned
         EndedBy = endedBy;
         EndNote = trimmed;
         UpdatedAt = DateTimeOffset.UtcNow;
+    }
+
+    /// <summary>
+    /// POPIA erasure of the lessee — the note is staff free text, so it may name or describe them.
+    /// Tombstoned rather than nulled so a reason of Other still visibly had a note. False when
+    /// there was nothing to redact (no note, already erased, or the system's own superseded note,
+    /// which holds nothing personal), so erasure counts stay idempotent and honest.
+    /// </summary>
+    public bool RedactEndNote()
+    {
+        if (EndNote is null or ErasedEndNote or SupersededEndNote)
+        {
+            return false;
+        }
+
+        EndNote = ErasedEndNote;
+        UpdatedAt = DateTimeOffset.UtcNow;
+        return true;
     }
 
     /// <summary>Days from <paramref name="asOf"/> to the fixed end date — negative once it has passed with the lease still active. Null when there is no fixed end date.</summary>

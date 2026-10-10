@@ -16,6 +16,11 @@ public sealed class LeaseRepository(PropertyDbContext dbContext) : TenantAwareRe
     public Task<Lease?> GetByLeaseApplicationIdAsync(Guid leaseApplicationId) =>
         Scoped(dbContext.Leases).FirstOrDefaultAsync(l => l.LeaseApplicationId == leaseApplicationId);
 
+    public async Task<IReadOnlyList<Lease>> ListByLeaseApplicationIdsAsync(IReadOnlyCollection<Guid> leaseApplicationIds) =>
+        await Scoped(dbContext.Leases)
+            .Where(l => l.LeaseApplicationId != null && leaseApplicationIds.Contains(l.LeaseApplicationId.Value))
+            .ToListAsync();
+
     public Task<Lease?> GetActiveForUnitAsync(Guid unitAssetId) =>
         Scoped(dbContext.Leases).FirstOrDefaultAsync(l => l.UnitAssetId == unitAssetId && l.Status == LeaseStatus.Active);
 

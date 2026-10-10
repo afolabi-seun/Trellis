@@ -194,13 +194,44 @@ public sealed class LeaseService(
     public async Task<ServiceResult<IReadOnlyList<LeaseResponse>>> ListTermNotRecordedAsync() =>
         await ToListResultAsync(await repository.ListActiveWithTermNotRecordedAsync());
 
+    public async Task<IReadOnlyList<LeaseEndNote>> ListEndNotesForApplicationsAsync(IReadOnlyCollection<Guid> applicationIds)
+    {
+        if (applicationIds.Count == 0)
+        {
+            return [];
+        }
+
+        var leases = await repository.ListByLeaseApplicationIdsAsync(applicationIds);
+        return leases
+            .Where(l => l.EndNote is not null)
+            .Select(l => new LeaseEndNote(l.LeaseId, l.LeaseApplicationId!.Value, l.EndNote!))
+            .ToList();
+    }
+
+    public async Task<int> RedactEndNotesForApplicationsAsync(IReadOnlyCollection<Guid> applicationIds)
+    {
+        if (applicationIds.Count == 0)
+        {
+            return 0;
+        }
+
+        var leases = await repository.ListByLeaseApplicationIdsAsync(applicationIds);
+        var redacted = leases.Count(l => l.RedactEndNote());
+        if (redacted > 0)
+        {
+            await repository.SaveChangesAsync();
+        }
+
+        return redacted;
+    }
+
     private static DateOnly Today => DateOnly.FromDateTime(DateTime.UtcNow);
 
     /// <summary>Ends the earlier lease the day before the new one starts (never before its own start). The unit stays OCCUPIED throughout.</summary>
     private async Task SupersedeAsync(Lease active, DateOnly newLeaseStart, Guid? actorUserId)
     {
         var endedOn = newLeaseStart.AddDays(-1) < active.StartDate ? active.StartDate : newLeaseStart.AddDays(-1);
-        active.End(endedOn, LeaseEndReason.Other, LeaseEndedBy.PmCompany, SupersededNote);
+        active.End(endedOn, LeaseEndReason.Other, LeaseEndedBy.PmCompany, Lease.SupersededEndNote);
         await repository.SaveChangesAsync();
 
         await auditService.RecordAsync(
@@ -208,8 +239,6 @@ public sealed class LeaseService(
             AuditTypes.PropertyAsset.LeaseEnded,
             $"{{\"leaseId\":\"{active.LeaseId}\",\"unitAssetId\":\"{active.UnitAssetId}\",\"reason\":\"OTHER\",\"supersededBySignedLease\":true}}");
     }
-
-    private const string SupersededNote = "Superseded by a lease signed through Leasing.";
 
     private async Task<ServiceResult<LeaseResponse>> ToResultAsync(Lease? lease) =>
         lease is null
