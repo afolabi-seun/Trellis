@@ -3,6 +3,8 @@ using NSubstitute;
 using Trellis.Api.Modules.Leasing.Application.Interfaces;
 using Trellis.Api.Modules.Leasing.Application.Services;
 using Trellis.Api.Modules.Leasing.Domain.Entities;
+using Trellis.Api.Modules.PropertyAsset.Application.Dtos;
+using Trellis.Api.Modules.PropertyAsset.Application.Interfaces;
 using Xunit;
 using LeasingApplication = Trellis.Api.Modules.Leasing.Domain.Entities.Application;
 
@@ -16,9 +18,10 @@ public sealed class LeasingPersonalDataHandlerTests
     private readonly IApplicationLinkTokenRepository _tokenRepository = Substitute.For<IApplicationLinkTokenRepository>();
     private readonly IScreeningResultRepository _screeningResultRepository = Substitute.For<IScreeningResultRepository>();
     private readonly ILeasingWebhookEventRepository _webhookEventRepository = Substitute.For<ILeasingWebhookEventRepository>();
+    private readonly ILeaseService _leaseService = Substitute.For<ILeaseService>();
 
     private LeasingPersonalDataHandler CreateSut() =>
-        new(_applicationRepository, _tokenRepository, _screeningResultRepository, _webhookEventRepository);
+        new(_applicationRepository, _tokenRepository, _screeningResultRepository, _webhookEventRepository, _leaseService);
 
     private LeasingApplication CreateApplication() => LeasingApplication.Create(
         _tenantId, Guid.NewGuid(), SubjectEmail, "Ada Applicant", "+27821234567", new DateOnly(1990, 1, 1), "1 Main Rd", "Acme", 5000m, true);
@@ -38,12 +41,35 @@ public sealed class LeasingPersonalDataHandlerTests
     public async Task ExportAsync_WithMatchingApplications_ReturnsThem()
     {
         _applicationRepository.ListByApplicantEmailAsync(SubjectEmail).Returns([CreateApplication()]);
+        _leaseService.ListEndNotesForApplicationsAsync(Arg.Any<IReadOnlyCollection<Guid>>()).Returns([]);
         var sut = CreateSut();
 
         var result = await sut.ExportAsync(SubjectEmail);
 
         result.Should().NotBeNull();
     }
+
+    [Fact]
+    public async Task ExportAsync_IncludesTheEndNoteOfEachApplicationsLease()
+    {
+        var withNote = CreateApplication();
+        var withoutNote = CreateApplication();
+        _applicationRepository.ListByApplicantEmailAsync(SubjectEmail).Returns([withNote, withoutNote]);
+        _leaseService.ListEndNotesForApplicationsAsync(Arg.Any<IReadOnlyCollection<Guid>>())
+            .Returns([new LeaseEndNote(Guid.NewGuid(), withNote.ApplicationId, "Moved out for medical treatment")]);
+        var sut = CreateSut();
+
+        var result = await sut.ExportAsync(SubjectEmail);
+
+        await _leaseService.Received(1).ListEndNotesForApplicationsAsync(
+            Arg.Is<IReadOnlyCollection<Guid>>(ids => ids.Count == 2 && ids.Contains(withNote.ApplicationId) && ids.Contains(withoutNote.ApplicationId)));
+        var exported = ((System.Collections.IEnumerable)result!).Cast<object>().ToList();
+        LeaseEndNoteOf(exported[0]).Should().Be("Moved out for medical treatment");
+        LeaseEndNoteOf(exported[1]).Should().BeNull();
+    }
+
+    private static string? LeaseEndNoteOf(object exported) =>
+        (string?)exported.GetType().GetProperty("LeaseEndNote")!.GetValue(exported);
 
     [Fact]
     public async Task EraseAsync_RedactsApplicantPii_OnEveryMatchingApplication()
@@ -99,6 +125,23 @@ public sealed class LeasingPersonalDataHandlerTests
 
         webhookEvent.PayloadJson.Should().Be("{\"redacted\":true}");
         await _webhookEventRepository.Received(1).SaveChangesAsync();
+    }
+
+    [Fact]
+    public async Task EraseAsync_AsksPropertyAssetToRedactTheEndNotesOfThoseApplicationsLeases_AndCountsThem()
+    {
+        var first = CreateApplication();
+        var second = CreateApplication();
+        _applicationRepository.ListByApplicantEmailAsync(SubjectEmail).Returns([first, second]);
+        _tokenRepository.ListByApplicantEmailAsync(SubjectEmail).Returns([]);
+        _leaseService.RedactEndNotesForApplicationsAsync(Arg.Any<IReadOnlyCollection<Guid>>()).Returns(1);
+        var sut = CreateSut();
+
+        var summary = await sut.EraseAsync(SubjectEmail);
+
+        await _leaseService.Received(1).RedactEndNotesForApplicationsAsync(
+            Arg.Is<IReadOnlyCollection<Guid>>(ids => ids.Count == 2 && ids.Contains(first.ApplicationId) && ids.Contains(second.ApplicationId)));
+        summary.RecordsAffected.Should().Be(3);
     }
 
     [Fact]

@@ -30,4 +30,20 @@ public interface ILeaseService
     Task<ServiceResult<IReadOnlyList<LeaseResponse>>> ListExpiringAsync(int withinDays);
 
     Task<ServiceResult<IReadOnlyList<LeaseResponse>>> ListTermNotRecordedAsync();
+
+    /// <summary>
+    /// POPIA export, the read counterpart of <see cref="RedactEndNotesForApplicationsAsync"/>: the
+    /// end notes on those applications' leases, for Leasing's IPersonalDataHandler to include in
+    /// the subject's export bundle. Leases without a note are left out.
+    /// </summary>
+    Task<IReadOnlyList<LeaseEndNote>> ListEndNotesForApplicationsAsync(IReadOnlyCollection<Guid> applicationIds);
+
+    /// <summary>
+    /// POPIA erasure, called by Leasing's IPersonalDataHandler with the erased applicant's
+    /// application ids — Leasing owns the subject's identity, PropertyAsset owns the lease, so
+    /// neither reaches into the other's schema. Tombstones every non-empty end note on those
+    /// applications' leases and returns how many it changed (0 on a repeat call). Manual leases
+    /// have no application, so they're never matched.
+    /// </summary>
+    Task<int> RedactEndNotesForApplicationsAsync(IReadOnlyCollection<Guid> applicationIds);
 }

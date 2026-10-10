@@ -19,6 +19,9 @@ public sealed record LeaseRenewRequest(string TermType, DateOnly? NewEndDate);
 /// <summary>TermType: FIXED (EndDate required) or MONTH_TO_MONTH (no EndDate).</summary>
 public sealed record LeaseTermRequest(string TermType, DateOnly? EndDate, string RowVersion);
 
+/// <summary>A Leasing-sourced lease's end note, for a POPIA export only — never logged, never returned anywhere else.</summary>
+public sealed record LeaseEndNote(Guid LeaseId, Guid LeaseApplicationId, string EndNote);
+
 /// <summary>
 /// DaysUntilEnd is null unless the term is FIXED, and negative for an active lease whose end date
 /// has passed. EndReason/EndedBy are null while active; EndReason is NOT_RECORDED and EndedBy null

@@ -212,7 +212,7 @@ application, which owns the applicant's details and their POPIA handling.
 | term_type | VARCHAR(20) | NOT NULL | FIXED \| MONTH_TO_MONTH \| NOT_RECORDED (leases that predate term capture — never guessed) |
 | end_date | DATE | NULLABLE | Set exactly when term_type = FIXED, after start_date (CHECK) |
 | status | VARCHAR(20) | NOT NULL | ACTIVE \| ENDED; at most one ACTIVE per unit (partial unique index) |
-| ended_on, end_reason, ended_by, end_note | | NULLABLE | Set together when ENDED (CHECK). end_reason from BDR-LSE-011's fixed list, or NOT_RECORDED for leases ended before it existed (ended_by then null); end_note ≤ 500 chars, required when the reason is OTHER |
+| ended_on, end_reason, ended_by, end_note | | NULLABLE | Set together when ENDED (CHECK). end_reason from BDR-LSE-011's fixed list, or NOT_RECORDED for leases ended before it existed (ended_by then null); end_note ≤ 500 chars, required when the reason is OTHER; tombstoned to `[erased]` by POPIA erasure of the lessee (LEASING-sourced leases only) |
 | created_by, created_at, updated_at, xmin | | | Standard bookkeeping and optimistic concurrency |
 
 No DELETE grant: an ended lease is history. Every `trellis_rentledger.rent_schedule` points at one

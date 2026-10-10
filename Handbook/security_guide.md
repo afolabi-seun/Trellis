@@ -592,7 +592,11 @@ PropertyAsset's own `IOwnerService.GetByEmailAsync`, so it must run before Prope
 handler has redacted that email out from under it (found the hard way, via a live smoke test).
 PII fields are tombstoned in place (`Application.RedactApplicantPii`, `Owner.RedactPii`,
 `OwnerReport.RedactOwnerPii`, `NotificationDelivery.RedactRecipientAddress`,
-`AppUser.RedactForErasure`) — never a row deleted, to preserve referential and audit integrity;
+`AppUser.RedactForErasure`, and `Lease.RedactEndNote` for the leases of an erased applicant's
+applications — staff free text that can describe the lessee, reached by Leasing's handler through
+PropertyAsset's `ILeaseService.RedactEndNotesForApplicationsAsync` (and exported through its
+`ListEndNotesForApplicationsAsync` read counterpart), never by touching `trellis_property` itself;
+MANUAL leases carry no lessee identity to match, and the system's fixed "superseded" note is kept) — never a row deleted, to preserve referential and audit integrity;
 `screening_result.full_report_ciphertext` is cleared too, the one deliberate column-level UPDATE
 grant on an otherwise INSERT-only table (`GrantScreeningCiphertextErase` migration). Erasing an
 already-erased subject is a no-op (the redacted email no longer matches). Gated by
