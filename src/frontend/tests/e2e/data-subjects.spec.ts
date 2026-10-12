@@ -14,6 +14,7 @@ import {
   seedTenantAdmin,
   SEED_PASSWORD,
 } from "./support/dbSeed";
+import { waitForModalSettled } from "./support/modal";
 
 // security_guide.md's POPIA data-subject export/erasure — TENANT_ADMIN only. A single seeded
 // Owner (PropertyAsset) is enough to prove the page is wired to real data end to end; the full
@@ -99,6 +100,7 @@ test("a Tenant Admin exports and then erases a data subject, and the redaction i
   await dialog.getByRole("textbox", { name: "Retype subject email" }).fill(OWNER_EMAIL);
   await dialog.getByLabel("Your password").fill(SEED_PASSWORD);
   await expect(eraseButton).toBeEnabled();
+  await waitForModalSettled(page);
   const dialogAxeResults = await new AxeBuilder({ page }).withTags(["wcag2a", "wcag2aa"]).analyze();
   expect(dialogAxeResults.violations).toEqual([]);
 

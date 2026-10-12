@@ -29,6 +29,7 @@ import {
   SEED_PASSWORD,
   tenantSlugFor,
 } from "./support/dbSeed";
+import { waitForModalSettled } from "./support/modal";
 
 // Phase 9's exit criterion: a prospective tenant applies via a secure link with no platform
 // account, staff review it, and a completed e-signature flips the unit to occupied and files the
@@ -333,6 +334,7 @@ test("BDR-LSE-004: only a Tenant Admin sees the full screening report, behind a 
   await expect(dialog.getByText("Sensitive information")).toBeVisible();
   await expect(dialog.getByText(/Provider: NOOP/)).toBeVisible();
   await expect(dialog.getByText(/"simulated":true/)).toBeVisible();
+  await waitForModalSettled(page);
   await expectNoAxeViolations(page);
 
   await page.keyboard.press("Escape");
@@ -354,8 +356,9 @@ test("BDR-LSE-010: staff offer a renewal, record a decline, then an acceptance t
     await dialog.getByLabel("Change the rent").check();
     await dialog.getByLabel("New rent per period").fill("1650");
     await expect(dialog.getByLabel("New rent applies from")).toHaveValue(NEW_RENT_FROM);
-    // Once is enough: axe on a dialog still animating in can misread its colours under load.
+    // The second offer opens the same dialog, so scanning it once is enough.
     if (checkAccessibility) {
+      await waitForModalSettled(page);
       await expectNoAxeViolations(page);
     }
     await dialog.getByRole("button", { name: "Record offer" }).click();
@@ -429,6 +432,7 @@ test("BDR-LSE: staff end a lease, freeing the unit and its rent schedule so the 
   await page.getByRole("option", { name: "The lessee" }).click();
   await expect(dialog.getByRole("button", { name: "End lease" })).toBeDisabled();
   await dialog.getByRole("textbox", { name: "Note" }).fill("Relocated for work");
+  await waitForModalSettled(page);
   await expectNoAxeViolations(page);
   await dialog.getByRole("button", { name: "End lease" }).click();
   await expect(dialog).toBeHidden();

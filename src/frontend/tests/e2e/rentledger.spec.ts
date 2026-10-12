@@ -18,6 +18,7 @@ import {
   getLeasesForUnit,
   getUnitOccupancyStatus,
 } from "./support/dbSeed";
+import { waitForModalSettled } from "./support/modal";
 
 const KES_TENANT_ID = "f1f1f1f1-f1f1-f1f1-f1f1-f1f1f1f1f1f1";
 const KES_TENANT_NAME = `E2E Rent KES Tenant ${Date.now()}`;
@@ -201,8 +202,7 @@ test("BDR-RENT-002: a staff member records payments received, and paying up clea
 
   await page.getByRole("button", { name: "Record payment received" }).click();
   await expect(page.getByText(/received outside Trellis/)).toBeVisible();
-  // Mantine fades the modal in; scanning mid-transition reports a false low contrast.
-  await expect(page.getByRole("dialog")).toHaveCSS("opacity", "1");
+  await waitForModalSettled(page);
   await expectNoAxeViolations(page);
   await page.getByRole("dialog").getByRole("button", { name: "Close" }).click();
 
