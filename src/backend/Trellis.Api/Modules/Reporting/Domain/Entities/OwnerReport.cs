@@ -57,6 +57,9 @@ public sealed class OwnerReport : ITenantOwned
     /// <summary>JSON-serialized `IReadOnlyList&lt;CurrencyAmount&gt;` — a plain scalar column, not a queryable structure, so RentLedger's own DTO shape is reused as-is rather than mapping to something Reporting-specific.</summary>
     public string? RentReceivedByCurrencyJson { get; private set; }
     public DateOnly? RentAsOf { get; private set; }
+
+    /// <summary>BDR-RENT-007 — JSON-serialized OwnerReportPaymentTimeliness, stored as generated; null on reports from before it existed, or without Rent Collection.</summary>
+    public string? RentPaymentTimelinessJson { get; private set; }
     public byte[]? PdfContent { get; private set; }
     public Guid GeneratedBy { get; private set; }
     public DateTimeOffset CreatedAt { get; private set; }
@@ -86,7 +89,7 @@ public sealed class OwnerReport : ITenantOwned
         int propertyCount, decimal totalMaintenanceCost, string maintenanceCurrency, int openMaintenanceCount,
         int compliantDocumentCount, int expiringDocumentCount, byte[] pdfContent,
         int? rentCurrentCount = null, int? rentOverdueCount = null, int? rentArrearsCount = null,
-        string? rentReceivedByCurrencyJson = null, DateOnly? rentAsOf = null)
+        string? rentReceivedByCurrencyJson = null, DateOnly? rentAsOf = null, string? rentPaymentTimelinessJson = null)
     {
         if (Status != OwnerReportStatus.Generating)
         {
@@ -104,6 +107,7 @@ public sealed class OwnerReport : ITenantOwned
         RentArrearsCount = rentArrearsCount;
         RentReceivedByCurrencyJson = rentReceivedByCurrencyJson;
         RentAsOf = rentAsOf;
+        RentPaymentTimelinessJson = rentPaymentTimelinessJson;
         PdfContent = pdfContent;
         Status = OwnerReportStatus.Ready;
         ReadyAt = DateTimeOffset.UtcNow;

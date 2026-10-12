@@ -35,6 +35,9 @@ public sealed class UnitAssetRepository(PropertyDbContext dbContext) : TenantAwa
     public async Task<IReadOnlyList<Guid>> ListIdsByPropertiesAsync(IReadOnlyCollection<Guid> propertyIds) =>
         await Scoped(dbContext.UnitAssets).Where(u => propertyIds.Contains(u.PropertyId)).Select(u => u.UnitAssetId).ToListAsync();
 
+    public async Task<IReadOnlyDictionary<Guid, Guid>> MapUnitsToPropertiesAsync(IReadOnlyCollection<Guid> propertyIds) =>
+        await Scoped(dbContext.UnitAssets).Where(u => propertyIds.Contains(u.PropertyId)).ToDictionaryAsync(u => u.UnitAssetId, u => u.PropertyId);
+
     public Task<int> CountActiveForTenantAsync(Guid tenantId) =>
         dbContext.UnitAssets.CountAsync(u => u.TenantId == tenantId && u.Status == UnitAssetStatus.Active);
 

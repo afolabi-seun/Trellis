@@ -17,5 +17,8 @@ public interface IRentPaymentRecordRepository
     Task<IReadOnlyDictionary<string, decimal>> GetReceivedInPeriodByCurrencyAsync(
         IReadOnlyDictionary<Guid, string> scheduleCurrencies, DateOnly periodStart, DateOnly periodEnd);
 
+    /// <summary>BDR-RENT-007 — every non-voided payment's date and amount, per schedule. Explicit ids, like GetReceivedTotalsAsync.</summary>
+    Task<IReadOnlyDictionary<Guid, IReadOnlyList<(DateOnly DateReceived, decimal Amount)>>> GetPaymentsAsync(IReadOnlyCollection<Guid> rentScheduleIds);
+
     Task SaveChangesAsync();
 }

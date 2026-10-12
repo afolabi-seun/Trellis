@@ -56,7 +56,8 @@ const ESIGNATURE_WEBHOOK_SECRET = "esig_test_dev_only_placeholder_not_a_real_sec
 const PROPERTY_ADDRESS = "42 Leasing Lane";
 const UNIT_LABEL = "Unit 7A";
 const LISTING_DESCRIPTION = "Sunny two-bedroom near the park";
-const API_URL = "http://localhost:5080";
+// Overridable so a run can target an API on another port (e.g. two sessions sharing one machine).
+const API_URL = process.env.E2E_API_URL ?? "http://localhost:5080";
 
 // A 1x1 JPEG, base64 — a real image the upload's content check accepts.
 const TINY_JPEG = Buffer.from(

@@ -7137,6 +7137,16 @@ export interface components {
             /** Format: date */
             periodEnd?: string;
         };
+        OwnerReportPaymentTimeliness: {
+            overall?: components["schemas"]["PaymentTimelinessDto"];
+            byProperty?: components["schemas"]["OwnerReportPropertyTimeliness"][] | null;
+        };
+        OwnerReportPropertyTimeliness: {
+            /** Format: uuid */
+            propertyId?: string;
+            propertyAddress?: string | null;
+            timeliness?: components["schemas"]["PaymentTimelinessDto"];
+        };
         OwnerReportRentSection: {
             /** Format: int32 */
             currentCount?: number;
@@ -7147,6 +7157,7 @@ export interface components {
             receivedByCurrency?: components["schemas"]["CurrencyAmount"][] | null;
             /** Format: date */
             asOf?: string;
+            timeliness?: components["schemas"]["OwnerReportPaymentTimeliness"];
         };
         OwnerReportResponse: {
             /** Format: uuid */
@@ -7254,6 +7265,16 @@ export interface components {
             data?: components["schemas"]["PaymentMethodResponse"];
             error?: components["schemas"]["ApiError"];
             meta: components["schemas"]["ApiMeta"];
+        };
+        PaymentTimelinessDto: {
+            /** Format: int32 */
+            periodsAssessed?: number;
+            /** Format: int32 */
+            periodsOnTime?: number;
+            /** Format: double */
+            onTimeRate?: number | null;
+            /** Format: double */
+            averageDaysLate?: number | null;
         };
         PlatformRevenueSummaryResponse: {
             /** Format: double */
@@ -7576,6 +7597,7 @@ export interface components {
             upcomingRentAmount?: number | null;
             /** Format: date */
             upcomingRentFrom?: string | null;
+            timeliness?: components["schemas"]["PaymentTimelinessDto"];
         };
         RentScheduleResponseApiResponse: {
             readonly status?: string | null;

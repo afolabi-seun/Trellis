@@ -28,7 +28,17 @@ public sealed record OwnerReportResponse(
 /// outside Trellis (BDR-RENT-006), grouped by each schedule's own currency and never summed across
 /// currencies — an empty list, not a zero, means nothing was recorded in the period.
 /// </summary>
-public sealed record OwnerReportRentSection(int CurrentCount, int OverdueCount, int ArrearsCount, IReadOnlyList<CurrencyAmount> ReceivedByCurrency, DateOnly AsOf);
+public sealed record OwnerReportRentSection(
+    int CurrentCount, int OverdueCount, int ArrearsCount, IReadOnlyList<CurrencyAmount> ReceivedByCurrency, DateOnly AsOf,
+    OwnerReportPaymentTimeliness? Timeliness = null);
+
+/// <summary>
+/// BDR-RENT-007 — for periods due within the report period whose grace had passed by generation:
+/// overall and per property, summed from period counts. Null on reports generated before it existed.
+/// </summary>
+public sealed record OwnerReportPaymentTimeliness(PaymentTimelinessDto Overall, IReadOnlyList<OwnerReportPropertyTimeliness> ByProperty);
+
+public sealed record OwnerReportPropertyTimeliness(Guid PropertyId, string PropertyAddress, PaymentTimelinessDto Timeliness);
 
 /// <summary>The internal content set IReportExportService renders from — pure data, no DB dependency, so the PDF/CSV renderers stay independently unit-testable.</summary>
 public sealed record OwnerReportContent(

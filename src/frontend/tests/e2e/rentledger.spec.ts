@@ -276,6 +276,12 @@ test("BDR-RENT-001: terms can be edited, and an ended schedule accepts no more r
   await dialog.getByRole("button", { name: "Save changes" }).click();
   await expect(dialog).toBeHidden();
   await expect(page.getByText(/Grace period: 10 days/)).toBeVisible();
+  // BDR-RENT-007: the months already past grace were recorded as received only today, so none were on time.
+  await expect(
+    page.getByText(
+      /Payment timeliness: 0 of \d+ periods paid on time \(0%\) · late periods averaged/,
+    ),
+  ).toBeVisible();
 
   // The schedule started its own (MANUAL) lease, so ending it ends the tenancy and asks why (BDR-LSE-011).
   await page.getByRole("button", { name: "End tenancy" }).click();

@@ -146,6 +146,10 @@ namespace Trellis.Api.Modules.Reporting.Infrastructure.Data.Migrations
                         .HasColumnType("integer")
                         .HasColumnName("rent_overdue_count");
 
+                    b.Property<string>("RentPaymentTimelinessJson")
+                        .HasColumnType("jsonb")
+                        .HasColumnName("rent_payment_timeliness");
+
                     b.Property<string>("RentReceivedByCurrencyJson")
                         .HasColumnType("jsonb")
                         .HasColumnName("rent_received_by_currency");

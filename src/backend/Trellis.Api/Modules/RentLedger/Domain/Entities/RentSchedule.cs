@@ -162,6 +162,20 @@ public sealed class RentSchedule : ITenantOwned
         UpdatedAt = DateTimeOffset.UtcNow;
     }
 
+    /// <summary>
+    /// BDR-RENT-007 — how promptly rent was recorded as received (non-voided payments only), for periods
+    /// due between <paramref name="dueFrom"/> and <paramref name="dueTo"/> when given. An ended schedule
+    /// is judged only up to the day it ended: no periods accrue after it.
+    /// </summary>
+    public PaymentTimeliness Timeliness(
+        IReadOnlyList<(DateOnly DateReceived, decimal Amount)> payments, DateOnly asOf, DateOnly? dueFrom = null, DateOnly? dueTo = null)
+    {
+        var until = EndedAt is { } ended && DateOnly.FromDateTime(ended.UtcDateTime) < asOf
+            ? DateOnly.FromDateTime(ended.UtcDateTime)
+            : asOf;
+        return PaymentTimelinessCalculator.Calculate(StartDate, DueDayOfMonth, GracePeriodDays, RentAmountOn, payments, until, dueFrom, dueTo);
+    }
+
     /// <summary>Current / overdue / in-arrears as of a date, given the total recorded as received against this schedule (non-voided payments only).</summary>
     public RentEvaluation Evaluate(decimal totalReceived, DateOnly asOf) =>
         RentStatusCalculator.Evaluate(StartDate, DueDayOfMonth, GracePeriodDays, RentAmountOn, totalReceived, asOf);

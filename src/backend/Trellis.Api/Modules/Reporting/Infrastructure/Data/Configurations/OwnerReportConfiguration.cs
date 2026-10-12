@@ -42,6 +42,7 @@ public sealed class OwnerReportConfiguration : IEntityTypeConfiguration<OwnerRep
         builder.Property(r => r.RentArrearsCount).HasColumnName("rent_arrears_count");
         builder.Property(r => r.RentReceivedByCurrencyJson).HasColumnName("rent_received_by_currency").HasColumnType("jsonb");
         builder.Property(r => r.RentAsOf).HasColumnName("rent_as_of");
+        builder.Property(r => r.RentPaymentTimelinessJson).HasColumnName("rent_payment_timeliness").HasColumnType("jsonb");
         builder.Property(r => r.PdfContent).HasColumnName("pdf_content").HasColumnType("bytea");
         builder.Property(r => r.GeneratedBy).HasColumnName("generated_by");
         builder.Property(r => r.CreatedAt).HasColumnName("created_at");

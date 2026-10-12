@@ -43,5 +43,20 @@ public sealed class RentPaymentRecordRepository(RentLedgerDbContext dbContext) :
             .ToDictionary(g => g.Key, g => g.Sum(r => r.AmountReceived));
     }
 
+    public async Task<IReadOnlyDictionary<Guid, IReadOnlyList<(DateOnly DateReceived, decimal Amount)>>> GetPaymentsAsync(
+        IReadOnlyCollection<Guid> rentScheduleIds)
+    {
+        var records = await dbContext.RentPaymentRecords
+            .Where(r => rentScheduleIds.Contains(r.RentScheduleId) && r.VoidedAt == null)
+            .Select(r => new { r.RentScheduleId, r.DateReceived, r.AmountReceived })
+            .ToListAsync();
+
+        return records
+            .GroupBy(r => r.RentScheduleId)
+            .ToDictionary(
+                g => g.Key,
+                g => (IReadOnlyList<(DateOnly, decimal)>)g.Select(r => (r.DateReceived, r.AmountReceived)).ToList());
+    }
+
     public Task SaveChangesAsync() => dbContext.SaveChangesAsync();
 }

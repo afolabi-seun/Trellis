@@ -129,4 +129,53 @@ public sealed class ReportExportServiceTests
         lines.Should().HaveCount(5);
         lines.Should().NotContain(l => l.StartsWith("Rent schedules in arrears", StringComparison.Ordinal));
     }
+
+    [Fact]
+    public void GenerateOwnerReportCsv_WithPaymentTimeliness_AddsTheOnTimeAndDaysLateRows_OverallAndPerProperty()
+    {
+        var timeliness = new OwnerReportPaymentTimeliness(
+            new PaymentTimelinessDto(4, 3, 0.75m, 6m),
+            [new OwnerReportPropertyTimeliness(Guid.NewGuid(), "9 Elm St", new PaymentTimelinessDto(2, 2, 1m, null))]);
+        var content = SampleContent with
+        {
+            Rent = new OwnerReportRentSection(5, 2, 1, [], new DateOnly(2026, 2, 3), timeliness),
+        };
+
+        var csv = System.Text.Encoding.UTF8.GetString(_sut.GenerateOwnerReportCsv(content));
+
+        csv.Should().Contain("Rent periods paid on time (due in period and past grace),3 of 4 (75%)");
+        csv.Should().Contain("Average days late (late periods only),6");
+        csv.Should().Contain("Paid on time — 9 Elm St,2 of 2 (100%)");
+    }
+
+    [Fact]
+    public void GenerateOwnerReportCsv_WithNothingAssessedYet_SaysNoData_NeverAMeasuredZero()
+    {
+        var content = SampleContent with
+        {
+            Rent = new OwnerReportRentSection(
+                5, 2, 1, [], new DateOnly(2026, 2, 3),
+                new OwnerReportPaymentTimeliness(new PaymentTimelinessDto(0, 0, null, null), [])),
+        };
+
+        var csv = System.Text.Encoding.UTF8.GetString(_sut.GenerateOwnerReportCsv(content));
+
+        csv.Should().Contain("Rent periods paid on time (due in period and past grace),No data");
+        csv.Should().Contain("Average days late (late periods only),No data");
+    }
+
+    [Fact]
+    public void GenerateOwnerReportPdf_WithPaymentTimeliness_StillProducesAWellFormedPdf()
+    {
+        var content = SampleContent with
+        {
+            Rent = new OwnerReportRentSection(
+                5, 2, 1, [], new DateOnly(2026, 2, 3),
+                new OwnerReportPaymentTimeliness(new PaymentTimelinessDto(4, 3, 0.75m, 6m), [])),
+        };
+
+        var bytes = _sut.GenerateOwnerReportPdf(content);
+
+        System.Text.Encoding.ASCII.GetString(bytes, 0, 5).Should().Be("%PDF-");
+    }
 }

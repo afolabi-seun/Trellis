@@ -164,13 +164,15 @@ public sealed class RentScheduleService(
         var (items, hasMore, totalCount) = await scheduleRepository.ListForTenantAsync(CursorCodec.Decode(cursor), limit);
         var nextCursor = hasMore && items.Count > 0 ? CursorCodec.Encode(items[^1].CreatedAt, items[^1].RentScheduleId) : null;
 
-        var totals = await paymentRepository.GetReceivedTotalsAsync(items.Select(s => s.RentScheduleId).ToList());
+        var ids = items.Select(s => s.RentScheduleId).ToList();
+        var totals = await paymentRepository.GetReceivedTotalsAsync(ids);
+        var payments = await paymentRepository.GetPaymentsAsync(ids);
 
         // Sequential, not Task.WhenAll — each ToResponseAsync makes a cross-module call and they share this request's scoped DbContexts.
         var responses = new List<RentScheduleResponse>();
         foreach (var item in items)
         {
-            responses.Add(await ToResponseAsync(item, totals.GetValueOrDefault(item.RentScheduleId)));
+            responses.Add(await ToResponseAsync(item, totals.GetValueOrDefault(item.RentScheduleId), PaymentsFor(payments, item)));
         }
 
         return ServiceResult<PagedResponse<RentScheduleResponse>>.Success(
@@ -197,10 +199,11 @@ public sealed class RentScheduleService(
             .OrderBy(x => x.Evaluation.OldestUnpaidDueDate)
             .ToList();
 
+        var payments = await paymentRepository.GetPaymentsAsync(inArrears.Select(x => x.Schedule.RentScheduleId).ToList());
         var responses = new List<RentScheduleResponse>();
         foreach (var (schedule, received, _) in inArrears)
         {
-            responses.Add(await ToResponseAsync(schedule, received));
+            responses.Add(await ToResponseAsync(schedule, received, PaymentsFor(payments, schedule)));
         }
 
         return ServiceResult<IReadOnlyList<RentScheduleResponse>>.Success(responses);
@@ -334,6 +337,35 @@ public sealed class RentScheduleService(
         return ServiceResult<bool>.Success(true);
     }
 
+    public async Task<RentTimelinessSummary?> GetPaymentTimelinessAsync(
+        IReadOnlyDictionary<Guid, Guid> unitToProperty, DateOnly dueFrom, DateOnly dueTo, DateOnly asOf)
+    {
+        if (!await moduleEntitlementService.IsEntitledAsync(TenantContext.Current!.TenantId, ModuleKey))
+        {
+            return null;
+        }
+
+        var schedules = unitToProperty.Count == 0 ? [] : await scheduleRepository.ListForUnitsAsync(unitToProperty.Keys.ToList());
+        var payments = await paymentRepository.GetPaymentsAsync(schedules.Select(s => s.RentScheduleId).ToList());
+
+        // Ended schedules count too: a tenancy that ended mid-period still paid (or didn't) for the months it ran.
+        var byProperty = new Dictionary<Guid, PaymentTimeliness>();
+        var overall = PaymentTimeliness.None;
+        foreach (var schedule in schedules)
+        {
+            var timeliness = schedule.Timeliness(PaymentsFor(payments, schedule), asOf, dueFrom, dueTo);
+            overall = overall.Add(timeliness);
+            var propertyId = unitToProperty[schedule.UnitAssetId];
+            byProperty[propertyId] = byProperty.GetValueOrDefault(propertyId, PaymentTimeliness.None).Add(timeliness);
+        }
+
+        return new RentTimelinessSummary(
+            ToDto(overall),
+            byProperty.Where(p => p.Value.PeriodsAssessed > 0)
+                .Select(p => new PropertyPaymentTimelinessDto(p.Key, ToDto(p.Value)))
+                .ToList());
+    }
+
     public async Task<OwnerRentSummary?> GetOwnerRentSummaryAsync(
         IReadOnlyList<Guid> unitAssetIds, DateOnly periodStart, DateOnly periodEnd, DateOnly asOf)
     {
@@ -395,10 +427,18 @@ public sealed class RentScheduleService(
             new LeaseStartRequest(request.UnitAssetId, null, request.StartDate, true, monthToMonth ? null : request.LeaseEndDate), createdBy);
     }
 
-    private async Task<RentScheduleResponse> ToResponseAsync(RentSchedule schedule, decimal? totalReceived = null)
+    private static IReadOnlyList<(DateOnly DateReceived, decimal Amount)> PaymentsFor(
+        IReadOnlyDictionary<Guid, IReadOnlyList<(DateOnly DateReceived, decimal Amount)>> payments, RentSchedule schedule) =>
+        payments.TryGetValue(schedule.RentScheduleId, out var list) ? list : [];
+
+    private static PaymentTimelinessDto ToDto(PaymentTimeliness t) => new(t.PeriodsAssessed, t.PeriodsOnTime, t.OnTimeRate, t.AverageDaysLate);
+
+    private async Task<RentScheduleResponse> ToResponseAsync(
+        RentSchedule schedule, decimal? totalReceived = null, IReadOnlyList<(DateOnly DateReceived, decimal Amount)>? payments = null)
     {
         var received = totalReceived
             ?? (await paymentRepository.GetReceivedTotalsAsync([schedule.RentScheduleId])).GetValueOrDefault(schedule.RentScheduleId);
+        payments ??= PaymentsFor(await paymentRepository.GetPaymentsAsync([schedule.RentScheduleId]), schedule);
 
         var unit = await unitAssetService.GetByIdAsync(schedule.UnitAssetId);
         var unitLabel = unit.Outcome == ServiceResultOutcome.Success ? unit.Data!.Label : "Unknown unit";
@@ -415,6 +455,6 @@ public sealed class RentScheduleService(
             schedule.Status.ToUpperSnakeCase(), evaluation?.Status.ToUpperSnakeCase(), evaluation?.PeriodsInArrears ?? 0,
             evaluation?.AmountShort ?? 0m, received, evaluation?.OldestUnpaidDueDate,
             scheduleRepository.GetRowVersion(schedule), schedule.CreatedAt,
-            upcoming?.RentAmount, upcoming?.EffectiveFrom);
+            upcoming?.RentAmount, upcoming?.EffectiveFrom, ToDto(schedule.Timeliness(payments, Today)));
     }
 }

@@ -38,7 +38,8 @@ const STARTER_ADMIN = `e2e-domain-starter-${Date.now()}@trellis-platform.test`;
 const CUSTOM_HOST = "acme-e2e.test";
 const REGISTERED_DOMAIN = `e2e-${Date.now()}.example.com`;
 const LISTING_DESCRIPTION = "Bright corner unit with a balcony";
-const API_URL = "http://localhost:5080";
+// Overridable so a run can target an API on another port (e.g. two sessions sharing one machine).
+const API_URL = process.env.E2E_API_URL ?? "http://localhost:5080";
 const SLUG = tenantSlugFor(ENTERPRISE_TENANT_ID);
 
 test.describe.configure({ mode: "serial" });

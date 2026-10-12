@@ -102,6 +102,24 @@ today** — the base amount, or the latest change already in effect — never a 
 past period's amount. The schedule response's `rentAmount` is the rent in effect today, with
 `upcomingRentAmount`/`upcomingRentFrom` for the next change.
 
+### Payment timeliness (BDR-RENT-007, Phase 11)
+
+Computed on read, never stored on the schedule — the same cumulative model as arrears. Payments
+cover periods oldest first, so a period counts as paid on the date the running total of
+non-voided recorded payments first covered it. A period is **assessed** once its deadline (due date
++ grace) has passed, and is **on time** if it was covered by that deadline. A late period's **days
+late** run from its due date to the date it was covered — or to today while it is still uncovered,
+so an unpaid month counts as late now instead of vanishing until someone pays. Each period is
+judged against the rent in effect on its due date (dated rent changes included); an ended schedule
+is judged only up to the day it ended.
+
+Results are counts (assessed, on time, total days late), so schedules roll up to properties and
+Owners by adding — never by averaging percentages (BDR-RPT-005). The on-time rate is null, shown as
+"no data", until something has been assessed; average days late is over late periods only. Each
+schedule response carries its lifetime figures; the Owner report carries figures for periods due
+within the report period, overall and per property, stored with the report as generated
+(`owner_report.rent_payment_timeliness`, null on reports from before it existed).
+
 ### trellis_rentledger.rent_payment_record
 
 | Column | Type | Constraints | Description |

@@ -78,7 +78,8 @@ public sealed class OwnerReportService(
 
             report.MarkReady(
                 propertyIds.Count, totalCost, maintenanceCurrency, openCount, compliantCount, expiringCount, pdfBytes,
-                rent?.CurrentCount, rent?.OverdueCount, rent?.ArrearsCount, SerializeRent(rent?.ReceivedByCurrency), rent?.AsOf);
+                rent?.CurrentCount, rent?.OverdueCount, rent?.ArrearsCount, SerializeRent(rent?.ReceivedByCurrency), rent?.AsOf,
+                rent?.Timeliness is null ? null : JsonSerializer.Serialize(rent.Timeliness));
             await repository.SaveChangesAsync();
         }
         catch (Exception)
@@ -176,9 +177,33 @@ public sealed class OwnerReportService(
         var asOf = DateOnly.FromDateTime(DateTime.UtcNow);
 
         var summary = await rentScheduleService.GetOwnerRentSummaryAsync(unitAssetIds, periodStart, periodEnd, asOf);
-        return summary is null
-            ? null
-            : new OwnerReportRentSection(summary.CurrentCount, summary.OverdueCount, summary.ArrearsCount, summary.ReceivedByCurrency, asOf);
+        if (summary is null)
+        {
+            return null;
+        }
+
+        var unitToProperty = propertyIds.Count == 0
+            ? new Dictionary<Guid, Guid>()
+            : await unitAssetService.MapUnitsToPropertiesAsync(propertyIds);
+        var timeliness = await rentScheduleService.GetPaymentTimelinessAsync(unitToProperty, periodStart, periodEnd, asOf);
+
+        return new OwnerReportRentSection(
+            summary.CurrentCount, summary.OverdueCount, summary.ArrearsCount, summary.ReceivedByCurrency, asOf,
+            timeliness is null ? null : await WithAddressesAsync(timeliness));
+    }
+
+    /// <summary>BDR-RENT-007 — per-property rows carry the property's address, captured at generation like the rest of the report.</summary>
+    private async Task<OwnerReportPaymentTimeliness> WithAddressesAsync(RentTimelinessSummary timeliness)
+    {
+        var rows = new List<OwnerReportPropertyTimeliness>();
+        foreach (var property in timeliness.ByProperty)
+        {
+            var found = await propertyService.GetByIdAsync(property.PropertyId);
+            var address = found.Outcome == ServiceResultOutcome.Success ? found.Data!.Address : "Unknown property";
+            rows.Add(new OwnerReportPropertyTimeliness(property.PropertyId, address ?? "Unknown property", property.Timeliness));
+        }
+
+        return new OwnerReportPaymentTimeliness(timeliness.Overall, rows.OrderBy(r => r.PropertyAddress, StringComparer.Ordinal).ToList());
     }
 
     private static string? SerializeRent(IReadOnlyList<CurrencyAmount>? amounts) =>
@@ -190,7 +215,10 @@ public sealed class OwnerReportService(
             : new OwnerReportRentSection(
                 report.RentCurrentCount.Value, report.RentOverdueCount ?? 0, report.RentArrearsCount ?? 0,
                 DeserializeRent(report.RentReceivedByCurrencyJson),
-                report.RentAsOf ?? DateOnly.FromDateTime(report.ReadyAt?.UtcDateTime ?? DateTime.UtcNow));
+                report.RentAsOf ?? DateOnly.FromDateTime(report.ReadyAt?.UtcDateTime ?? DateTime.UtcNow),
+                string.IsNullOrEmpty(report.RentPaymentTimelinessJson)
+                    ? null
+                    : JsonSerializer.Deserialize<OwnerReportPaymentTimeliness>(report.RentPaymentTimelinessJson));
 
     private static IReadOnlyList<CurrencyAmount> DeserializeRent(string? json) =>
         string.IsNullOrEmpty(json) ? [] : JsonSerializer.Deserialize<IReadOnlyList<CurrencyAmount>>(json) ?? [];

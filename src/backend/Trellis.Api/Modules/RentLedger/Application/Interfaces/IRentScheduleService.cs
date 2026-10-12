@@ -61,6 +61,15 @@ public interface IRentScheduleService
         Guid tenantId, Guid leaseId, DateOnly effectiveFrom, decimal rentAmount, Guid? renewalOfferId, Guid actorUserId);
 
     /// <summary>
+    /// BDR-RENT-007 for the Owner report — on-time rate and days late for periods due between
+    /// <paramref name="dueFrom"/> and <paramref name="dueTo"/>, across every schedule on the given units
+    /// (active or ended), overall and per property. Null when the tenant isn't entitled to
+    /// RENT_COLLECTION. Requires the caller's TenantContext.Current (Scoped()).
+    /// </summary>
+    Task<RentTimelinessSummary?> GetPaymentTimelinessAsync(
+        IReadOnlyDictionary<Guid, Guid> unitToProperty, DateOnly dueFrom, DateOnly dueTo, DateOnly asOf);
+
+    /// <summary>
     /// BDR-RENT-005 — the Owner report's rollup across the given units. Null when the current tenant
     /// isn't entitled to RENT_COLLECTION (the report then omits rent rather than showing a
     /// misleading zero). Requires the caller's TenantContext.Current (Scoped()).

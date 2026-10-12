@@ -2,6 +2,7 @@ using System.Globalization;
 using QuestPDF.Fluent;
 using QuestPDF.Helpers;
 using QuestPDF.Infrastructure;
+using Trellis.Api.Modules.RentLedger.Application.Dtos;
 using Trellis.Api.Modules.Reporting.Application.Dtos;
 using Trellis.Api.Modules.Reporting.Application.Interfaces;
 using Trellis.Api.Modules.Reporting.Infrastructure.Csv;
@@ -101,6 +102,11 @@ public sealed class QuestPdfOwnerReportRenderer : IReportExportService
                             {
                                 AddRow(table, $"Rent recorded as received in period ({received.Currency})", CurrencyFormatter.Format(received.Amount, received.Currency));
                             }
+
+                            foreach (var (label, value) in TimelinessRows(rent.Timeliness))
+                            {
+                                AddRow(table, label, value);
+                            }
                         });
                     }
                 });
@@ -136,11 +142,45 @@ public sealed class QuestPdfOwnerReportRenderer : IReportExportService
                 rows.Add([$"Rent recorded as received in period ({received.Currency})", received.Amount.ToString("F2", CultureInfo.InvariantCulture)]);
             }
 
+            foreach (var (label, value) in TimelinessRows(rent.Timeliness))
+            {
+                rows.Add([label, value]);
+            }
+
             rows.Add(["Rent status as of", rent.AsOf.ToString("yyyy-MM-dd", CultureInfo.InvariantCulture)]);
         }
 
         return CsvWriter.Write(["Metric", "Value"], rows);
     }
+
+    /// <summary>
+    /// BDR-RENT-007 — the same rows in the PDF and the CSV. "No data" when no period's grace had
+    /// passed, never a 0% or 100% that wasn't measured; "None late" rather than an average of nothing.
+    /// </summary>
+    private static IEnumerable<(string Label, string Value)> TimelinessRows(OwnerReportPaymentTimeliness? timeliness)
+    {
+        if (timeliness is null)
+        {
+            yield break;
+        }
+
+        yield return ("Rent periods paid on time (due in period and past grace)", Describe(timeliness.Overall));
+        yield return ("Average days late (late periods only)", DaysLate(timeliness.Overall));
+        foreach (var property in timeliness.ByProperty)
+        {
+            yield return ($"Paid on time — {property.PropertyAddress}", Describe(property.Timeliness));
+        }
+    }
+
+    private static string Describe(PaymentTimelinessDto t) =>
+        t.OnTimeRate is { } rate
+            ? $"{t.PeriodsOnTime} of {t.PeriodsAssessed} ({Math.Round(rate * 100, MidpointRounding.AwayFromZero).ToString("0", CultureInfo.InvariantCulture)}%)"
+            : "No data";
+
+    private static string DaysLate(PaymentTimelinessDto t) =>
+        t.PeriodsAssessed == 0 ? "No data"
+        : t.AverageDaysLate is { } days ? days.ToString("0.#", CultureInfo.InvariantCulture)
+        : "None late";
 
     public byte[] GenerateDashboardCsv(DashboardSummaryResponse summary)
     {

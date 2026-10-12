@@ -26,6 +26,7 @@ import { unitsApi } from "../../../api/units";
 import { dangerAlertStyles, infoAlertStyles } from "../../../theme/dangerStyles";
 import { formatCurrency } from "../../../utils/formatCurrency";
 import { leaseErrorMessage } from "../leases/leaseLabels";
+import { timelinessPercent } from "./paymentTimeliness";
 import { RentDisclaimer, RentStatusBadge } from "./rentStatus";
 
 const scheduleSchema = z
@@ -204,6 +205,7 @@ export function RentSchedulesPage() {
             <Table.Th>Rent per period</Table.Th>
             <Table.Th>Due day</Table.Th>
             <Table.Th>Recorded as received</Table.Th>
+            <Table.Th>Paid on time</Table.Th>
             <Table.Th>Status</Table.Th>
           </Table.Tr>
         </Table.Thead>
@@ -222,6 +224,7 @@ export function RentSchedulesPage() {
               <Table.Td>
                 {formatCurrency(schedule.totalReceived ?? 0, schedule.currency ?? "USD")}
               </Table.Td>
+              <Table.Td>{timelinessPercent(schedule.timeliness)}</Table.Td>
               <Table.Td>
                 <RentStatusBadge status={schedule.rentStatus} />
               </Table.Td>

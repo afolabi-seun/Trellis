@@ -254,4 +254,29 @@ public sealed class OwnerReportServiceTests : IDisposable
         _exportService.DidNotReceiveWithAnyArgs().GenerateOwnerReportPdf(default!);
         await _auditService.DidNotReceiveWithAnyArgs().RecordAsync(default, default, default, default!, default);
     }
+
+    [Fact]
+    public async Task GenerateAsync_IncludesPaymentTimeliness_ForPeriodsDueInTheReportPeriod_WithEachPropertysAddress()
+    {
+        var ownerId = ArrangeGenerationForOwner(out var unitIds);
+        var propertyId = Guid.NewGuid();
+        _rentScheduleService.GetOwnerRentSummaryAsync(Arg.Any<IReadOnlyList<Guid>>(), Arg.Any<DateOnly>(), Arg.Any<DateOnly>(), Arg.Any<DateOnly>())
+            .Returns(new OwnerRentSummary(1, 0, 0, []));
+        var unitMap = unitIds.ToDictionary(u => u, _ => propertyId);
+        _unitAssetService.MapUnitsToPropertiesAsync(Arg.Any<IReadOnlyCollection<Guid>>()).Returns(unitMap);
+        var overall = new PaymentTimelinessDto(4, 3, 0.75m, 6m);
+        _rentScheduleService.GetPaymentTimelinessAsync(Arg.Any<IReadOnlyDictionary<Guid, Guid>>(), Arg.Any<DateOnly>(), Arg.Any<DateOnly>(), Arg.Any<DateOnly>())
+            .Returns(new RentTimelinessSummary(overall, [new PropertyPaymentTimelinessDto(propertyId, overall)]));
+        _propertyService.GetByIdAsync(propertyId).Returns(ServiceResult<PropertyResponse>.Success(
+            new PropertyResponse(propertyId, Guid.NewGuid(), "9 Elm St", "RESIDENTIAL", "ACTIVE", null, null, null, null, "AAAAAAAAAAA=", DateTimeOffset.UtcNow)));
+        var sut = CreateSut();
+
+        var result = await sut.GenerateAsync(ownerId, OwnerReportPeriodType.Monthly, new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31), Guid.NewGuid());
+
+        result.Data!.Rent!.Timeliness!.Overall.Should().Be(overall);
+        result.Data.Rent.Timeliness.ByProperty.Should().ContainSingle().Which.PropertyAddress.Should().Be("9 Elm St");
+        await _rentScheduleService.Received(1).GetPaymentTimelinessAsync(
+            unitMap, new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31), Arg.Any<DateOnly>());
+        _exportService.Received(1).GenerateOwnerReportPdf(Arg.Is<OwnerReportContent>(c => c.Rent!.Timeliness!.Overall.PeriodsOnTime == 3));
+    }
 }

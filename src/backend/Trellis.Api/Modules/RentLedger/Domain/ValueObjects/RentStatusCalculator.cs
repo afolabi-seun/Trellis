@@ -56,7 +56,7 @@ public static class RentStatusCalculator
     }
 
     /// <summary>Every due date from the first one on/after startDate up to and including asOf, in order.</summary>
-    private static List<DateOnly> DueDatesThrough(DateOnly startDate, int dueDayOfMonth, DateOnly asOf)
+    internal static List<DateOnly> DueDatesThrough(DateOnly startDate, int dueDayOfMonth, DateOnly asOf)
     {
         var dueDates = new List<DateOnly>();
         var monthStart = new DateOnly(startDate.Year, startDate.Month, 1);

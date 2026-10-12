@@ -14,6 +14,8 @@ public interface IUnitAssetRepository
 
     Task<IReadOnlyList<Guid>> ListIdsByPropertiesAsync(IReadOnlyCollection<Guid> propertyIds);
 
+    Task<IReadOnlyDictionary<Guid, Guid>> MapUnitsToPropertiesAsync(IReadOnlyCollection<Guid> propertyIds);
+
     /// <summary>billing_design.md's usage metering (BDR-BIL-001) — an explicit tenantId param, not Scoped()/TenantContext.Current, since the only caller (UsageSnapshotBackgroundService) runs under SystemContext with no ambient tenant during its cross-tenant batch poll.</summary>
     Task<int> CountActiveForTenantAsync(Guid tenantId);
 

@@ -671,4 +671,61 @@ public sealed class RentScheduleServiceTests : IDisposable
         result.Data.UpcomingRentAmount.Should().Be(1400m);
         result.Data.UpcomingRentFrom.Should().Be(today.AddMonths(2));
     }
+
+    // ---- Payment timeliness (BDR-RENT-007) ----
+
+    [Fact]
+    public async Task GetByIdAsync_IncludesTheSchedulesPaymentTimeliness()
+    {
+        var schedule = ActiveSchedule(start: new DateOnly(2026, 1, 1));
+        _scheduleRepository.GetByIdAsync(schedule.RentScheduleId).Returns(schedule);
+        _paymentRepository.GetPaymentsAsync(Arg.Any<IReadOnlyCollection<Guid>>()).Returns(
+            new Dictionary<Guid, IReadOnlyList<(DateOnly, decimal)>>
+            {
+                [schedule.RentScheduleId] = [(new DateOnly(2026, 1, 5), 1000m), (new DateOnly(2026, 2, 20), 1000m)],
+            });
+        var sut = CreateSut();
+
+        var result = await sut.GetByIdAsync(schedule.RentScheduleId);
+
+        // January on time; February covered 15 days after its due date; every later month unpaid so far.
+        result.Data!.Timeliness.PeriodsOnTime.Should().Be(1);
+        result.Data.Timeliness.PeriodsAssessed.Should().BeGreaterThan(2);
+    }
+
+    [Fact]
+    public async Task GetPaymentTimelinessAsync_SumsPeriodsPerProperty_AndOverall()
+    {
+        var propertyA = Guid.NewGuid();
+        var propertyB = Guid.NewGuid();
+        var unitA = Guid.NewGuid();
+        var unitB = Guid.NewGuid();
+        var onTime = ActiveSchedule(start: new DateOnly(2026, 1, 1), unit: unitA);
+        var late = ActiveSchedule(start: new DateOnly(2026, 1, 1), unit: unitB);
+        _scheduleRepository.ListForUnitsAsync(Arg.Any<IReadOnlyCollection<Guid>>()).Returns([onTime, late]);
+        _paymentRepository.GetPaymentsAsync(Arg.Any<IReadOnlyCollection<Guid>>()).Returns(
+            new Dictionary<Guid, IReadOnlyList<(DateOnly, decimal)>>
+            {
+                [onTime.RentScheduleId] = [(new DateOnly(2026, 1, 5), 1000m), (new DateOnly(2026, 2, 5), 1000m)],
+                [late.RentScheduleId] = [(new DateOnly(2026, 1, 20), 1000m), (new DateOnly(2026, 2, 25), 1000m)],
+            });
+        var sut = CreateSut();
+
+        var result = await sut.GetPaymentTimelinessAsync(
+            new Dictionary<Guid, Guid> { [unitA] = propertyA, [unitB] = propertyB },
+            new DateOnly(2026, 1, 1), new DateOnly(2026, 2, 28), new DateOnly(2026, 3, 31));
+
+        result!.Overall.Should().Be(new PaymentTimelinessDto(4, 2, 0.5m, 17.5m));
+        result.ByProperty.Should().HaveCount(2);
+        result.ByProperty.Single(p => p.PropertyId == propertyB).Timeliness.PeriodsOnTime.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task GetPaymentTimelinessAsync_WithoutRentCollection_IsNull_NotAMisleadingZero()
+    {
+        _entitlements.IsEntitledAsync(_tenantId, "RENT_COLLECTION").Returns(false);
+
+        (await CreateSut().GetPaymentTimelinessAsync(new Dictionary<Guid, Guid>(), new DateOnly(2026, 1, 1), new DateOnly(2026, 1, 31), new DateOnly(2026, 2, 28)))
+            .Should().BeNull();
+    }
 }

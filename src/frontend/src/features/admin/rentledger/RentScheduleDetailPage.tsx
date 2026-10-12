@@ -25,6 +25,7 @@ import { dangerAlertStyles, dangerButtonStyles } from "../../../theme/dangerStyl
 import { formatCurrency } from "../../../utils/formatCurrency";
 import { EndLeaseModal, type EndLeaseValues } from "../leases/EndLeaseModal";
 import { leaseErrorMessage } from "../leases/leaseLabels";
+import { describeTimeliness } from "./paymentTimeliness";
 import { RentDisclaimer, RentStatusBadge } from "./rentStatus";
 
 const today = () => new Date().toISOString().slice(0, 10);
@@ -190,6 +191,7 @@ export function RentScheduleDetailPage() {
             </Text>
           )}
           <Text>Recorded as received: {formatCurrency(schedule.totalReceived ?? 0, currency)}</Text>
+          <Text>Payment timeliness: {describeTimeliness(schedule.timeliness)}.</Text>
           {isActive && (schedule.periodsInArrears ?? 0) > 0 && (
             <Text>
               {schedule.periodsInArrears} period(s) past grace —{" "}
